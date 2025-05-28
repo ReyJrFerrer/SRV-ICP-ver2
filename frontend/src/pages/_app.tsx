@@ -1,5 +1,6 @@
 import type { AppProps } from "next/app";
 import "tailwindcss/tailwind.css";
+import "@app/styles/globals.css";
 
 import { Client, InternetIdentity } from "@bundly/ares-core";
 import { IcpConnectContextProvider } from "@bundly/ares-react";

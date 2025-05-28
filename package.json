@@ -1,5 +1,5 @@
 {
-  "name": "azle-api-rest-nextjs",
+  "name": "SRV-ithink",
   "version": "0.4.0",
   "workspaces": [
     "backend",

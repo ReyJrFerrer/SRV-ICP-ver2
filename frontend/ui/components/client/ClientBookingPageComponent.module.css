@@ -1,6 +1,66 @@
-/* SRV-ICP-1/ui/styles/BookingPageComponent.module.css */
 .bookingFormContainer {
-  background-color: #fff; /* White cards on a light gray page background */
+  background-color: #fff; 
+}
+
+
+.pageContainer {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #f0f2f5; 
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageHeader {
+  display: grid; 
+  grid-template-columns: auto 1fr auto; 
+  align-items: center;
+  padding: 14px 16px; 
+  background-color: white;
+  border-bottom: 1px solid #e8e8e8; 
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+  box-sizing: border-box;
+}
+
+.backButton {
+  grid-column: 1 / 2; 
+  background: none;
+  border: none;
+  font-size: 23px; 
+  font-weight: normal; 
+  cursor: pointer;
+  color: #555; 
+  padding: 0; 
+  line-height: 1; 
+  justify-self: start; 
+}
+
+.mainTitle {
+  grid-column: 2 / 3; 
+  font-size: 17px;  
+  font-weight: 500; 
+  color: #1c1e21;  
+  text-align: center; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerSpacer {
+  grid-column: 3 / 4; 
+  width: 40px; 
+ 
+}
+
+
+.mainContent {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0px 0px 80px 0px; 
 }
 
 .formSection {

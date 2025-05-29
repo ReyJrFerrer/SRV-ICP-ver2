@@ -48,7 +48,7 @@ const ClientBookPage: React.FC<ClientBookPageProps> = ({ service }) => {
           &larr;
         </button>
         <h1 className={styles.mainTitle}>Book '{service.title}'</h1>
-        <div style={{width: '40px'}}></div> {/* Spacer */}
+        <div className={styles.headerSpacer}></div> {/* Optional: Use if you need to balance a right-side element or ensure centering with grid */}
       </header>
       
       <main className={styles.mainContent}>

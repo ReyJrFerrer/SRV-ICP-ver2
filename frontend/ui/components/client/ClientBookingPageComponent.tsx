@@ -1,29 +1,21 @@
-// SRV-ICP-1/ui/components/client/booking/BookingPageComponent.tsx
-import React, { useState, ChangeEvent, FC, useEffect } from 'react'; // Added useEffect
-// Import ServicePackage if you defined it in services.ts and want to use it here
+import React, { useState, ChangeEvent, FC, useEffect } from 'react'; 
+
 import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Adjust path
 import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css';
 
-// --- Prop Types ---
 interface BookingPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {
     createdAt: string;
     updatedAt: string;
-    // The packages array from service prop will now have ServicePackage[] type
-    // No need to redefine it here if OriginalServiceType already includes it correctly
   };
 }
 
-// This local type will represent a package item in the component's state, including its checked status
 interface SelectablePackageItem extends ServicePackage {
   checked: boolean;
 }
 
-
-// --- Sub-Components (PackageSelection needs to be updated) ---
-
 interface PackageSelectionProps {
-  packages: SelectablePackageItem[]; // Now expects items with a 'checked' property
+  packages: SelectablePackageItem[]; 
   onPackageChange: (packageId: string) => void;
 }
 const PackageSelection: FC<PackageSelectionProps> = ({ packages, onPackageChange }) => (
@@ -43,9 +35,6 @@ const PackageSelection: FC<PackageSelectionProps> = ({ packages, onPackageChange
   </div>
 );
 
-// ... (ConcernsInput, SimpleCalendar, BookingOptionsDisplay, LocationInfo, PaymentInfoDisplay remain the same as before)
-// Make sure their prop definitions are correct if they rely on specific parts of the service object.
-// For brevity, only PackageSelection and the main component are shown with direct changes.
 
 const ConcernsInput: FC<{concerns: string; onConcernsChange: (value: string) => void;}> = ({ concerns, onConcernsChange }) => (
   <div className={styles.formSection}>
@@ -86,7 +75,7 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
   bookingOption, onOptionChange, selectedDate, onDateChange, selectedTime, onTimeChange
 }) => (
   <div className={styles.formSection}>
-    <h3 className={styles.sectionTitle}>Booking Options</h3>
+    <h3 className={styles.sectionTitle}>Booking Schedule</h3>
     <div className={styles.optionGroup}>
       <button className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`} onClick={() => { onOptionChange('sameday'); onDateChange(null); }}>Same day <span className={styles.optionDetail}>25 - 40 mins</span></button>
       <button className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`} onClick={() => onOptionChange('scheduled')}>Scheduled</button>
@@ -108,17 +97,14 @@ const PaymentInfoDisplay: FC = () => (
 );
 
 
-// --- Main Booking Page Component ---
 const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
-  // Initialize packages state based on the service prop
   const [packages, setPackages] = useState<SelectablePackageItem[]>([]);
 
   useEffect(() => {
-    // Initialize packages with a 'checked' property (e.g., none checked by default, or based on some logic)
     if (service && service.packages) {
-      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false }))); // Or true for first one, etc.
+      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false }))); 
     }
-  }, [service]); // Re-run if service prop changes
+  }, [service]); 
 
   const [concerns, setConcerns] = useState<string>('');
   const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
@@ -136,9 +122,9 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const handleConfirmBooking = () => {
     const bookingDetails = {
       serviceId: service.id,
-      serviceSlug: service.slug, // It's good to have the slug if you use it
+      serviceSlug: service.slug, 
       serviceName: service.title,
-      selectedPackages: packages.filter(p => p.checked).map(p => ({id: p.id, name: p.name})), // Send id and name
+      selectedPackages: packages.filter(p => p.checked).map(p => ({id: p.id, name: p.name})), 
       concerns,
       bookingType: bookingOption,
       date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : null),

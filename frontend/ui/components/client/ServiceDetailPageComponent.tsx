@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Service as OriginalServiceType } from 'frontend/public/data/services'; // Adjusted path
 import styles from 'frontend/ui/components/client/ServiceDetailPageComponent.module.css';
+import { useRouter } from 'next/router'; // Import useRouter
 
 interface ServiceDetailPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {
@@ -104,8 +105,11 @@ const ServiceImagesSection: React.FC = () => (
 
 
 const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service }) => {
+  const router = useRouter(); // Initialize router
+
   const handleBookingRequest = () => {
-    alert(`Booking request for ${service.title}`);
+    // Navigate to the booking page, passing the service slug
+    router.push(`/client/book/${service.slug}`);
   };
 
   return (

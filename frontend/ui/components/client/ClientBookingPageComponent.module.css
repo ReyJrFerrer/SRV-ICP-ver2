@@ -1,0 +1,193 @@
+/* SRV-ICP-1/ui/styles/BookingPageComponent.module.css */
+.bookingFormContainer {
+  background-color: #fff; /* White cards on a light gray page background */
+}
+
+.formSection {
+  padding: 16px;
+  margin-bottom: 12px; /* Space between card-like sections */
+  background-color: #ffffff;
+  border-bottom: 1px solid #e8e8e8; 
+}
+.formSection:first-child {
+   border-top: 1px solid #e8e8e8; 
+}
+
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.checkboxLabel {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  margin-right: 8px;
+  accent-color: #007bff; /* Or your brand color */
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 5px 0;
+  margin-top: 5px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.optionGroup {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.optionButton {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.optionButtonSelected {
+  background-color: #007bff; /* Highlight color */
+  color: white;
+  border-color: #007bff;
+}
+
+.optionDetail {
+  display: block;
+  font-size: 12px;
+  color: #666;
+}
+
+.optionButtonSelected .optionDetail {
+  color: #e0e0ff;
+}
+
+.scheduledOptions {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+
+.calendarPlaceholder {
+  padding: 10px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+.dateButton, .dateButtonSelected {
+  padding: 8px 12px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dateButtonSelected {
+  background-color: #007bff;
+  color: white;
+}
+
+.timeInput {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.actionButton {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.actionButton:hover {
+  background-color: #0056b3;
+}
+
+.secondaryButton {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.secondaryButton:hover {
+  background-color: #5a6268;
+}
+
+.paymentNote {
+  font-size: 14px;
+  color: #555;
+  background-color: #e9f5ff;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+}
+
+.confirmButtonContainer {
+  padding: 16px;
+  background-color: #fff;
+  border-top: 1px solid #e0e0e0;
+  position: sticky; /* Make it sticky */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+.confirmButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background-color: #28a745; /* Green button */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.confirmButton:hover {
+  background-color: #218838;
+}

@@ -24,6 +24,10 @@
 
 /* Bottom Tab Navigation */
 .bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: #205781;
   padding: 12px 0;
   display: flex;

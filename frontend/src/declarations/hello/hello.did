@@ -1,0 +1,10 @@
+service : {
+  getProjectInfo: () ->
+   (record {
+      description: text;
+      name: text;
+      version: text;
+    }) query;
+  getWelcomeMessage: () -> (text) query;
+  greet: (name: text) -> (text) query;
+}

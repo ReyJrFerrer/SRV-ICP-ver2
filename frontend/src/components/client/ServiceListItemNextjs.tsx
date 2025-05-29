@@ -31,7 +31,7 @@ interface ServiceListItemProps {
 
 const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories = false }) => {
   return (
-    <Link href={`/customer/service/${service.slug}`}>
+    <Link href={`/client/service/${service.slug}`}>
       <div className={`service-card ${inCategories ? 'w-full' : 'w-80 md:w-96'}`}>
         <div className="relative">
           <div className="aspect-video w-full">

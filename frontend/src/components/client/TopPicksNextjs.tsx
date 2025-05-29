@@ -37,7 +37,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Top Picks!</h2>
         <Link 
-          href="/customer/service/view-all"
+          href="/client/service/view-all"
           className="text-green-600 flex items-center hover:text-green-700 transition-colors"
         >
           <span className="mr-1">View All</span>

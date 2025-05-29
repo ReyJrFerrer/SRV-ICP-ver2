@@ -39,7 +39,7 @@ const Categories: React.FC<CategoriesProps> = ({ categories, className = '' }) =
         {categories.slice(0, 3).map((category) => (
           <Link 
             key={category.id} 
-            href={`/customer/categories/${category.slug}`}
+            href={`/client/categories/${category.slug}`}
             className="flex flex-col items-center transition-transform hover:scale-105"
           >
             <div className="category-icon mb-2">
@@ -51,7 +51,7 @@ const Categories: React.FC<CategoriesProps> = ({ categories, className = '' }) =
         
         {/* More categories link */}
         <Link 
-          href="/customer/categories/all-service-types"
+          href="/client/categories/all-service-types"
           className="flex flex-col items-center transition-transform hover:scale-105"
         >
           <div className="category-icon mb-2">

@@ -28,7 +28,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       }
       
       if (redirectToSearch) {
-        router.push(`/customer/service-maps?q=${encodeURIComponent(query)}`);
+        router.push(`/client/service-maps?q=${encodeURIComponent(query)}`);
       }
     }
   };

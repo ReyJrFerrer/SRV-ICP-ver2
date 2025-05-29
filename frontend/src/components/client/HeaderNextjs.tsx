@@ -19,7 +19,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
   const handleAddressMapClick = () => {
     setLocationSheetOpen(false);
-    router.push('/customer/service-maps');
+    router.push('/client/service-maps');
   };
 
   return (

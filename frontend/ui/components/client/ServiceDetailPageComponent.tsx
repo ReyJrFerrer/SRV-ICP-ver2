@@ -26,7 +26,7 @@ const ServiceHeroImage: React.FC<{ service: ServiceDetailPageComponentProps['ser
 
 const ServiceInfoSection: React.FC<{ service: ServiceDetailPageComponentProps['service'] }> = ({ service }) => (
   <div className={styles.infoSection}>
-    <h2>{service.name}</h2>
+    <h2>{service.title}</h2>
     <p className={styles.description}>{service.description}</p>
     
     <div className={styles.detailItem}>

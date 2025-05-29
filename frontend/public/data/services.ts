@@ -1,4 +1,4 @@
-// SRV-ICP-1/public/data/services.ts
+
 
 export interface ServicePrice {
   amount: number;

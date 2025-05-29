@@ -1,0 +1,144 @@
+.headerContainer {
+  background: white;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+}
+
+.bookingsButton {
+  background: none;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.bookingsButton:hover {
+  background-color: #f5f5f5;
+}
+
+.bookingIcon {
+  font-size: 24px;
+  color: #666;
+}
+
+.badgeContainer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #dc3545;
+  color: white;
+  border-radius: 10px;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badgeText {
+  line-height: 1;
+}
+
+.searchBarContainer {
+  width: 100%;
+}
+
+.categoriesContainer {
+  margin-top: 8px;
+}
+
+.categoriesRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.category,
+.moreButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+  flex: 1;
+  max-width: 80px;
+}
+
+.category:hover,
+.moreButton:hover {
+  background-color: #f5f5f5;
+}
+
+.categoryIconContainer {
+  width: 50px;
+  height: 50px;
+  background: rgba(79, 149, 157, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.categoryIcon {
+  font-size: 24px;
+}
+
+.categoryText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .headerContainer {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .categoriesRow {
+    gap: 4px;
+  }
+
+  .categoryIconContainer {
+    width: 44px;
+    height: 44px;
+  }
+
+  .categoryIcon {
+    font-size: 20px;
+  }
+
+  .categoryText {
+    font-size: 11px;
+  }
+}

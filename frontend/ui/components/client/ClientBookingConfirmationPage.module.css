@@ -1,0 +1,120 @@
+/* SRV-ICP-1/ui/styles/ClientBookingConfirmationPage.module.css */
+.pageContainer {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px; /* Add some horizontal padding */
+  box-sizing: border-box;
+}
+
+.pageHeader {
+  padding: 18px 0; /* Adjusted padding */
+  background-color: transparent; /* No separate background for header */
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.mainTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+.mainContent {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Center the card vertically if page isn't too long */
+  padding-bottom: 20px;
+}
+
+.confirmationCard {
+  background-color: #ffffff;
+  padding: 25px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+  width: 100%;
+  max-width: 400px; /* Max width for the card itself */
+}
+
+.successIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.confirmationCard h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.subMessage {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.detailsSection {
+  text-align: left;
+  margin-bottom: 24px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.detailsSection h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.detailsSection p, .detailsSection div {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.detailsSection strong {
+  color: #333;
+}
+
+.detailsSection ul {
+  list-style: disc;
+  padding-left: 25px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.detailsSection ul li {
+  margin-bottom: 4px;
+}
+
+.homeButton {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.homeButton:hover {
+  background-color: #0056b3;
+}

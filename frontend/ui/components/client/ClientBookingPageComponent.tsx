@@ -1,5 +1,7 @@
 import React, { useState, ChangeEvent, FC, useEffect } from 'react'; 
-
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Adjust path
 import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css';
 
@@ -99,6 +101,7 @@ const PaymentInfoDisplay: FC = () => (
 
 const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const [packages, setPackages] = useState<SelectablePackageItem[]>([]);
+    const router = useRouter(); // Initialize router
 
   useEffect(() => {
     if (service && service.packages) {
@@ -107,10 +110,11 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   }, [service]); 
 
   const [concerns, setConcerns] = useState<string>('');
+  
   const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-
+  
   const handlePackageChange = (packageId: string) => {
     setPackages(prevPackages =>
       prevPackages.map(pkg =>
@@ -121,6 +125,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
 
   const handleConfirmBooking = () => {
     const bookingDetails = {
+      providerName: service.name,
       serviceId: service.id,
       serviceSlug: service.slug, 
       serviceName: service.title,
@@ -131,7 +136,13 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
       time: bookingOption === 'scheduled' ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (25-40 mins estimate)' : null),
     };
     console.log('Booking Details:', bookingDetails);
-    alert('Booking Confirmed (see console for details)!');
+
+     router.push({
+      pathname: '/client/booking/confirmation',
+      query: { details: JSON.stringify(bookingDetails) },
+    });
+  
+  
   };
 
   if (!service) {
@@ -149,6 +160,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         onDateChange={setSelectedDate}
         selectedTime={selectedTime}
         onTimeChange={setSelectedTime}
+        
       />
       <LocationInfo />
       <PaymentInfoDisplay />

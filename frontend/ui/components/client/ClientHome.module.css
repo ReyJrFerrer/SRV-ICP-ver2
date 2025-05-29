@@ -37,9 +37,8 @@
 }
 
 .servicesList {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   padding-bottom: 16px;
   scrollbar-width: none; /* Firefox */
@@ -59,6 +58,38 @@
   .servicesList {
     display: grid;
     grid-template-columns: repeat((2, 1fr));
+    gap: 20px;
+    overflow-x: visible;
+    flex-direction: initial;
+    align-items: initial;
+  }
+
+  .serviceCardWrapper{
+   width: auto;
+   max-width: none; 
+  }
+}
+
+@media (max-width: 600px) {
+  .servicesList {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 20px;
+    overflow-x: visible;
+    flex-direction: initial;
+    align-items: initial;
+  }
+
+  .serviceCardWrapper{
+   width: auto;
+   max-width: none; 
+  }
+}
+
+@media (min-width: 1024px) {
+  .servicesList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     overflow-x: visible;
     flex-direction: initial;

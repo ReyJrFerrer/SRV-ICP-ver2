@@ -175,9 +175,9 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .itemHomePage {
-    width: clamp(240px, 65vw, 260px);
+    width: 95vw;
     height: 340px;
   }
   

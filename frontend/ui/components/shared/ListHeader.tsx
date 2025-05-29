@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './ListHeader.module.css';
 import UserLocationComponent from './UserLocationComponent';
 import SearchBarComponent from './SearchBarComponent';
-import { CATEGORIES } from '../../../public/data/categories';
+import { CATEGORIES, Category } from '../../../public/data/categories';
 
 export default function ListHeader() {
+  const [showAll, setShowAll] = useState(false);
+
   const getCategoryIcon = (iconName: string) => {
     const icons: { [key: string]: string } = {
       'home': '🏠',
@@ -18,6 +20,8 @@ export default function ListHeader() {
     };
     return icons[iconName] || '🔧';
   };
+
+  const displayedCategories: Category[] = showAll ? CATEGORIES : CATEGORIES.slice(0, 3);
 
   return (
     <div className={styles.headerContainer}>
@@ -44,7 +48,7 @@ export default function ListHeader() {
       {/* Categories */}
       <div className={styles.categoriesContainer}>
         <div className={styles.categoriesRow}>
-          {CATEGORIES.slice(0, 3).map((category) => (
+          {displayedCategories.map((category) => (
             <div key={category.id} className={styles.category}>
               <div className={styles.categoryIconContainer}>
                 <span className={styles.categoryIcon}>
@@ -54,12 +58,19 @@ export default function ListHeader() {
               <span className={styles.categoryText}>{category.name}</span>
             </div>
           ))}
-          
-          <div className={styles.moreButton}>
+
+          <div
+            className={styles.moreButton}
+            onClick={() => setShowAll(prev => !prev)}
+          >
             <div className={styles.categoryIconContainer}>
-              <span className={styles.categoryIcon}>⋯</span>
+              <span className={styles.categoryIcon}>
+                {showAll ? '⬆' : '⋯'}
+              </span>
             </div>
-            <span className={styles.categoryText}>More</span>
+            <span className={styles.categoryText}>
+              {showAll ? 'Less' : 'More'}
+            </span>
           </div>
         </div>
       </div>

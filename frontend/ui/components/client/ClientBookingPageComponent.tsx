@@ -1,7 +1,5 @@
 import React, { useState, ChangeEvent, FC, useEffect } from 'react'; 
-import Head from 'next/head';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Adjust path
 import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css';
 

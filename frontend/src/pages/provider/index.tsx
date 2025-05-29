@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from "@bundly/ares-react";
+import { useRouter } from 'next/router';
 import Header from '@app/components/header';
 import Footer from '@app/components/shared/Footer';
 
 export default function ProviderPage() {
   const { isAuthenticated, currentIdentity } = useAuth();
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect to the provider home page
+    if (isAuthenticated) {
+      router.push('/provider/home');
+    }
+  }, [isAuthenticated, router]);
 
   return (
     <>
@@ -15,13 +24,9 @@ export default function ProviderPage() {
           
           {isAuthenticated ? (
             <div className="text-center">
-              <p className="text-xl mb-4">Welcome to your service provider dashboard!</p>
-              <p className="text-gray-600 mb-8">
-                This is where you can manage your services and bookings.
-              </p>
-              <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200 text-indigo-700">
-                <p>You are logged in as a service provider.</p>
-                <p className="text-sm mt-2">Principal ID: {currentIdentity.getPrincipal().toString()}</p>
+              <p className="text-xl mb-4">Redirecting to your provider dashboard...</p>
+              <div className="mt-4 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
               </div>
             </div>
           ) : (

@@ -1,37 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from "@bundly/ares-react";
-import Header from '@app/components/header';
-import Footer from '@app/components/shared/Footer';
+import Head from 'next/head';
 
-export default function ClientPage() {
+export default function ClientIndexPage() {
+  const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
+  
+  useEffect(() => {
+    // Redirect to client home page
+    router.push('/client/home');
+  }, [router]);
 
   return (
     <>
-      <Header />
-      <main className="min-h-screen py-16 px-6">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-8">
-          <h1 className="text-3xl font-bold text-center mb-8">Client Dashboard</h1>
-          
-          {isAuthenticated ? (
-            <div className="text-center">
-              <p className="text-xl mb-4">Welcome to your client dashboard!</p>
-              <p className="text-gray-600 mb-8">
-                This is where you can browse and book services from our providers.
-              </p>
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 text-blue-700">
-                <p>You are logged in as a client.</p>
-                <p className="text-sm mt-2">Principal ID: {currentIdentity.getPrincipal().toString()}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className="text-xl text-red-600">Please log in to access your client dashboard.</p>
-            </div>
-          )}
+      <Head>
+        <title>Service Provider App</title>
+        <meta name="description" content="Find the best service providers near you" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to home page...</p>
         </div>
-      </main>
-      <Footer />
+      </div>
     </>
   );
 }

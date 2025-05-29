@@ -64,15 +64,6 @@ const ClientHomePage: React.FC = () => {
       </Head>
 
       <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Status bar - just a visual representation */}
-        <div className="bg-white px-4 py-1 flex justify-between items-center text-xs text-gray-500">
-          <span>10:26</span>
-          <div className="flex space-x-2">
-            <span>WiFi</span>
-            <span>Signal</span>
-            <span>100%</span>
-          </div>
-        </div>
 
         <div className="px-4 pt-4 pb-16">
           <Header className="mb-6" />

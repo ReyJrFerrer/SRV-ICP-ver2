@@ -12,20 +12,23 @@ export interface Profile {
   'isVerified' : boolean,
   'phone' : string,
 }
-export type Result = { 'ok' : Profile } |
+export type Result = { 'ok' : boolean } |
+  { 'err' : string };
+export type Result_1 = { 'ok' : Profile } |
   { 'err' : string };
 export type Time = bigint;
 export type UserRole = { 'Client' : null } |
   { 'ServiceProvider' : null };
 export interface _SERVICE {
-  'createProfile' : ActorMethod<[string, string, string, UserRole], Result>,
+  'createProfile' : ActorMethod<[string, string, string, UserRole], Result_1>,
   'getAllServiceProviders' : ActorMethod<[], Array<Profile>>,
-  'getMyProfile' : ActorMethod<[], Result>,
-  'getProfile' : ActorMethod<[Principal], Result>,
+  'getMyProfile' : ActorMethod<[], Result_1>,
+  'getProfile' : ActorMethod<[Principal], Result_1>,
   'updateProfile' : ActorMethod<
     [[] | [string], [] | [string], [] | [string]],
-    Result
+    Result_1
   >,
+  'verifyUser' : ActorMethod<[Principal], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

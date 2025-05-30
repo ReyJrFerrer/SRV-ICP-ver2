@@ -1,0 +1,18 @@
+// Version: 1.0.0
+type Profile__298844605 = Profile__405097533;
+type Profile__405097533 =
+  {
+    createdAt : Time__593356169;
+    email : Text;
+    id : Principal;
+    isVerified : Bool;
+    name : Text;
+    phone : Text;
+    role : UserRole__492485133;
+    updatedAt : Time__593356169
+  };
+type Time__593356169 = Int;
+type UserRole__492485133 = {#Client; #ServiceProvider};
+actor {
+  stable var profileEntries : [(Principal, Profile__298844605)]
+};

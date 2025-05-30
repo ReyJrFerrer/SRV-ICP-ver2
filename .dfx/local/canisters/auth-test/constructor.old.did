@@ -4,6 +4,11 @@ type UserRole =
    ServiceProvider;
  };
 type Time = int;
+type Result_1 = 
+ variant {
+   err: text;
+   ok: vec Profile;
+ };
 type Result = 
  variant {
    err: text;
@@ -24,4 +29,10 @@ service : {
   getAllProfiles: () -> (vec Profile) query;
   getAllServiceProviders: () -> (vec Profile) query;
   getProfile: (userId: principal) -> (Result) query;
+  testCreateProfile: () -> (Result);
+  testGetAllServiceProviders: () -> (Result_1);
+  testInvalidEmail: () -> (Result);
+  testInvalidPhone: () -> (Result);
+  testUpdateProfile: () -> (Result);
+  testVerifyUser: () -> (Result);
 }

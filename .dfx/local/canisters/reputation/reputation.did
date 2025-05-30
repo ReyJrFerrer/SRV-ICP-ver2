@@ -1,0 +1,89 @@
+type TrustLevel = 
+ variant {
+   High;
+   Low;
+   Medium;
+   New;
+   VeryHigh;
+ };
+type Time = int;
+type ReviewStatus = 
+ variant {
+   Flagged;
+   Hidden;
+   Visible;
+ };
+type Review = 
+ record {
+   bookingId: text;
+   clientId: principal;
+   comment: text;
+   createdAt: Time;
+   id: text;
+   providerId: principal;
+   qualityScore: opt float64;
+   rating: nat;
+   serviceId: text;
+   status: ReviewStatus;
+   updatedAt: Time;
+ };
+type Result_3 = 
+ variant {
+   err: text;
+   ok: bool;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: Evidence;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: Review;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: ReputationScore;
+ };
+type ReputationScore = 
+ record {
+   averageRating: opt float64;
+   completedBookings: nat;
+   detectionFlags: vec DetectionFlag;
+   lastUpdated: Time;
+   trustLevel: TrustLevel;
+   trustScore: float64;
+   userId: principal;
+ };
+type Evidence = 
+ record {
+   bookingId: text;
+   createdAt: Time;
+   description: text;
+   fileUrls: vec text;
+   id: text;
+   qualityScore: opt float64;
+   submitterId: principal;
+ };
+type DetectionFlag = 
+ variant {
+   CompetitiveManipulation;
+   FakeEvidence;
+   IdentityFraud;
+   Other;
+   ReviewBomb;
+ };
+service : {
+  addDetectionFlag: (userId: principal, flag: DetectionFlag) -> (Result);
+  detectCompetitiveManipulation: (providerId: principal) -> (Result_3);
+  detectReviewBombing: (providerId: principal) -> (Result_3);
+  getReputationScore: (userId: principal) -> (Result) query;
+  initializeReputation: (userId: principal, creationTime: Time) -> (Result);
+  processEvidence: (evidence: Evidence) -> (Result_2);
+  processReview: (review: Review) -> (Result_1);
+  updateAverageRating: (userId: principal, rating: float64) -> (Result);
+  updateCompletedBookings: (userId: principal, count: nat) -> (Result);
+  updateUserReputation: (userId: principal) -> (Result);
+}

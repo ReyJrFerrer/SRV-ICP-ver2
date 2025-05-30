@@ -1,0 +1,15 @@
+// Version: 1.0.0
+type Review__911237909 =
+  {
+    bookingId : Text;
+    comment : Text;
+    createdAt : Time__593356169;
+    id : Text;
+    rating : Nat;
+    reviewerId : Principal;
+    updatedAt : Time__593356169
+  };
+type Time__593356169 = Int;
+actor {
+  stable var reviewEntries : [(Text, Review__911237909)]
+};

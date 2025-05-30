@@ -14,21 +14,23 @@ export const idlFactory = ({ IDL }) => {
     'isVerified' : IDL.Bool,
     'phone' : IDL.Text,
   });
-  const Result = IDL.Variant({ 'ok' : Profile, 'err' : IDL.Text });
+  const Result_1 = IDL.Variant({ 'ok' : Profile, 'err' : IDL.Text });
+  const Result = IDL.Variant({ 'ok' : IDL.Bool, 'err' : IDL.Text });
   return IDL.Service({
     'createProfile' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, UserRole],
-        [Result],
+        [Result_1],
         [],
       ),
     'getAllServiceProviders' : IDL.Func([], [IDL.Vec(Profile)], ['query']),
-    'getMyProfile' : IDL.Func([], [Result], ['query']),
-    'getProfile' : IDL.Func([IDL.Principal], [Result], ['query']),
+    'getMyProfile' : IDL.Func([], [Result_1], ['query']),
+    'getProfile' : IDL.Func([IDL.Principal], [Result_1], ['query']),
     'updateProfile' : IDL.Func(
         [IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
-        [Result],
+        [Result_1],
         [],
       ),
+    'verifyUser' : IDL.Func([IDL.Principal], [Result], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

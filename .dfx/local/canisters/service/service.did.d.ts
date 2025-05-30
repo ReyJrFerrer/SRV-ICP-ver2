@@ -1,0 +1,58 @@
+import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
+
+export interface Location {
+  'latitude' : number,
+  'country' : string,
+  'city' : string,
+  'postalCode' : string,
+  'state' : string,
+  'longitude' : number,
+  'address' : string,
+}
+export type Result = { 'ok' : Service } |
+  { 'err' : string };
+export interface Service {
+  'id' : string,
+  'status' : ServiceStatus,
+  'title' : string,
+  'createdAt' : Time,
+  'description' : string,
+  'updatedAt' : Time,
+  'category' : ServiceCategory,
+  'rating' : [] | [number],
+  'price' : bigint,
+  'reviewCount' : bigint,
+  'providerId' : Principal,
+  'location' : Location,
+}
+export interface ServiceCategory {
+  'id' : string,
+  'name' : string,
+  'slug' : string,
+  'description' : string,
+  'parentId' : [] | [string],
+}
+export type ServiceStatus = { 'Available' : null } |
+  { 'Suspended' : null } |
+  { 'Unavailable' : null };
+export type Time = bigint;
+export interface _SERVICE {
+  'createService' : ActorMethod<
+    [string, string, string, bigint, Location],
+    Result
+  >,
+  'getAllCategories' : ActorMethod<[], Array<ServiceCategory>>,
+  'getService' : ActorMethod<[string], Result>,
+  'getServicesByCategory' : ActorMethod<[string], Array<Service>>,
+  'getServicesByProvider' : ActorMethod<[Principal], Array<Service>>,
+  'searchServicesByLocation' : ActorMethod<
+    [Location, number, [] | [string]],
+    Array<Service>
+  >,
+  'updateServiceRating' : ActorMethod<[string, number, bigint], Result>,
+  'updateServiceStatus' : ActorMethod<[string, ServiceStatus], Result>,
+}
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

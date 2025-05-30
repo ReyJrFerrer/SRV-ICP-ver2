@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import { useRouter } from "next/router";
 import { useAuth } from "@bundly/ares-react";
 
 import Header from "@app/components/header";
@@ -8,7 +8,21 @@ import Features from "@app/components/shared/Features";
 import Footer from "@app/components/shared/Footer";
 
 export default function HomePage() {
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
+
+  const handleRoleSelection = (role: 'Client' | 'ServiceProvider') => {
+    if (isAuthenticated) {
+      // If user is already authenticated, redirect to appropriate home page
+      router.push(role === 'Client' ? '/client/home' : '/provider/home');
+    } else {
+      // If not authenticated, redirect to login page with role parameter
+      router.push({
+        pathname: '/login',
+        query: { role }
+      });
+    }
+  };
 
   return (
     <>
@@ -21,16 +35,18 @@ export default function HomePage() {
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">Ready to get started?</h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/client" as="/client">
-                <button className="btn-primary">
-                  I Need a Service
-                </button>
-              </Link>
-              <Link href="/provider" as="/provider">
-                <button className="btn-secondary">
-                  I Provide Services
-                </button>
-              </Link>
+              <button
+                onClick={() => handleRoleSelection('Client')}
+                className="btn-primary"
+              >
+                I Need a Service
+              </button>
+              <button
+                onClick={() => handleRoleSelection('ServiceProvider')}
+                className="btn-secondary"
+              >
+                I Provide Services
+              </button>
             </div>
           </div>
         </section>
@@ -49,8 +65,11 @@ export default function HomePage() {
                   {isAuthenticated ? (
                     <p className="text-xl">You're already signed in!</p>
                   ) : (
-                    <button className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
-                      Sign Up Now
+                    <button
+                      onClick={() => router.push('/login')}
+                      className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                    >
+                      Get Started
                     </button>
                   )}
                 </div>

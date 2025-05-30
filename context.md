@@ -1,410 +1,224 @@
-# **Project Structure and Functionality**
+# Canister Architecture & Process Flow Summary
 
-**srv-ithink/**
+## Main Canisters Overview
 
-**├── backend/                          # Motoko Backend (ICP Canisters)**
+### 1. **Auth Canister** (`auth.mo`)
 
-**│   ├── service/**
+**Primary Role:** User authentication and profile management
 
-**│   │   ├── auth.mo                  # Authentication & User Management**
+- **Core Functions:**
+    - Internet Identity integration
+    - Principal-based user management
+    - Role assignment (Client/Provider)
+    - Basic profile creation and updates
+- **Reputation Integration:**
+    - Stores account creation timestamps for age calculations
+    - Tracks user roles for reputation context
+    - Provides user verification status
 
-**│   │   ├── booking.mo               # Booking System**
+### 2. **Service Canister** (`service.mo`)
 
-**│   │   ├── review.mo                # Review Authenticity System**
+**Primary Role:** Service discovery and management
 
-**│   │   └── service.mo               # Service Discovery**x	
+- **Core Functions:**
+    - Create and manage service listings
+    - Location-based service storage
+    - Availability status management
+    - Service categorization
+- **Reputation Integration:**
+    - Displays reputation-weighted ratings
+    - Filters services by provider trust scores
+    - Shows verified review counts
 
-**│   ├── types/**
+### 3. **Booking Canister** (`booking.mo`)
 
-**│   │   └── shared.mo                # All type definitions**
+**Primary Role:** Booking lifecycle management
 
-**│   └── utils/**
+- **Core Functions:**
+    - Create booking requests
+    - Accept/decline bookings
+    - Track booking status and completion
+    - Evidence submission and verification
+- **Reputation Integration:**
+    - Links bookings to review eligibility
+    - Stores service completion confirmations
+    - Manages evidence for reputation scoring
 
-**│       └── helpers.mo               # Common utility functions**
+### 4. **Review Canister** (`review.mo`)
 
-**│  ── ui/                              # Next.js Frontend**
+**Primary Role:** Review submission and basic management
 
-**│   ├── components/**
+- **Core Functions:**
+    - Submit reviews with booking verification
+    - Basic review storage and retrieval
+    - 30-day review window enforcement
+- **Reputation Integration:**
+    - Interfaces with reputation canister for analysis
+    - Stores reputation flags and quality scores
+    - Implements review hiding based on reputation analysis
 
-**│   │   ├── client/                  # Client Module**
+### 5. **Reputation Canister** (`reputation.mo`)
 
-**│   │   ├── provider/                # Provider Module**
+**Primary Role:** Automated reputation management and fraud detection
 
-**│   │   └── shared/                  # Shared Components**
-
-**│**
-
-**│   ├── hooks/                       # Custom React Hooks**
-
-**│   ├── services/                    # API Integration Layer**
-
-**│   ├── contexts/                    # React Contexts**
-
-**│   └── utils/                       # Frontend Utils**
-
-**└── pages/**
-
-	**├── client/                  # Client Module**
-
-**├── provider/            # Provider Module**
-
-**└── auth/                  # Authentication Pages**
-
-# **Week 1: Core Functionality**
-
-## **Module 1: Authentication System**
-
-**File:** backend/cansiters/auth.mo
-
-**Functionalities:**
-
-- Internet Identity integration
-- Principal-based user management
-- Role assignment (Client/Provider)
-- Basic profile creation
-
-### **Core Functions:**
-
-createUserProfile(userType: UserType, name: Text) -> Result<UserProfile, Text>
-
-getUserProfile(principal: Principal) -> ?UserProfile
-
-updateUserRole(principal: Principal, role: UserType) -> Result<(), Text>
-
-### **Frontend Components:**
-
-ui/components/shared/LoginButton.js - Internet Identity login
-
-ui/components/shared/RoleSelector.js - Choose Client/Provider role
-
-ui/pages/auth/login.js - Authentication page
+- **Core Functions:**
+    - Trust score calculation and management
+    - Review bomb detection
+    - Competitive manipulation detection
+    - Evidence quality assessment
+    - Automated review hiding/weighting
+- **Integration Points:**
+    - Receives data from all other canisters
+    - Provides reputation scores and recommendations
+    - Maintains detection algorithms and thresholds
 
 ---
 
-## **Module 2: Service Discovery (Provider Side)**
+## Process Flow Diagrams
 
-File: backend/canisters/service.mo
+### A. User Onboarding & Trust Building Flow
 
-### **Functionalities:**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Joins    │───▶│  Auth Canister  │───▶│ Reputation      │
+│   Platform      │    │                 │    │ Canister        │
+└─────────────────┘    │ • Create Profile│    │                 │
+                       │ • Assign Role   │    │ • Initialize    │
+                       │ • Store Timestamp│    │   Trust Score   │
+                       └─────────────────┘    │ • Set New User  │
+                                              │   Flags         │
+                                              └─────────────────┘
 
-Create service listings
+```
 
-Manage availability status
+### B. Service Discovery & Booking Flow
 
-Location-based service storage
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client        │───▶│  Service        │───▶│ Booking         │
+│   Searches      │    │  Canister       │    │ Canister        │
+└─────────────────┘    │                 │    │                 │
+                       │ • Filter by     │    │ • Create        │
+                       │   Location      │    │   Booking       │
+                       │ • Show Rep.     │    │ • Link to       │
+                       │   Ratings       │    │   Service       │
+                       │ • Trust Badges  │    │ • Track Status  │
+                       └─────────────────┘    └─────────────────┘
+                              ▲                        │
+                              │                        ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │ Reputation      │◀───│ Service         │
+                       │ Canister        │    │ Completion      │
+                       │                 │    │                 │
+                       │ • Weighted      │    │ • Evidence      │
+                       │   Ratings       │    │   Submission    │
+                       │ • Trust Scores  │    │ • Mutual        │
+                       │ • Verified      │    │   Confirmation  │
+                       │   Reviews       │    └─────────────────┘
+                       └─────────────────┘
 
-Basic service categorization
+```
 
-### **Core Functions:**
+### C. Review Submission & Analysis Flow
 
-motokocreateService(title: Text, description: Text, category: Text, location: Text) -> Result<Service, Text>
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Service         │───▶│ Review          │───▶│ Reputation      │
+│ Completed       │    │ Canister        │    │ Canister        │
+└─────────────────┘    │                 │    │                 │
+                       │ • Check         │    │ • Analyze       │
+                       │   Eligibility   │    │   Review        │
+                       │ • Basic         │    │ • Calculate     │
+                       │   Validation    │    │   Trust Impact  │
+                       │ • Store Review  │    │ • Run Detection │
+                       └─────────────────┘    │   Algorithms    │
+                              ▲                └─────────────────┘
+                              │                        │
+                              │                        ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │ Updated Review  │◀───│ Analysis        │
+                       │ Status          │    │ Results         │
+                       │                 │    │                 │
+                       │ • Visibility    │    │ • Hide/Show     │
+                       │ • Weight        │    │ • Flag Reason   │
+                       │ • Quality Score │    │ • Trust Update  │
+                       └─────────────────┘    └─────────────────┘
 
-updateAvailability(serviceId: Nat, available: Bool) -> Result<(), Text>
+```
 
-getServicesByLocation(location: Text) -> [Service]
+### D. Reputation Management Cycle
 
-### **Provider Components:**
+```
+                    ┌─────────────────────────────────────────┐
+                    │           REPUTATION CANISTER           │
+                    │                                         │
+    ┌───────────────┼─────────────────────────────────────────┼───────────────┐
+    │               │                                         │               │
+    ▼               │   ┌─────────────────┐                   │               ▼
+┌─────────┐         │   │ Trust Score     │                   │         ┌─────────┐
+│ Booking │────────────▶│ Calculator      │◀──────────────────────────▶│ Review  │
+│ Data    │         │   │                 │                   │       │ Analysis│
+└─────────┘         │   │ • Authenticity  │                   │         └─────────┘
+    │               │   │ • Patterns      │                   │               │
+    │               │   │ • Consistency   │                   │               │
+    ▼               │   │ • Evidence      │                   │               ▼
+┌─────────┐         │   │ • Network       │                   │         ┌─────────┐
+│Evidence │────────────▶│                 │                   │         │Detection│
+│Quality  │         │   └─────────────────┘                   │         │Engines  │
+└─────────┘         │           │                             │         └─────────┘
+    │               │           ▼                             │               │
+    │               │   ┌─────────────────┐                   │               │
+    │               │   │ Reputation      │                   │               │
+    │               │   │ Actions         │                   │               │
+    │               │   │                 │                   │               │
+    │               │   │ • Hide Reviews  │                   │               │
+    │               │   │ • Adjust Weights│                   │               │
+    │               │   │ • Flag Users    │                   │               │
+    │               │   │ • Update Scores │                   │               │
+    │               │   └─────────────────┘                   │               │
+    │               │           │                             │               │
+    └───────────────┼───────────┼─────────────────────────────┼───────────────┘
+                    │           ▼                             │
+                    │   ┌─────────────────┐                   │
+                    │   │ Service         │                   │
+                    │   │ Reputation      │                   │
+                    │   │ Updates         │                   │
+                    │   └─────────────────┘                   │
+                    └─────────────────────────────────────────┘
 
-ui/components/provider/ServiceCreation.js - Create new services
-
-ui/components/provider/ServiceList.js - Manage existing services
-
-ui/components/provider/AvailabilityToggle.js - Toggle availability
-
-ui/pages/provider/dashboard.js - Provider main dashboard
-
----
-
-## **Module 3: Service Discovery (Client Side)**
-
-File: Same backend/canisters/service.mo
-
-### **Functionalities:**
-
-Search services by location
-
-Filter by category
-
-View service details
-
-Check provider availability
-
-### **Client Components:**
-
-ui/components/client/ServiceSearch.js - Search interface
-
-ui/components/client/ServiceCard.js - Service display card
-
-ui/components/client/ServiceDetails.js - Detailed service view
-
-ui/pages/client/search.js - Main search page
-
----
-
-## **Module 4: Basic Booking System**
-
-File: backend/canisters/booking.mo
-
-### **Functionalities:**
-
-Create booking requests
-
-Accept/decline bookings (provider)
-
-View booking history
-
-Basic status management
-
-### **Core Functions:**
-
-motokocreateBooking(serviceId: Nat, clientNotes: Text, scheduledTime: Time) -> Result<Booking, Text>
-
-updateBookingStatus(bookingId: Nat, status: BookingStatus) -> Result<(), Text>
-
-getClientBookings(clientId: Principal) -> [Booking]
-
-getProviderBookings(providerId: Principal) -> [Booking]
-
-### **Client Components:**
-
-ui/components/client/BookingForm.js - Create booking requests
-
-ui/components/client/BookingHistory.js - View past bookings
-
-ui/pages/client/bookings.js - Booking management page
-
-### **Provider Components:**
-
-ui/components/provider/BookingRequests.js - Handle incoming requests
-
-ui/components/provider/ActiveBookings.js - Manage active bookings
-
-ui/pages/provider/bookings.js - Booking management page
-
----
-
-## **Module 5: Basic Messaging**
-
-Files: ??
-
-### **Functionalities:**
-
-Simple chat interface
-
-Booking-specific conversations
-
-Real-time messaging (frontend state)
-
-### **Shared Components:**
-
-ui/components/shared/ChatInterface.js - Basic chat UI
-
-ui/components/shared/MessageList.js - Display messages
-
-ui/pages/shared/chat/[bookingId].js - Chat page
+```
 
 ---
 
-# **Week 2: Improvements**
+## Key Integration Points
 
-## **Module 6: Review Authenticity System**
+### 1. **Cross-Canister Data Flow**
 
-File: backend/canisters/review.mo
+- **Auth → Reputation**: User creation timestamp, role verification
+- **Booking → Reputation**: Completion status, evidence, cancellation rates
+- **Review → Reputation**: Review content, timing, patterns
+- **Service → Reputation**: Service categories, provider relationships
+- **Reputation → All**: Trust scores, visibility flags, quality metrics
 
-### **Functionalities:**
+### 2. **Real-time Triggers**
 
-Booking-linked review creation
+- **Booking Completion** → Trust score update
+- **Review Submission** → Immediate analysis and potential hiding
+- **Evidence Upload** → Quality scoring and verification
+- **User Activity** → Pattern analysis and fraud detection
 
-Review verification system
+### 3. **Feedback Loops**
 
-Prevent duplicate reviews
+- Trust scores influence review weights
+- Review quality affects future trust calculations
+- Service reputation impacts discovery rankings
+- User behavior patterns trigger progressive restrictions
 
-30-day review window enforcement
+### 4. **Data Consistency**
 
-### **Core Functions:**
+- All canisters maintain Principal-based user references
+- Booking IDs link reviews to completed services
+- Service IDs connect ratings to providers
+- Evidence IDs link proof to specific interactions
 
-motokosubmitReview(bookingId: Nat, rating: Nat, reviewText: ?Text) -> Result<Review, Text>
-
-verifyReviewEligibility(bookingId: Nat, clientId: Principal) -> Result<Bool, Text>
-
-getVerifiedReviews(providerId: Principal) -> [Review]
-
-### **Client Components:**
-
-ui/components/client/ReviewForm.js - Submit reviews
-
-ui/components/client/ReviewEligibility.js - Check review eligibility
-
-### **Shared Components:**
-
-ui/components/shared/ReviewDisplay.js - Display verified reviews
-
-ui/components/shared/RatingStars.js - Star rating component
-
----
-
-## **Module 7: Quality Control System**
-
-File: Enhancement to backend/canisters/review.mo
-
-### **Functionalities:**
-
-Community flagging system
-
-Basic credibility scoring
-
-Review dispute mechanism
-
-Auto-hide flagged content
-
-### **Core Functions:**
-
-motokoflagReview(reviewId: Nat, reason: FlagReason) -> Result<(), Text>
-
-disputeReview(reviewId: Nat, reason: DisputeReason) -> Result<Nat, Text>
-
-calculateCredibilityScore(userId: Principal) -> Float
-
-Provider Components:
-
-ui/components/provider/ReviewDisputes.js - Dispute management
-
-ui/components/provider/ReviewAnalytics.js - Review insights
-
-### **Shared Components:**
-
-ui/components/shared/FlagReview.js - Flag suspicious reviews
-
-ui/components/shared/CredibilityBadge.js - Show user credibility
-
----
-
-## **Module 8: Evidence System**
-
-File: Enhancement to backend/canisters/booking.mo
-
-### **Functionalities:**
-
-Photo upload for service completion
-
-GPS location verification
-
-Timestamp evidence
-
-Service completion confirmation
-
-### **Core Functions:**
-
-motokosubmitServiceEvidence(bookingId: Nat, evidenceType: EvidenceType, content: Text) -> Result<(), Text>
-
-confirmServiceCompletion(bookingId: Nat, role: UserType) -> Result<(), Text>
-
-getBookingEvidence(bookingId: Nat) -> [Evidence]
-
-### **Shared Components:**
-
-ui/components/shared/EvidenceUpload.js - Upload evidence
-
-ui/components/shared/ServiceCompletion.js - Confirm completion
-
-ui/components/shared/EvidenceDisplay.js - View evidence
-
----
-
-## **Module 9: Analytics Dashboard**
-
-Files: Frontend calculations based on existing data
-
-### **Functionalities:**
-
-Provider performance metrics
-
-Booking statistics
-
-Review analytics
-
-Revenue tracking (manual entry)
-
-### **Provider Components:**
-
-ui/components/provider/PerformanceMetrics.js - Key metrics display
-
-ui/components/provider/BookingCharts.js - Visual analytics
-
-ui/components/provider/ReviewInsights.js - Review analytics
-
-ui/pages/provider/analytics.js - Analytics dashboard
-
----
-
-## **Module 10: PWA Features**
-
-Files: Next.js configuration and service workers
-
-### **Functionalities:**
-
-Offline capability
-
-Push notifications
-
-Install prompts
-
-Mobile-first design
-
-### **Configuration:**
-
-next.config.js - PWA configuration
-
-public/manifest.json - Web app manifest
-
-public/sw.js - Service worker
-
-### **Shared Components:**
-
-ui/components/shared/NotificationManager.js - Handle notifications
-
-ui/components/shared/OfflineIndicator.js - Offline status
-
-# **Architecture Notes**
-
-### **Backend:**
-
-// auth.mo - Handles all user management
-
-// service.mo - Handles service listings and discovery
-
-// booking.mo - Handles booking lifecycle and evidence
-
-// review.mo - Handles review authenticity and moderation
-
-### **Frontend:**
-
-// AuthContext - User authentication state
-
-// BookingContext - Booking management state
-
-// ServiceContext - Service discovery state
-
-// ReviewContext - Review system state
-
-### **API Integration Layer**
-
-// services/auth-service.js - Authentication operations
-
-// services/booking-service.js - Booking CRUD operations
-
-// services/review-service.js - Review operations
-
-// services/service-service.js - Service discovery operations
-
-### **Data Flow**
-
-User Auth → Service Discovery → Booking Creation → Service Completion → Review Submission → Quality Control
-
-### **Verification Flow**
-
-Completed Booking → Evidence Submission → Review Eligibility → Verified Review → Credibility Scoring
-
-### **Client-SP Updates Flow**
-
-Availability Status ↔ Service Discovery ↔ Booking Requests ↔ Status Updates ↔ Notifications
+This architecture ensures that reputation management is seamlessly integrated throughout the user journey while maintaining the decentralized, automated nature required for your hackathon dApp.

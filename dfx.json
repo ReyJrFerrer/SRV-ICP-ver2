@@ -2,12 +2,52 @@
   "version": 1,
   "dfx": "0.26.1",
   "canisters": {
-    "test": {
+    "auth": {
       "type": "motoko",
-      "main": "backend/test/main.mo",
+      "main": "backend/function/auth.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/test"
+        "output": "frontend/src/declarations/auth"
+      }
+    },
+    "auth-test": {
+      "type": "motoko",
+      "main": "backend/function/auth-test.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/auth-test"
+      }
+    },
+    "booking": {
+      "type": "motoko",
+      "main": "backend/function/booking.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/booking"
+      }
+    },
+    "reputation": {
+      "type": "motoko",
+      "main": "backend/function/reputation.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/reputation"
+      }
+    },
+    "review": {
+      "type": "motoko",
+      "main": "backend/function/review.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/review"
+      }
+    },
+    "service": {
+      "type": "motoko",
+      "main": "backend/function/service.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/service"
       }
     },
     "internet-identity": {

@@ -1,0 +1,31 @@
+type UserRole = 
+ variant {
+   Client;
+   ServiceProvider;
+ };
+type Time = int;
+type Result = 
+ variant {
+   err: text;
+   ok: Profile;
+ };
+type Profile = 
+ record {
+   createdAt: Time;
+   email: text;
+   id: principal;
+   isVerified: bool;
+   name: text;
+   phone: text;
+   role: UserRole;
+   updatedAt: Time;
+ };
+service : {
+  createProfile: (name: text, email: text, phone: text, role: UserRole) ->
+   (Result);
+  getAllServiceProviders: () -> (vec Profile) query;
+  getMyProfile: () -> (Result) query;
+  getProfile: (userId: principal) -> (Result) query;
+  updateProfile: (name: opt text, email: opt text, phone: opt text) ->
+   (Result);
+}

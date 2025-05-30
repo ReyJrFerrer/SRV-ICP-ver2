@@ -27,16 +27,6 @@ actor AuthCanister {
     private let MIN_PHONE_LENGTH : Nat = 10;
     private let MAX_PHONE_LENGTH : Nat = 15;
 
-    // Initialization
-    system func preupgrade() {
-        profileEntries := Iter.toArray(profiles.entries());
-    };
-
-    system func postupgrade() {
-        profiles := HashMap.fromIter<Principal, Profile>(profileEntries.vals(), 10, Principal.equal, Principal.hash);
-        profileEntries := [];
-    };
-
     // Helper functions
     private func validateEmail(email : Text) : Bool {
         if (email.size() < MIN_EMAIL_LENGTH or email.size() > MAX_EMAIL_LENGTH) {
@@ -84,6 +74,53 @@ actor AuthCanister {
 
     private func validateName(name : Text) : Bool {
         name.size() >= MIN_NAME_LENGTH and name.size() <= MAX_NAME_LENGTH
+    };
+
+    // Static data initialization
+    private func initializeStaticProfiles() {
+        let staticProfiles : [(Principal, Profile)] = [
+            (Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"), {
+                id = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                name = "Demo Service Provider";
+                email = "provider@example.com";
+                phone = "1234567890";
+                role = #ServiceProvider;
+                createdAt = Time.now();
+                updatedAt = Time.now();
+                isVerified = true;
+            }),
+            (Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), {
+                id = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                name = "Demo Client";
+                email = "client@example.com";
+                phone = "9876543210";
+                role = #Client;
+                createdAt = Time.now();
+                updatedAt = Time.now();
+                isVerified = true;
+            })
+        ];
+
+        // Add profiles to HashMap
+        for ((id, profile) in staticProfiles.vals()) {
+            profiles.put(id, profile);
+            verifiedUsers.put(id, true);
+        };
+    };
+
+    // Initialization
+    system func preupgrade() {
+        profileEntries := Iter.toArray(profiles.entries());
+    };
+
+    system func postupgrade() {
+        profiles := HashMap.fromIter<Principal, Profile>(profileEntries.vals(), 10, Principal.equal, Principal.hash);
+        profileEntries := [];
+        
+        // Initialize static data if profiles are empty
+        if (profiles.size() == 0) {
+            initializeStaticProfiles();
+        };
     };
 
     // Public functions

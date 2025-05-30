@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
+import Debug "mo:base/Debug";
 
 import Types "../types/shared";
 import Helpers "../utils/helpers";
@@ -26,6 +27,121 @@ actor ServiceCanister {
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
     private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
 
+    // Static data initialization
+    private func initializeStaticData() {
+        // Initialize categories
+        let staticCategories : [(Text, ServiceCategory)] = [
+            ("cat-001", {
+                id = "cat-001";
+                name = "Home Services";
+                description = "Professional home maintenance and improvement services";
+                parentId = null;
+                slug = "home-services";
+                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/home-services-cover"
+            }),
+            ("cat-001-01", {
+                id = "cat-001-01";
+                name = "Cleaning Services";
+                description = "Professional cleaning and housekeeping services";
+                parentId = ?"cat-001";
+                slug = "home-cleaning";
+                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/cleaning-services-cover"
+            }),
+            ("cat-002", {
+                id = "cat-002";
+                name = "Automobile Repairs";
+                description = "Professional automobile maintenance and repair services";
+                parentId = null;
+                slug = "auto-repairs";
+                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/auto-repairs-cover"
+            }),
+            ("cat-003", {
+                id = "cat-003";
+                name = "Gadget Technicians";
+                description = "Professional repair and support for electronic devices";
+                parentId = null;
+                slug = "gadget-tech";
+                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/gadget-tech-cover"
+            })
+        ];
+
+        // Initialize sample services
+        let sampleLocation : Location = {
+            latitude = 16.4145;
+            longitude = 120.5960;
+            address = "Baguio City - Session Road";
+            city = "Baguio City";
+            state = "Benguet";
+            country = "Philippines";
+            postalCode = "2600"
+        };
+
+        let staticServices : [(Text, Service)] = [
+            ("svc-001", {
+                id = "svc-001";
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                title = "Professional Home Cleaning";
+                description = "Experienced house maid for cleaning, organizing, and maintaining your home";
+                category = switch(categories.get("cat-001-01")) { 
+                    case(?c) c; 
+                    case(null) {
+                        {
+                            id = "cat-001-01";
+                            name = "Cleaning Services";
+                            description = "Professional cleaning and housekeeping services";
+                            parentId = ?"cat-001";
+                            slug = "home-cleaning";
+                            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/clean-house.jpg"
+                        }
+                    } 
+                };
+                price = 5000; // Basic Cleaning Package - 5,000 PHP
+                location = sampleLocation;
+                status = #Available;
+                createdAt = Time.now();
+                updatedAt = Time.now();
+                rating = ?4.8;
+                reviewCount = 156
+            }),
+            ("svc-002", {
+                id = "svc-002";
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                title = "Car Maintenance Service";
+                description = "Complete car maintenance and repair services. We handle everything from oil changes to major repairs.";
+                category = switch(categories.get("cat-002")) { 
+                    case(?c) c; 
+                    case(null) {
+                        {
+                            id = "cat-002";
+                            name = "Automobile Repairs";
+                            description = "Professional automobile maintenance and repair services";
+                            parentId = null;
+                            slug = "auto-repairs";
+                            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/car-repair.jpg"
+                        }
+                    } 
+                };
+                price = 6000; // Basic Vehicle Service Package - 6,000 PHP
+                location = sampleLocation;
+                status = #Available;
+                createdAt = Time.now();
+                updatedAt = Time.now();
+                rating = ?4.9;
+                reviewCount = 213
+            })
+        ];
+
+        // Add categories to HashMap
+        for ((id, category) in staticCategories.vals()) {
+            categories.put(id, category);
+        };
+
+        // Add services to HashMap
+        for ((id, service) in staticServices.vals()) {
+            services.put(id, service);
+        };
+    };
+
     // Initialization
     system func preupgrade() {
         serviceEntries := Iter.toArray(services.entries());
@@ -38,6 +154,11 @@ actor ServiceCanister {
         
         categories := HashMap.fromIter<Text, ServiceCategory>(categoryEntries.vals(), 10, Text.equal, Text.hash);
         categoryEntries := [];
+        
+        // Initialize static data if categories are empty
+        if (categories.size() == 0) {
+            initializeStaticData();
+        };
     };
 
     // Public functions
@@ -56,7 +177,7 @@ actor ServiceCanister {
             return #err("Anonymous principal not allowed");
         };
         
-        // Get category (in real implementation, validate it exists)
+        // Validate category exists
         let category = switch (categories.get(categoryId)) {
             case (?cat) cat;
             case (null) {
@@ -64,7 +185,7 @@ actor ServiceCanister {
             };
         };
         
-        let serviceId = generateId();
+        let serviceId = Helpers.generateId();
         
         let newService : Service = {
             id = serviceId;
@@ -110,15 +231,23 @@ actor ServiceCanister {
     };
     
     // Get services by category
-    public query func getServicesByCategory(categoryId : Text) : async [Service] {
-        let categoryServices = Array.filter<Service>(
-            Iter.toArray(services.vals()),
-            func (service : Service) : Bool {
-                return service.category.id == categoryId and service.status == #Available;
-            }
-        );
-        
-        return categoryServices;
+    public query func getServicesByCategory(categoryId : Text) : async Result<[Service]> {
+        // Validate category exists
+        switch (categories.get(categoryId)) {
+            case (null) {
+                return #err("Category not found");
+            };
+            case (?_) {
+                let categoryServices = Array.filter<Service>(
+                    Iter.toArray(services.vals()),
+                    func (service : Service) : Bool {
+                        return service.category.id == categoryId and service.status == #Available;
+                    }
+                );
+                
+                return #ok(categoryServices);
+            };
+        };
     };
     
     // Update service status
@@ -163,7 +292,7 @@ actor ServiceCanister {
         userLocation : Location,
         maxDistance : Float,
         categoryId : ?Text
-    ) : async [Service] {
+    ) : async Result<[Service]> {
         let allServices = Iter.toArray(services.vals());
         
         let filteredServices = Array.filter<Service>(
@@ -173,11 +302,13 @@ actor ServiceCanister {
                     case (?id) service.category.id == id;
                     case (null) true;
                 };
-                return service.status == #Available and categoryMatch;
+                
+                let distance = Helpers.calculateDistance(userLocation, service.location);
+                return service.status == #Available and categoryMatch and distance <= maxDistance;
             }
         );
         
-        return filteredServices;
+        return #ok(filteredServices);
     };
     
     // Update service rating (called by Review Canister)
@@ -212,15 +343,50 @@ actor ServiceCanister {
         };
     };
     
+    // Add a new category
+    public shared(msg) func addCategory(
+        name : Text,
+        description : Text,
+        parentId : ?Text,
+        slug : Text,
+        imageUrl : Text
+    ) : async Result<ServiceCategory> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // Validate parent category if provided
+        switch (parentId) {
+            case (?pid) {
+                switch (categories.get(pid)) {
+                    case (null) {
+                        return #err("Parent category not found");
+                    };
+                    case (?_) {};
+                };
+            };
+            case (null) {};
+        };
+        
+        let categoryId = Helpers.generateId();
+        
+        let newCategory : ServiceCategory = {
+            id = categoryId;
+            name = name;
+            description = description;
+            parentId = parentId;
+            slug = slug;
+            imageUrl = imageUrl;
+        };
+        
+        categories.put(categoryId, newCategory);
+        return #ok(newCategory);
+    };
+    
     // Get all categories
     public query func getAllCategories() : async [ServiceCategory] {
         return Iter.toArray(categories.vals());
-    };
-
-    // Helper functions
-    private func generateId() : Text {
-        let now = Int.abs(Time.now());
-        let random = Int.abs(Time.now()) % 10000;
-        return Int.toText(now) # "-" # Int.toText(random);
     };
 }

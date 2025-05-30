@@ -25,12 +25,17 @@ module {
         return Int.toText(now) # "-" # Int.toText(random);
     };
 
-    // Calculate distance between two locations (using simplified formula)
+    // Calculate distance between two locations using Haversine formula
     public func calculateDistance(loc1 : Location, loc2 : Location) : Float {
-        // Simple Euclidean distance for demonstration
-        let dx = loc2.latitude - loc1.latitude;
-        let dy = loc2.longitude - loc1.longitude;
-        return Float.sqrt(dx * dx + dy * dy) * 111.0; // Approximate conversion to km
+        // Haversine formula for distance calculation
+        let R = 6371.0; // Earth's radius in kilometers
+        let dLat = (loc2.latitude - loc1.latitude) * Float.pi / 180.0;
+        let dLon = (loc2.longitude - loc1.longitude) * Float.pi / 180.0;
+        let a = Float.sin(dLat/2.0) * Float.sin(dLat/2.0) +
+                Float.cos(loc1.latitude * Float.pi / 180.0) * Float.cos(loc2.latitude * Float.pi / 180.0) *
+                Float.sin(dLon/2.0) * Float.sin(dLon/2.0);
+        let c = 2.0 * Float.arctan2(Float.sqrt(a), Float.sqrt(1.0 - a));
+        return R * c;
     };
 
     // Check if a review is within 30 day window

@@ -93,13 +93,27 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
  </div>
 );
 
-const ServiceImagesSection: React.FC = () => (
+const ServiceImagesSection: React.FC<{ service: ServiceDetailPageComponentProps['service'] }> = ({ service }) => (
   <div className={styles.serviceImagesSection}>
     <h3>Service Images</h3>
-    <div className={styles.imageGallery}>
-      <div className={styles.galleryImagePlaceholder}>Image 1</div>
-      <div className={styles.galleryImagePlaceholder}>Image 2</div>
-    </div>
+    {service.galleryImages && service.galleryImages.length > 0 ? (
+      <div className={styles.imageGallery}>
+        {service.galleryImages.map((imageUrl, index) => (
+          <div key={index} className={styles.galleryImageContainer}>
+            <Image
+              src={imageUrl}
+              alt={`${service.title} gallery image ${index + 1}`}
+              width={100} // Specify appropriate width
+              height={100} // Specify appropriate height
+              className={styles.galleryImage} // Add a class for specific styling
+              objectFit="cover" // Or "contain", depending on your needs
+            />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p>No additional images available.</p>
+    )}
   </div>
 );
 
@@ -121,7 +135,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
         <ServiceRatingSection service={service} />
         <ServiceRequirementsSection />
         <ServiceVerificationSection isVerified={true} /> 
-        <ServiceImagesSection />
+        <ServiceImagesSection service={service} />
       </div>
       <div className={styles.bookingButtonContainer}>
         <button onClick={handleBookingRequest} className={styles.bookingButton}>

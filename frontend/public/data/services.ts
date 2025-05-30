@@ -49,6 +49,7 @@ export interface Service {
   availability: ServiceAvailability;
   rating: ServiceRating;
   heroImage: string;
+  galleryImages?: string[];
   slug: string;
   packages: ServicePackage[]; // Added packages array
 }
@@ -88,6 +89,10 @@ export const SERVICES: Service[] = [
       { id: 'pkg1-2', name: 'Deep Cleaning Kitchen' },
       { id: 'pkg1-3', name: 'Laundry Service' },
       { id: 'pkg1-4', name: 'Full House Deep Clean (4hrs)' },
+    ],
+    galleryImages: [ // Add actual paths to your images
+      "/images/CleaningServices-HouseMaid2.jpg",
+      "/images/CleaningServices-HouseMaid3.jpg"
     ]
   },
   {
@@ -119,6 +124,10 @@ export const SERVICES: Service[] = [
       { id: 'pkg2-2', name: 'Toilet Repair' },
       { id: 'pkg2-3', name: 'Drain Cleaning' },
       { id: 'pkg2-4', name: 'Emergency Plumbing Service (1hr)' },
+    ],
+    galleryImages: [ // Add actual paths to your images
+      "/images/HomeServices-Plumbing2.jpg",
+      "/images/HomeServices-Plumbing3.jpg"
     ]
   },
   {
@@ -150,6 +159,9 @@ export const SERVICES: Service[] = [
       { id: 'pkg3-2', name: 'Brake Inspection & Repair' },
       { id: 'pkg3-3', name: 'Engine Diagnostics' },
       { id: 'pkg3-4', name: 'Tire Rotation & Balancing' },
+    ],
+    galleryImages: [ // Add actual paths to your images
+      "/images/Automobile Repairs-AutoMechanic3.jpg"
     ]
   },
   {
@@ -181,6 +193,10 @@ export const SERVICES: Service[] = [
       { id: 'pkg4-2', name: 'Hair Color (Full)' },
       { id: 'pkg4-3', name: 'Event Styling / Updo' },
       { id: 'pkg4-4', name: 'Manicure & Pedicure Add-on' },
+    ],
+    galleryImages: [ // Add actual paths to your images
+      "/images/BeautyServices-Hairstylist2.jpg",
+      "/images/BeautyServices-Hairstylist3.jpg"
     ]
   },
   {
@@ -212,6 +228,10 @@ export const SERVICES: Service[] = [
       { id: 'pkg5-2', name: 'Furniture Assembly' },
       { id: 'pkg5-3', name: 'Picture Hanging & Shelf Mounting' },
       { id: 'pkg5-4', name: 'Minor Electrical Fixes' },
+    ],
+    galleryImages: [ // Add actual paths to your images
+      "/images/BeautyServices-Hairstylist2.jpg",
+      "/images/BeautyServices-Hairstylist3.jpg"
     ]
   }
 ];

@@ -161,3 +161,49 @@
 .bookingButton:hover {
   background-color: #218838;
 }
+
+/* SRV-ICP-1/ui/styles/ServiceDetailPageComponent.module.css */
+/* ... other styles ... */
+
+.serviceImagesSection {
+  /* ... your existing styles ... */
+  margin-bottom: 24px; /* Or as needed */
+}
+
+.serviceImagesSection h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.imageGallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Allows horizontal scrolling if many images */
+  padding-bottom: 10px; /* Space for scrollbar if it appears */
+}
+
+.galleryImageContainer {
+  flex-shrink: 0; /* Prevent images from shrinking */
+  width: 100px;   /* Match Image width */
+  height: 100px;  /* Match Image height */
+  position: relative; /* For Next/Image layout="fill" if you choose that */
+  border-radius: 8px;
+  overflow: hidden; /* To clip image to rounded corners */
+  border: 1px solid #eee; /* Optional border */
+}
+
+.galleryImage {
+  /* If using layout="fill" on Next/Image, object-fit would be here.
+     Since we are using width/height props, specific styling might not be needed
+     unless you want transitions or other effects. */
+  border-radius: 8px; /* Ensure image itself has rounded corners if container does */
+}
+
+.serviceImagesSection p { /* For the "No additional images" message */
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+  padding: 10px 0;
+}

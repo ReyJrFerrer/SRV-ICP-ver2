@@ -16,26 +16,18 @@ import Types "../types/shared";
 
 actor ReviewCanister {
     // Type definitions
-    type Review = {
-        id : Text;
-        bookingId : Text;
-        reviewerId : Principal;
-        rating : Nat;
-        comment : Text;
-        createdAt : Time.Time;
-        updatedAt : Time.Time;
-        status : ReviewStatus;
-        qualityScore : Float;
-    };
+    type Review = Types.Review;
+    type ReviewStatus = Types.ReviewStatus;
+    type Result<T> = Types.Result<T>;
 
-    type ReviewStatus = {
-        #active;
-        #hidden;
-        #flagged;
-        #deleted;
-    };
-
-    type Result<T> = Result.Result<T, Text>;
+    // State variables
+    private stable var reviewEntries : [(Text, Review)] = [];
+    private var reviews = HashMap.HashMap<Text, Review>(10, Text.equal, Text.hash);
+    
+    // Canister references
+    private var bookingCanisterId : ?Principal = null;
+    private var serviceCanisterId : ?Principal = null;
+    private var reputationCanisterId : ?Principal = null;
 
     // Constants
     private let REVIEW_WINDOW_DAYS : Nat = 30;
@@ -44,31 +36,75 @@ actor ReviewCanister {
     private let MIN_RATING : Nat = 1;
     private let MAX_RATING : Nat = 5;
 
-    // State
-    private stable var reviewEntries : [(Text, Review)] = [];
-    private var reviews = HashMap.HashMap<Text, Review>(10, Text.equal, Text.hash);
-    private var bookingCanisterId : Principal = Principal.fromText("aaaaa-aa");
-    private var serviceCanisterId : Principal = Principal.fromText("aaaaa-aa");
-    private var reputationCanisterId : Principal = Principal.fromText("aaaaa-aa");
-    
-
-    // Initialization
-    system func preupgrade() {
-        reviewEntries := Iter.toArray(reviews.entries());
-    };
-
-    system func postupgrade() {
-        reviews := HashMap.fromIter<Text, Review>(reviewEntries.vals(), 10, Text.equal, Text.hash);
-        reviewEntries := [];
-    };
-
     // Helper functions
     private func generateId() : Text {
         let now = Int.abs(Time.now());
         let random = Int.abs(Time.now()) % 10000;
         return Int.toText(now) # "-" # Int.toText(random);
     };
-    
+
+    // Initialize static reviews
+    private func initializeStaticReviews() {
+        let staticReviews : [(Text, Review)] = [
+            ("rev-001", {
+                id = "rev-001";
+                bookingId = "bk-001";
+                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                serviceId = "svc-001";
+                rating = 5;
+                comment = "Excellent service! The provider was very professional and completed the work on time.";
+                createdAt = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
+                updatedAt = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
+                status = #Visible;
+                qualityScore = ?0.9;
+            }),
+            ("rev-002", {
+                id = "rev-002";
+                bookingId = "bk-002";
+                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                serviceId = "svc-002";
+                rating = 4;
+                comment = "Good service overall. The provider was knowledgeable but took longer than expected.";
+                createdAt = Time.now() - (5 * 24 * 3600_000_000_000); // 5 days ago
+                updatedAt = Time.now() - (5 * 24 * 3600_000_000_000); // 5 days ago
+                status = #Visible;
+                qualityScore = ?0.8;
+            }),
+            ("rev-003", {
+                id = "rev-003";
+                bookingId = "bk-003";
+                clientId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                providerId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                serviceId = "svc-003";
+                rating = 3;
+                comment = "Average service. The provider was late and the quality was not as expected.";
+                createdAt = Time.now() - (7 * 24 * 3600_000_000_000); // 7 days ago
+                updatedAt = Time.now() - (7 * 24 * 3600_000_000_000); // 7 days ago
+                status = #Hidden;
+                qualityScore = ?0.6;
+            })
+        ];
+        
+        // Add reviews to HashMap
+        for ((id, review) in staticReviews.vals()) {
+            reviews.put(id, review);
+        };
+    };
+
+    // Pre-upgrade hook
+    system func preupgrade() {
+        reviewEntries := Iter.toArray(reviews.entries());
+    };
+
+    // Post-upgrade hook
+    system func postupgrade() {
+        reviews := HashMap.fromIter<Text, Review>(reviewEntries.vals(), 0, Text.equal, Text.hash);
+        initializeStaticReviews();
+    };
+
+    // Helper functions
     private func isValidRating(rating : Nat) : Bool {
         return rating >= MIN_RATING and rating <= MAX_RATING;
     };
@@ -117,90 +153,111 @@ actor ReviewCanister {
         };
         
         // Check if booking exists and is eligible for review
-        let bookingCanister = actor(Principal.toText(bookingCanisterId)) : actor {
-            isEligibleForReview : (Text, Principal) -> async Result<Bool>;
-            getBookingCompletionTime : (Text) -> async Result<Time.Time>;
-        };
-        
-        switch (await bookingCanister.isEligibleForReview(bookingId, caller)) {
-            case (#ok(true)) {
-                // Get booking completion time to check review window
-                switch (await bookingCanister.getBookingCompletionTime(bookingId)) {
-                    case (#ok(completionTime)) {
-                        if (not isWithinReviewWindow(completionTime)) {
-                            return #err("Review window has expired. Reviews must be submitted within " # Nat.toText(REVIEW_WINDOW_DAYS) # " days of service completion");
-                        };
-                        
-                        // Check if review already exists
-                        let existingReviews = Array.filter<Review>(
-                            Iter.toArray(reviews.vals()),
-                            func (review : Review) : Bool {
-                                return review.bookingId == bookingId and review.reviewerId == caller;
-                            }
-                        );
-                        
-                        if (existingReviews.size() > 0) {
-                            return #err("Review already exists for this booking");
-                        };
-                        
-                        let reviewId = generateId();
-                        let now = Time.now();
-                        
-                        let newReview : Review = {
-                            id = reviewId;
-                            bookingId = bookingId;
-                            reviewerId = caller;
-                            rating = rating;
-                            comment = comment;
-                            createdAt = now;
-                            updatedAt = now;
-                            status = #active;
-                            qualityScore = calculateQualityScore({
-                                id = reviewId;
-                                bookingId = bookingId;
-                                reviewerId = caller;
-                                rating = rating;
-                                comment = comment;
-                                createdAt = now;
-                                updatedAt = now;
-                                status = #active;
-                                qualityScore = 0.0;
-                            });
-                        };
-                        
-                        reviews.put(reviewId, newReview);
-                        
-                        // Update service rating
-                        let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
-                            updateServiceRating : (Text, Nat) -> async ();
-                        };
-                        await serviceCanister.updateServiceRating(bookingId, rating);
-                        
-                        // Notify reputation canister
-                        let reputationCanister = actor(Principal.toText(reputationCanisterId)) : actor {
-                            analyzeReview : (Review) -> async Result<Text>;
-                        };
-                        switch (await reputationCanister.analyzeReview(newReview)) {
-                            case (#ok(_)) {
-                                Debug.print("Review analysis completed successfully");
+        switch (bookingCanisterId) {
+            case (?canisterId) {
+                let bookingCanister = actor(Principal.toText(canisterId)) : actor {
+                    isEligibleForReview : (Text, Principal) -> async Result<Bool>;
+                    getBookingCompletionTime : (Text) -> async Result<Time.Time>;
+                };
+                
+                switch (await bookingCanister.isEligibleForReview(bookingId, caller)) {
+                    case (#ok(true)) {
+                        // Get booking completion time to check review window
+                        switch (await bookingCanister.getBookingCompletionTime(bookingId)) {
+                            case (#ok(completionTime)) {
+                                if (not isWithinReviewWindow(completionTime)) {
+                                    return #err("Review window has expired. Reviews must be submitted within " # Nat.toText(REVIEW_WINDOW_DAYS) # " days of service completion");
+                                };
+                                
+                                // Check if review already exists
+                                let existingReviews = Array.filter<Review>(
+                                    Iter.toArray(reviews.vals()),
+                                    func (review : Review) : Bool {
+                                        return review.bookingId == bookingId and review.clientId == caller;
+                                    }
+                                );
+                                
+                                if (existingReviews.size() > 0) {
+                                    return #err("Review already exists for this booking");
+                                };
+                                
+                                let reviewId = generateId();
+                                let now = Time.now();
+                                
+                                let newReview : Review = {
+                                    id = reviewId;
+                                    bookingId = bookingId;
+                                    clientId = caller;
+                                    providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should come from booking
+                                    serviceId = "svc-001"; // This should come from booking
+                                    rating = rating;
+                                    comment = comment;
+                                    createdAt = now;
+                                    updatedAt = now;
+                                    status = #Visible;
+                                    qualityScore = ?calculateQualityScore({
+                                        id = reviewId;
+                                        bookingId = bookingId;
+                                        clientId = caller;
+                                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                                        serviceId = "svc-001";
+                                        rating = rating;
+                                        comment = comment;
+                                        createdAt = now;
+                                        updatedAt = now;
+                                        status = #Visible;
+                                        qualityScore = null;
+                                    });
+                                };
+                                
+                                reviews.put(reviewId, newReview);
+                                
+                                // Update service rating
+                                switch (serviceCanisterId) {
+                                    case (?serviceId) {
+                                        let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                                            updateServiceRating : (Text, Nat) -> async ();
+                                        };
+                                        await serviceCanister.updateServiceRating(bookingId, rating);
+                                    };
+                                    case (null) {};
+                                };
+                                
+                                // Notify reputation canister
+                                switch (reputationCanisterId) {
+                                    case (?reputationId) {
+                                        let reputationCanister = actor(Principal.toText(reputationId)) : actor {
+                                            analyzeReview : (Review) -> async Result<Text>;
+                                        };
+                                        switch (await reputationCanister.analyzeReview(newReview)) {
+                                            case (#ok(_)) {
+                                                Debug.print("Review analysis completed successfully");
+                                            };
+                                            case (#err(msg)) {
+                                                Debug.print("Review analysis failed: " # msg);
+                                            };
+                                        };
+                                    };
+                                    case (null) {};
+                                };
+                                
+                                return #ok(newReview);
                             };
                             case (#err(msg)) {
-                                Debug.print("Review analysis failed: " # msg);
+                                return #err("Failed to get booking completion time: " # msg);
                             };
                         };
-                        
-                        return #ok(newReview);
+                    };
+                    case (#ok(false)) {
+                        return #err("Booking is not eligible for review");
                     };
                     case (#err(msg)) {
-                        return #err("Failed to get booking completion time: " # msg);
+                        return #err(msg);
                     };
                 };
             };
-            case (#ok(false)) {
-                return #err("Booking is not eligible for review");
-            };
-            case (#err(msg)) {
-                return #err(msg);
+            case (null) {
+                return #err("Booking canister reference not set");
             };
         };
     };
@@ -209,8 +266,8 @@ actor ReviewCanister {
     public query func getReview(reviewId : Text) : async Result<Review> {
         switch (reviews.get(reviewId)) {
             case (?review) {
-                if (review.status == #deleted) {
-                    return #err("Review has been deleted");
+                if (review.status == #Hidden) {
+                    return #err("Review has been hidden");
                 };
                 return #ok(review);
             };
@@ -225,7 +282,7 @@ actor ReviewCanister {
         let bookingReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
-                return review.bookingId == bookingId and review.status == #active;
+                return review.bookingId == bookingId and review.status == #Visible;
             }
         );
         
@@ -237,7 +294,7 @@ actor ReviewCanister {
         let userReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
-                return review.reviewerId == userId and review.status == #active;
+                return review.clientId == userId and review.status == #Visible;
             }
         );
         
@@ -263,55 +320,69 @@ actor ReviewCanister {
         
         switch (reviews.get(reviewId)) {
             case (?existingReview) {
-                if (existingReview.reviewerId != caller) {
+                if (existingReview.clientId != caller) {
                     return #err("Not authorized to update this review");
                 };
                 
-                if (existingReview.status != #active) {
+                if (existingReview.status != #Visible) {
                     return #err("Cannot update a " # debug_show(existingReview.status) # " review");
                 };
                 
                 let updatedReview : Review = {
                     id = existingReview.id;
                     bookingId = existingReview.bookingId;
-                    reviewerId = existingReview.reviewerId;
+                    clientId = existingReview.clientId;
+                    providerId = existingReview.providerId;
+                    serviceId = existingReview.serviceId;
                     rating = rating;
                     comment = comment;
                     createdAt = existingReview.createdAt;
                     updatedAt = Time.now();
-                    status = #active;
-                    qualityScore = calculateQualityScore({
+                    status = #Visible;
+                    qualityScore = ?calculateQualityScore({
                         id = existingReview.id;
                         bookingId = existingReview.bookingId;
-                        reviewerId = existingReview.reviewerId;
+                        clientId = existingReview.clientId;
+                        providerId = existingReview.providerId;
+                        serviceId = existingReview.serviceId;
                         rating = rating;
                         comment = comment;
                         createdAt = existingReview.createdAt;
                         updatedAt = Time.now();
-                        status = #active;
-                        qualityScore = 0.0;
+                        status = #Visible;
+                        qualityScore = null;
                     });
                 };
                 
                 reviews.put(reviewId, updatedReview);
                 
                 // Update service rating
-                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
-                    updateServiceRating : (Text, Nat) -> async ();
+                switch (serviceCanisterId) {
+                    case (?serviceId) {
+                        let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                            updateServiceRating : (Text, Nat) -> async ();
+                        };
+                        await serviceCanister.updateServiceRating(existingReview.bookingId, rating);
+                    };
+                    case (null) {};
                 };
-                await serviceCanister.updateServiceRating(existingReview.bookingId, rating);
                 
                 // Notify reputation canister
-                let reputationCanister = actor(Principal.toText(reputationCanisterId)) : actor {
-                    analyzeReview : (Review) -> async Result<Text>;
-                };
-                switch (await reputationCanister.analyzeReview(updatedReview)) {
-                    case (#ok(_)) {
-                        Debug.print("Review analysis completed successfully");
+                switch (reputationCanisterId) {
+                    case (?reputationId) {
+                        let reputationCanister = actor(Principal.toText(reputationId)) : actor {
+                            analyzeReview : (Review) -> async Result<Text>;
+                        };
+                        switch (await reputationCanister.analyzeReview(updatedReview)) {
+                            case (#ok(_)) {
+                                Debug.print("Review analysis completed successfully");
+                            };
+                            case (#err(msg)) {
+                                Debug.print("Review analysis failed: " # msg);
+                            };
+                        };
                     };
-                    case (#err(msg)) {
-                        Debug.print("Review analysis failed: " # msg);
-                    };
+                    case (null) {};
                 };
                 
                 return #ok(updatedReview);
@@ -328,23 +399,25 @@ actor ReviewCanister {
         
         switch (reviews.get(reviewId)) {
             case (?existingReview) {
-                if (existingReview.reviewerId != caller) {
+                if (existingReview.clientId != caller) {
                     return #err("Not authorized to delete this review");
                 };
                 
-                if (existingReview.status == #deleted) {
-                    return #err("Review is already deleted");
+                if (existingReview.status == #Hidden) {
+                    return #err("Review is already hidden");
                 };
                 
                 let updatedReview : Review = {
                     id = existingReview.id;
                     bookingId = existingReview.bookingId;
-                    reviewerId = existingReview.reviewerId;
+                    clientId = existingReview.clientId;
+                    providerId = existingReview.providerId;
+                    serviceId = existingReview.serviceId;
                     rating = existingReview.rating;
                     comment = existingReview.comment;
                     createdAt = existingReview.createdAt;
                     updatedAt = Time.now();
-                    status = #deleted;
+                    status = #Hidden;
                     qualityScore = existingReview.qualityScore;
                 };
                 
@@ -362,7 +435,7 @@ actor ReviewCanister {
         let providerReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
-                return review.reviewerId == providerId and review.status == #active;
+                return review.providerId == providerId and review.status == #Visible;
             }
         );
         
@@ -384,7 +457,7 @@ actor ReviewCanister {
         let serviceReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
-                return review.bookingId == serviceId and review.status == #active;
+                return review.serviceId == serviceId and review.status == #Visible;
             }
         );
         
@@ -401,26 +474,12 @@ actor ReviewCanister {
         return #ok(averageRating);
     };
 
-    // Set canister references (admin function)
-    public shared(msg) func setCanisterReferences(
-        booking : Principal,
-        service : Principal,
-        reputation : Principal
-    ) : async Result<Text> {
-        // In real implementation, need to check if caller has admin rights
-        bookingCanisterId := booking;
-        serviceCanisterId := service;
-        reputationCanisterId := reputation;
-        
-        return #ok("Canister references set successfully");
-    };
-
     // Calculate user average rating
     public query func calculateUserAverageRating(userId : Principal) : async Result<Float> {
         let userReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
-                return review.reviewerId == userId and review.status == #active;
+                return review.clientId == userId and review.status == #Visible;
             }
         );
         
@@ -454,10 +513,9 @@ actor ReviewCanister {
         for (review in reviews.vals()) {
             total += 1;
             switch (review.status) {
-                case (#active) { active += 1; };
-                case (#hidden) { hidden += 1; };
-                case (#flagged) { flagged += 1; };
-                case (#deleted) { deleted += 1; };
+                case (#Visible) { active += 1; };
+                case (#Hidden) { hidden += 1; };
+                case (#Flagged) { flagged += 1; };
             };
         };
         
@@ -466,7 +524,21 @@ actor ReviewCanister {
             activeReviews = active;
             hiddenReviews = hidden;
             flaggedReviews = flagged;
-            deletedReviews = deleted;
+            deletedReviews = 0; // Since we don't have a deleted status anymore
         };
+    };
+
+    // Set canister references (admin function)
+    public shared(msg) func setCanisterReferences(
+        booking : Principal,
+        service : Principal,
+        reputation : Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        bookingCanisterId := ?booking;
+        serviceCanisterId := ?service;
+        reputationCanisterId := ?reputation;
+        
+        return #ok("Canister references set successfully");
     };
 }

@@ -17,10 +17,12 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
     biography: "Experienced house maid with over 10 years of experience in residential cleaning and organizing.",
     location: {
       address: "Baguio City - Session Road",
-      coordinates: {
-        latitude: 16.4145,
-        longitude: 120.5960
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4145,
+      longitude: 120.5960,
+      postalCode: "2600",
+      state: "Benguet"
     },
     verificationStatus: 'VERIFIED' as ProviderVerificationStatus,
     accountStatus: 'ACTIVE' as ProviderAccountStatus,
@@ -98,10 +100,12 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
     biography: "Emergency plumbing specialist with expertise in fixing leaks, clogs, and plumbing installations. Available 24/7 for urgent calls.",
     location: {
       address: "Baguio City - Mines View Park",
-      coordinates: {
-        latitude: 16.4245,
-        longitude: 120.6314
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4245,
+      longitude: 120.6314,
+      postalCode: "2600",
+      state: "Benguet"
     },
     verificationStatus: 'VERIFIED' as ProviderVerificationStatus,
     accountStatus: 'ACTIVE' as ProviderAccountStatus,
@@ -174,10 +178,12 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
     biography: "Skilled appliance repair technician with experience fixing refrigerators, washing machines, dryers, and other major household appliances.",
     location: {
       address: "Baguio City - Burnham Park",
-      coordinates: {
-        latitude: 16.4108,
-        longitude: 120.5950
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4108,
+      longitude: 120.5950,
+      postalCode: "2600",
+      state: "Benguet"
     },
     verificationStatus: 'VERIFIED' as ProviderVerificationStatus,
     accountStatus: 'ACTIVE' as ProviderAccountStatus,

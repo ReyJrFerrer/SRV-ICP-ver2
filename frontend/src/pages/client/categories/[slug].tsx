@@ -9,15 +9,25 @@ import SearchBar from '@app/components/client/SearchBarNextjs';
 import ServiceListItem from '@app/components/client/ServiceListItemNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
+// Types
+import { Service } from '../../../../assets/types/service/service';
+import { Category } from '../../../../assets/types/category/category';
+
 // Utils
 import { adaptServiceData, adaptCategoryData } from '@app/utils/serviceDataAdapter';
+
+interface CategoryState {
+  name: string;
+  description: string;
+  slug?: string;
+}
 
 const CategoryPage: React.FC = () => {
   const router = useRouter();
   const { slug } = router.query;
   
-  const [category, setCategory] = useState(null);
-  const [services, setServices] = useState([]);
+  const [category, setCategory] = useState<CategoryState | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,7 +52,8 @@ const CategoryPage: React.FC = () => {
         } else if (slug === 'all-service-types') {
           setCategory({
             name: 'All Service Types',
-            description: 'Browse all available service types'
+            description: 'Browse all available service types',
+            slug: 'all-service-types'
           });
           setServices(adaptServiceData(servicesModule.SERVICES));
         }

@@ -26,10 +26,12 @@ export const ORDERS: Order[] = [
         } as OrderSchedule,
         location: {
             address: "123 Pine Street, Baguio City",
-            coordinates: {
-                latitude: 16.4178,
-                longitude: 120.5972
-            }
+            city: "Baguio City",
+            country: "Philippines",
+            latitude: 16.4178,
+            longitude: 120.5972,
+            postalCode: "2600",
+            state: "Benguet"
         },
         payment: {
             id: "pay-001",
@@ -72,10 +74,12 @@ export const ORDERS: Order[] = [
         } as OrderSchedule,
         location: {
             address: "45 Outlook Drive, Baguio City",
-            coordinates: {
-                latitude: 16.4261,
-                longitude: 120.6200
-            }
+            city: "Baguio City",
+            country: "Philippines",
+            latitude: 16.4261,
+            longitude: 120.6200,
+            postalCode: "2600",
+            state: "Benguet"
         },
         payment: {
             id: "pay-002",
@@ -117,10 +121,12 @@ export const ORDERS: Order[] = [
         } as OrderSchedule,
         location: {
             address: "78 Leonard Wood Road, Baguio City",
-            coordinates: {
-                latitude: 16.4067,
-                longitude: 120.5964
-            }
+            city: "Baguio City",
+            country: "Philippines",
+            latitude: 16.4067,
+            longitude: 120.5964,
+            postalCode: "2600",
+            state: "Benguet"
         },
         payment: {
             id: "pay-003",
@@ -175,10 +181,12 @@ export const ORDERS: Order[] = [
         } as OrderSchedule,
         location: {
             address: "22 Session Road, Baguio City",
-            coordinates: {
-                latitude: 16.4145,
-                longitude: 120.5960
-            }
+            city: "Baguio City",
+            country: "Philippines",
+            latitude: 16.4145,
+            longitude: 120.5960,
+            postalCode: "2600",
+            state: "Benguet"
         },
         payment: {
             id: "pay-004",

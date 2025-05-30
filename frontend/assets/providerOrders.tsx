@@ -15,10 +15,12 @@ export const PROVIDER_ORDERS: ProviderOrder[] = [
     scheduledEndTime: new Date("2025-06-18T13:00:00"),
     location: {
       address: "123 Pine Street, Baguio City",
-      coordinates: {
-        latitude: 16.4178,
-        longitude: 120.5972
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4178,
+      longitude: 120.5972,
+      postalCode: "2600",
+      state: "Benguet"
     },
     quotedPrice: 100.00,
     paymentReceived: false,
@@ -50,10 +52,12 @@ export const PROVIDER_ORDERS: ProviderOrder[] = [
     actualStartTime: new Date("2025-06-09T14:40:00"),
     location: {
       address: "45 Outlook Drive, Baguio City",
-      coordinates: {
-        latitude: 16.4261,
-        longitude: 120.6200
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4261,
+      longitude: 120.6200,
+      postalCode: "2600",
+      state: "Benguet"
     },
     quotedPrice: 160.00,
     paymentReceived: false,
@@ -75,10 +79,13 @@ export const PROVIDER_ORDERS: ProviderOrder[] = [
         type: 'LOCATION_SHARED',
         timestamp: new Date("2025-06-09T14:30:00"),
         location: {
-          coordinates: {
-            latitude: 16.4250,
-            longitude: 120.6190
-          }
+          address: "45 Outlook Drive, Baguio City",
+          city: "Baguio City",
+          country: "Philippines",
+          latitude: 16.4250,
+          longitude: 120.6190,
+          postalCode: "2600",
+          state: "Benguet"
         }
       }
     ],
@@ -103,10 +110,12 @@ export const PROVIDER_ORDERS: ProviderOrder[] = [
     actualEndTime: new Date("2025-06-07T12:15:00"),
     location: {
       address: "78 Leonard Wood Road, Baguio City",
-      coordinates: {
-        latitude: 16.4067,
-        longitude: 120.5964
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4067,
+      longitude: 120.5964,
+      postalCode: "2600",
+      state: "Benguet"
     },
     quotedPrice: 120.00,
     finalPrice: 150.00,
@@ -213,10 +222,12 @@ export const PROVIDER_BOOKING_REQUESTS = [
     scheduledEndTime: new Date("2025-06-20T15:00:00"),
     location: {
       address: "88 Military Cut-off, Baguio City",
-      coordinates: {
-        latitude: 16.4150,
-        longitude: 120.5950
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4150,
+      longitude: 120.5950,
+      postalCode: "2600",
+      state: "Benguet"
     },
     quotedPrice: 125.00,
     paymentReceived: false,
@@ -240,10 +251,12 @@ export const PROVIDER_BOOKING_REQUESTS = [
     scheduledEndTime: new Date("2025-06-22T15:00:00"),
     location: {
       address: "156 Legarda Road, Baguio City",
-      coordinates: {
-        latitude: 16.4110,
-        longitude: 120.5930
-      }
+      city: "Baguio City",
+      country: "Philippines",
+      latitude: 16.4110,
+      longitude: 120.5930,
+      postalCode: "2600",
+      state: "Benguet"
     },
     quotedPrice: 145.00,
     paymentReceived: false,

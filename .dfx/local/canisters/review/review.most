@@ -1,12 +1,15 @@
 // Version: 1.0.0
+type ReviewStatus__201462724 = {#active; #deleted; #flagged; #hidden};
 type Review__911237909 =
   {
     bookingId : Text;
     comment : Text;
     createdAt : Time__593356169;
     id : Text;
+    qualityScore : Float;
     rating : Nat;
     reviewerId : Principal;
+    status : ReviewStatus__201462724;
     updatedAt : Time__593356169
   };
 type Time__593356169 = Int;

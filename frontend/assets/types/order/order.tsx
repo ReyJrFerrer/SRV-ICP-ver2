@@ -5,6 +5,8 @@ import { ServicePayment } from '../payment/service-payments';
 import { ServiceCompletion } from '../completion/service-completion';
 import { Dispute } from '../dispute/dispute';
 import { Rating } from '../common/rating';
+import { Location } from '../common/location';
+
 export interface Order extends BaseEntity {
     serviceId: string;
     clientId: string;
@@ -16,4 +18,4 @@ export interface Order extends BaseEntity {
     completion: ServiceCompletion;
     dispute?: Dispute;
     rating?: Rating;
-  }
+}

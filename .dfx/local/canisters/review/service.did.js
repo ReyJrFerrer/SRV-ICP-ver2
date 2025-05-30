@@ -1,12 +1,20 @@
 export const idlFactory = ({ IDL }) => {
   const Result_3 = IDL.Variant({ 'ok' : IDL.Float64, 'err' : IDL.Text });
   const Result_2 = IDL.Variant({ 'ok' : IDL.Null, 'err' : IDL.Text });
+  const ReviewStatus = IDL.Variant({
+    'deleted' : IDL.Null,
+    'active' : IDL.Null,
+    'hidden' : IDL.Null,
+    'flagged' : IDL.Null,
+  });
   const Time = IDL.Int;
   const Review = IDL.Record({
     'id' : IDL.Text,
+    'status' : ReviewStatus,
     'bookingId' : IDL.Text,
     'createdAt' : Time,
     'reviewerId' : IDL.Principal,
+    'qualityScore' : IDL.Float64,
     'comment' : IDL.Text,
     'updatedAt' : Time,
     'rating' : IDL.Nat,
@@ -28,9 +36,22 @@ export const idlFactory = ({ IDL }) => {
     'deleteReview' : IDL.Func([IDL.Text], [Result_2], []),
     'getBookingReviews' : IDL.Func([IDL.Text], [IDL.Vec(Review)], ['query']),
     'getReview' : IDL.Func([IDL.Text], [Result], ['query']),
+    'getReviewStatistics' : IDL.Func(
+        [],
+        [
+          IDL.Record({
+            'hiddenReviews' : IDL.Nat,
+            'flaggedReviews' : IDL.Nat,
+            'deletedReviews' : IDL.Nat,
+            'totalReviews' : IDL.Nat,
+            'activeReviews' : IDL.Nat,
+          }),
+        ],
+        ['query'],
+      ),
     'getUserReviews' : IDL.Func([IDL.Principal], [IDL.Vec(Review)], ['query']),
     'setCanisterReferences' : IDL.Func(
-        [IDL.Principal, IDL.Principal],
+        [IDL.Principal, IDL.Principal, IDL.Principal],
         [Result_1],
         [],
       ),

@@ -10,6 +10,9 @@ import ServiceListItem from '@app/components/client/ServiceListItemNextjs';
 import BottomSheet from '@app/components/client/BottomSheetNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
+// Types
+import { Service } from '../../../assets/types/service/service';
+
 // Utils
 import { adaptServiceData } from '@app/utils/serviceDataAdapter';
 
@@ -17,7 +20,7 @@ const ServiceMapPage: React.FC = () => {
   const router = useRouter();
   const { q: searchQuery, category } = router.query;
   
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [resultsOpen, setResultsOpen] = useState(true);

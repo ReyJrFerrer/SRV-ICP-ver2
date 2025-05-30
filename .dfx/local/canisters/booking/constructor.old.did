@@ -69,8 +69,17 @@ service : {
   declineBooking: (bookingId: text) -> (Result_1);
   disputeBooking: (bookingId: text) -> (Result_1);
   getBooking: (bookingId: text) -> (Result_1) query;
+  getBookingsByDateRange: (startDate: Time, endDate: Time) ->
+   (vec Booking) query;
+  getBookingsByStatus: (status: BookingStatus) -> (vec Booking) query;
+  getClientActiveBookings: (clientId: principal) -> (vec Booking) query;
   getClientBookings: (clientId: principal) -> (vec Booking) query;
+  getClientCompletedBookings: (clientId: principal) -> (vec Booking) query;
+  getDisputedBookings: () -> (vec Booking) query;
+  getProviderActiveBookings: (providerId: principal) -> (vec Booking) query;
   getProviderBookings: (providerId: principal) -> (vec Booking) query;
+  getProviderCompletedBookings: (providerId: principal) ->
+   (vec Booking) query;
   isEligibleForReview: (bookingId: text, reviewerId: principal) ->
    (Result_2) query;
   startBooking: (bookingId: text) -> (Result_1);

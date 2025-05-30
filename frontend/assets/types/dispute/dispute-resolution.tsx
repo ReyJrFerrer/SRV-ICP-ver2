@@ -1,8 +1,10 @@
-
 import { DisputeResolutionOutcome } from "./dispute-evidence";
 export interface DisputeResolution {
-    outcome: DisputeResolutionOutcome;
+    type: string;
+    amount: number;
+    currency: string;
+    resolvedBy: string;
+    resolvedAt: Date;
     notes: string;
-    timestamp: Date;
-  }
+}
   

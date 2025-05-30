@@ -8,12 +8,15 @@ import SearchBar from '@app/components/client/SearchBarNextjs';
 import ServiceListItem from '@app/components/client/ServiceListItemNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
+// Types
+import { Service } from '../../../../assets/types/service/service';
+
 // Utils
 import { adaptServiceData } from '@app/utils/serviceDataAdapter';
 
 const ViewAllServicesPage: React.FC = () => {
   const router = useRouter();
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

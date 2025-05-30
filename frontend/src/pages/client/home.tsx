@@ -9,15 +9,27 @@ import Categories from '@app/components/client/CategoriesNextjs';
 import TopPicks from '@app/components/client/TopPicksNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
+// Types
+import { Service } from '../../../assets/types/service/service';
+import { Category as BaseCategory } from '../../../assets/types/category/category';
+
 // Utils for data adaptation
 import { adaptServiceData, adaptCategoryData } from '@app/utils/serviceDataAdapter';
+
+// Define the adapted category type that matches the Categories component requirements
+interface AdaptedCategory {
+  id: string;
+  name: string;
+  icon: string;
+  slug: string;
+}
 
 // Mock data - in production, this would be imported from your data sources
 // We're using dynamic import to avoid issues with server-side rendering of React Native components
 const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
-  const [services, setServices] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<AdaptedCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +42,7 @@ const ClientHomePage: React.FC = () => {
         
         // Adapt data for Next.js
         const adaptedServices = adaptServiceData(servicesModule.SERVICES);
-        const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES);
+        const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
         
         setServices(adaptedServices);
         setCategories(adaptedCategories);

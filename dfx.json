@@ -42,22 +42,6 @@
         "output": "frontend/src/declarations/booking-test"
       }
     },
-    "review-test": {
-      "type": "motoko",
-      "main": "backend/function/review-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/review-test"
-      }
-    },
-    "reputation-test": {
-      "type": "motoko",
-      "main": "backend/function/reputation-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/reputation-test"
-      }
-    },
     "reputation": {
       "type": "motoko",
       "main": "backend/function/reputation.mo",
@@ -82,16 +66,24 @@
         "output": "frontend/src/declarations/service"
       }
     },
-   "internet_identity": {
-    "type": "custom",
-    "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
-    "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
-    "remote": {
-      "id": {
-        "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-      }
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "type": "custom",
+      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
     },
-    "frontend": {}
-  }
+    "frontend": {
+      "type": "assets",
+      "source": ["frontend/build"],
+      "dependencies": ["auth", "booking", "review", "reputation", "service"],
+      "frontend": {
+        "entrypoint": "frontend/build/index.html"
+      }
+    }
   }
 }

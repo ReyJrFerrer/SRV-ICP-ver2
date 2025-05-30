@@ -9,6 +9,9 @@ import ServiceLocationMap from '@app/components/client/ServiceLocationMapNextjs'
 import BottomSheet from '@app/components/client/BottomSheetNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
+// Types
+import { Service } from '../../../../assets/types/service/service';
+
 // Utils
 import { adaptServiceData } from '@app/utils/serviceDataAdapter';
 
@@ -16,7 +19,7 @@ const ServiceDetailPage: React.FC = () => {
   const router = useRouter();
   const { slug } = router.query;
   
-  const [service, setService] = useState(null);
+  const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [bookingSheetOpen, setBookingSheetOpen] = useState(false);

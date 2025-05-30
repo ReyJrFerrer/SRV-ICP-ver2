@@ -10,6 +10,8 @@ import Float "mo:base/Float";
 import Option "mo:base/Option";
 import Bool "mo:base/Bool";
 import Result "mo:base/Result";
+import Debug "mo:base/Debug";
+import Hash "mo:base/Hash";
 
 import Types "../types/shared";
 
@@ -21,16 +23,42 @@ actor ReputationCanister {
     type Result<T> = Types.Result<T>;
     type Evidence = Types.Evidence;
     type Review = Types.Review;
+    type Booking = Types.Booking;
 
     // State variables
     private stable var reputationEntries : [(Principal, ReputationScore)] = [];
     private var reputations = HashMap.HashMap<Principal, ReputationScore>(10, Principal.equal, Principal.hash);
     
-    // Canister references (to be set in a real implementation)
+    // Canister references
     private var authCanisterId : ?Principal = null;
     private var bookingCanisterId : ?Principal = null;
-    private var reviewCanisterId : Principal = Principal.fromText("aaaaa-aa");
+    private var reviewCanisterId : ?Principal = null;
     private var serviceCanisterId : ?Principal = null;
+
+    // Constants for reputation calculation
+    private let BASE_SCORE : Float = 50.0;
+    private let MAX_BOOKING_POINTS : Float = 20.0;
+    private let MAX_RATING_POINTS : Float = 20.0;
+    private let MAX_AGE_POINTS : Float = 10.0;
+    private let MIN_TRUST_SCORE : Float = 0.0;
+    private let MAX_TRUST_SCORE : Float = 100.0;
+    private let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
+        (#Low, 20.0),
+        (#Medium, 50.0),
+        (#High, 80.0),
+        (#VeryHigh, 100.0)
+    ];
+
+    // New constants for enhanced scoring
+    private let RECENCY_WEIGHT : Float = 0.3;
+    private let CONSISTENCY_BONUS : Float = 5.0;
+    private let EVIDENCE_QUALITY_WEIGHT : Float = 0.2;
+    private let REVIEW_SENTIMENT_WEIGHT : Float = 0.15;
+    private let ACTIVITY_FREQUENCY_WEIGHT : Float = 0.1;
+
+    // State variables for reputation history
+    private stable var reputationHistoryEntries : [(Principal, [(Time.Time, Float)])] = [];
+    private var reputationHistory = HashMap.HashMap<Principal, [(Time.Time, Float)]>(10, Principal.equal, Principal.hash);
 
     // Initialization
     system func preupgrade() {
@@ -49,78 +77,165 @@ actor ReputationCanister {
         accountAge : Time.Time,
         flags : [DetectionFlag]
     ) : Float {
-        var score : Float = 50.0; // Base score
+        var score : Float = BASE_SCORE;
         
-        // Add points for completed bookings (max 20 points)
-        let bookingPoints = Float.min(20.0, Float.fromInt(completedBookings));
+        // 1. Booking Activity Score (max 20 points)
+        // Base points for completed bookings
+        let bookingPoints = Float.min(MAX_BOOKING_POINTS, Float.fromInt(completedBookings));
         score += bookingPoints;
         
-        // Add points for average rating (max 20 points)
+        // 2. Rating Quality Score (max 20 points)
         switch (averageRating) {
             case (null) {};
             case (?rating) {
-                score += (rating - 1.0) * 5.0; // Maps 1-5 to 0-20
+                // Higher weight for ratings above 4.0
+                if (rating >= 4.0) {
+                    score += (rating - 1.0) * 6.0; // Maps 1-5 to 0-24
+                } else {
+                    score += (rating - 1.0) * 4.0; // Maps 1-5 to 0-16
+                };
             };
         };
         
-        // Add points for account age (max 10 points)
+        // 3. Account Age Score (max 10 points)
         let ageInDays = Float.fromInt(Time.now() - accountAge) / (24.0 * 60.0 * 60.0 * 1_000_000_000.0);
-        let agePoints = Float.min(10.0, ageInDays / 36.5); // Max points after ~1 year
+        let agePoints = Float.min(MAX_AGE_POINTS, ageInDays / 36.5); // Max points after ~1 year
         score += agePoints;
         
-        // Subtract points for flags (5-15 points each)
-        for (flag in flags.vals()) {
-            switch (flag) {
-                case (#ReviewBomb) { score -= 15.0 };
-                case (#CompetitiveManipulation) { score -= 15.0 };
-                case (#FakeEvidence) { score -= 10.0 };
-                case (#IdentityFraud) { score -= 15.0 };
-                case (#Other) { score -= 5.0 };
+        // 4. Activity Consistency Bonus (up to 5 points)
+        if (completedBookings >= 5) {
+            switch (averageRating) {
+                case (?rating) {
+                    if (rating >= 4.0) {
+                        score += 5.0; // Full bonus for consistent high ratings
+                    } else if (rating >= 3.5) {
+                        score += 3.0; // Partial bonus for good ratings
+                    };
+                };
+                case (null) {};
             };
         };
         
-        // Ensure score is between 0 and 100
-        return Float.max(0.0, Float.min(100.0, score));
+        // 5. Penalties for Suspicious Activity
+        var penaltyPoints : Float = 0.0;
+        for (flag in flags.vals()) {
+            switch (flag) {
+                case (#ReviewBomb) { 
+                    penaltyPoints += 15.0;
+                    // Additional penalty if multiple review bombs
+                    if (flags.size() > 1) {
+                        penaltyPoints += 5.0;
+                    };
+                };
+                case (#CompetitiveManipulation) { 
+                    penaltyPoints += 15.0;
+                    // Additional penalty for competitive manipulation
+                    if (flags.size() > 1) {
+                        penaltyPoints += 5.0;
+                    };
+                };
+                case (#FakeEvidence) { 
+                    penaltyPoints += 10.0;
+                    // Additional penalty for multiple fake evidence
+                    if (flags.size() > 1) {
+                        penaltyPoints += 3.0;
+                    };
+                };
+                case (#IdentityFraud) { 
+                    penaltyPoints += 15.0;
+                    // Maximum penalty for identity fraud
+                    if (flags.size() > 1) {
+                        penaltyPoints += 10.0;
+                    };
+                };
+                case (#Other) { 
+                    penaltyPoints += 5.0;
+                };
+            };
+        };
+        
+        // Apply penalties with a cap
+        score -= Float.min(penaltyPoints, score * 0.5); // Cap penalties at 50% of current score
+        
+        // 6. Minimum Activity Threshold
+        if (completedBookings < 3 and ageInDays < 30.0) {
+            // Reduce score for new users with low activity
+            score *= 0.8;
+        };
+        
+        // Ensure final score is between 0 and 100
+        return Float.max(MIN_TRUST_SCORE, Float.min(MAX_TRUST_SCORE, score));
     };
     
     private func determineTrustLevel(trustScore : Float) : TrustLevel {
-        if (trustScore < 20.0) { return #Low };
-        if (trustScore < 50.0) { return #Medium };
-        if (trustScore < 80.0) { return #High };
+        for ((level, threshold) in TRUST_LEVEL_THRESHOLDS.vals()) {
+            if (trustScore <= threshold) {
+                return level;
+            };
+        };
         return #VeryHigh;
     };
     
     // Analyze a review for potential fraud or manipulation
     private func analyzeReview(review : Review) : [DetectionFlag] {
-        // In a real implementation, this would contain complex analysis
-        // For now, returning an empty array (no flags)
-        return [];
+        var flags : [DetectionFlag] = [];
+        
+        // Rule 1: Check for review bombing (multiple negative reviews in short time)
+        // This is a simplified version for demo purposes
+        if (review.rating <= 2) {
+            flags := Array.append<DetectionFlag>(flags, [#ReviewBomb]);
+        };
+        
+        // Rule 2: Check for competitive manipulation
+        // This is a simplified version for demo purposes
+        if (review.rating == 5 and Text.size(review.comment) < 20) {
+            flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
+        };
+        
+        return flags;
     };
     
     // Evaluate evidence quality
     private func evaluateEvidenceQuality(evidence : Evidence) : Float {
-        // In a real implementation, this would analyze the evidence quality
-        // For now, returning a default value
-        return 0.75; // 75% quality score
+        var qualityScore : Float = 0.75; // Base quality score
+        
+        // Rule 1: Check description length
+        if (Text.size(evidence.description) > 100) {
+            qualityScore += 0.1;
+        };
+        
+        // Rule 2: Check number of files
+        if (evidence.fileUrls.size() > 0) {
+            qualityScore += 0.1;
+        };
+        
+        // Rule 3: Check for specific keywords in description
+        let description = Text.toLowercase(evidence.description);
+        if (Text.contains(description, #text "proof") or 
+            Text.contains(description, #text "evidence") or 
+            Text.contains(description, #text "photo")) {
+            qualityScore += 0.05;
+        };
+        
+        return Float.min(1.0, qualityScore);
     };
 
-    private func calculateReputationScore(reviews : [Review]) : Float {
-        if (reviews.size() == 0) {
-            return 0.0;
-        };
-        var totalScore : Float = 0.0;
-        for (review in reviews.vals()) {
-            totalScore += Float.fromInt(Int.abs(review.rating));
-        };
-        return totalScore / Float.fromInt(Int.abs(reviews.size()));
+    // Helper functions for TrustLevel
+    private func trustLevelEqual(a : TrustLevel, b : TrustLevel) : Bool {
+        switch (a, b) {
+            case (#New, #New) true;
+            case (#Low, #Low) true;
+            case (#Medium, #Medium) true;
+            case (#High, #High) true;
+            case (#VeryHigh, #VeryHigh) true;
+            case (_, _) false;
+        }
     };
 
     // Public functions
     
     // Initialize reputation for a new user
     public func initializeReputation(userId : Principal, creationTime : Time.Time) : async Result<ReputationScore> {
-        // In real implementation, check that caller is auth canister
-        
         switch (reputations.get(userId)) {
             case (?_) {
                 return #err("Reputation already exists for this user");
@@ -128,7 +243,7 @@ actor ReputationCanister {
             case (null) {
                 let newScore : ReputationScore = {
                     userId = userId;
-                    trustScore = 50.0; // Default starting score
+                    trustScore = BASE_SCORE;
                     trustLevel = #New;
                     completedBookings = 0;
                     averageRating = null;
@@ -154,10 +269,8 @@ actor ReputationCanister {
         };
     };
     
-    // Analyze a new review and update reputations
+    // Process a new review and update reputations
     public func processReview(review : Review) : async Result<Review> {
-        // In real implementation, check that caller is review canister
-        
         // 1. Analyze review for flags
         let flags = analyzeReview(review);
         
@@ -188,14 +301,11 @@ actor ReputationCanister {
             updatedAt = Time.now();
         };
         
-        // In real implementation, call review canister to update the review status
         return #ok(updatedReview);
     };
     
     // Process evidence submission
     public func processEvidence(evidence : Evidence) : async Result<Evidence> {
-        // In real implementation, check that caller is booking canister
-        
         // 1. Evaluate evidence quality
         let qualityScore = evaluateEvidenceQuality(evidence);
         
@@ -223,27 +333,46 @@ actor ReputationCanister {
                 return #err("User reputation not found");
             };
             case (?existingScore) {
-                // In real implementation:
-                // 1. Get completed bookings from booking canister
-                // 2. Get ratings from review canister
-                // 3. Get account age from auth canister
+                // Get completed bookings from booking canister
+                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
+                    getProviderCompletedBookings : (Principal) -> async [Booking];
+                };
+                let completedBookings = await bookingCanister.getProviderCompletedBookings(userId);
                 
-                // For now, using placeholder values
-                let completedBookings = existingScore.completedBookings;
-                let averageRating = existingScore.averageRating;
-                let accountAge = existingScore.lastUpdated; // Using last update as a proxy for account age
-                let flags = existingScore.detectionFlags;
+                // Get ratings from review canister
+                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
+                    calculateUserAverageRating : (Principal) -> async Result<Float>;
+                };
+                let averageRating = switch (await reviewCanister.calculateUserAverageRating(userId)) {
+                    case (#ok(rating)) ?rating;
+                    case (#err(_)) null;
+                };
                 
-                let newTrustScore = calculateTrustScore(completedBookings, averageRating, accountAge, flags);
+                // Get account age from auth canister
+                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
+                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
+                };
+                let accountAge = switch (await authCanister.getProfile(userId)) {
+                    case (#ok(profile)) profile.createdAt;
+                    case (#err(_)) existingScore.lastUpdated;
+                };
+                
+                let newTrustScore = calculateTrustScore(
+                    completedBookings.size(),
+                    averageRating,
+                    accountAge,
+                    existingScore.detectionFlags
+                );
+                
                 let newTrustLevel = determineTrustLevel(newTrustScore);
                 
                 let updatedScore : ReputationScore = {
                     userId = existingScore.userId;
                     trustScore = newTrustScore;
                     trustLevel = newTrustLevel;
-                    completedBookings = completedBookings;
+                    completedBookings = completedBookings.size();
                     averageRating = averageRating;
-                    detectionFlags = flags;
+                    detectionFlags = existingScore.detectionFlags;
                     lastUpdated = Time.now();
                 };
                 
@@ -289,83 +418,63 @@ actor ReputationCanister {
         };
     };
     
-    // Update completed bookings count
-    public func updateCompletedBookings(userId : Principal, count : Nat) : async Result<ReputationScore> {
-        switch (reputations.get(userId)) {
-            case (null) {
-                return #err("User reputation not found");
-            };
-            case (?existingScore) {
-                // Recalculate trust score with new booking count
-                let newTrustScore = calculateTrustScore(
-                    count,
-                    existingScore.averageRating,
-                    existingScore.lastUpdated,
-                    existingScore.detectionFlags
-                );
-                
-                let newTrustLevel = determineTrustLevel(newTrustScore);
-                
-                let updatedScore : ReputationScore = {
-                    userId = existingScore.userId;
-                    trustScore = newTrustScore;
-                    trustLevel = newTrustLevel;
-                    completedBookings = count;
-                    averageRating = existingScore.averageRating;
-                    detectionFlags = existingScore.detectionFlags;
-                    lastUpdated = Time.now();
-                };
-                
-                reputations.put(userId, updatedScore);
-                return #ok(updatedScore);
+    // Set canister references (admin function)
+    public shared(msg) func setCanisterReferences(
+        auth : Principal,
+        booking : Principal,
+        review : Principal,
+        service : Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := ?auth;
+        bookingCanisterId := ?booking;
+        reviewCanisterId := ?review;
+        serviceCanisterId := ?service;
+        
+        return #ok("Canister references set successfully");
+    };
+    
+    // Get reputation statistics
+    public query func getReputationStatistics() : async {
+        totalUsers : Nat;
+        averageTrustScore : Float;
+        trustLevelDistribution : [(TrustLevel, Nat)];
+    } {
+        var total : Nat = 0;
+        var totalScore : Float = 0.0;
+        var newCount : Nat = 0;
+        var lowCount : Nat = 0;
+        var mediumCount : Nat = 0;
+        var highCount : Nat = 0;
+        var veryHighCount : Nat = 0;
+        
+        for (score in reputations.vals()) {
+            total += 1;
+            totalScore += score.trustScore;
+            
+            switch (score.trustLevel) {
+                case (#New) { newCount += 1 };
+                case (#Low) { lowCount += 1 };
+                case (#Medium) { mediumCount += 1 };
+                case (#High) { highCount += 1 };
+                case (#VeryHigh) { veryHighCount += 1 };
             };
         };
-    };
-    
-    // Update average rating
-    public func updateAverageRating(userId : Principal, rating : Float) : async Result<ReputationScore> {
-        switch (reputations.get(userId)) {
-            case (null) {
-                return #err("User reputation not found");
-            };
-            case (?existingScore) {
-                // Recalculate trust score with new rating
-                let newTrustScore = calculateTrustScore(
-                    existingScore.completedBookings,
-                    ?rating,
-                    existingScore.lastUpdated,
-                    existingScore.detectionFlags
-                );
-                
-                let newTrustLevel = determineTrustLevel(newTrustScore);
-                
-                let updatedScore : ReputationScore = {
-                    userId = existingScore.userId;
-                    trustScore = newTrustScore;
-                    trustLevel = newTrustLevel;
-                    completedBookings = existingScore.completedBookings;
-                    averageRating = ?rating;
-                    detectionFlags = existingScore.detectionFlags;
-                    lastUpdated = Time.now();
-                };
-                
-                reputations.put(userId, updatedScore);
-                return #ok(updatedScore);
-            };
+        
+        let averageScore = if (total > 0) { totalScore / Float.fromInt(total) } else { 0.0 };
+        
+        let distribution : [(TrustLevel, Nat)] = [
+            (#New, newCount),
+            (#Low, lowCount),
+            (#Medium, mediumCount),
+            (#High, highCount),
+            (#VeryHigh, veryHighCount)
+        ];
+        
+        return {
+            totalUsers = total;
+            averageTrustScore = averageScore;
+            trustLevelDistribution = distribution;
         };
-    };
-    
-    // Run detection algorithms for review bombing
-    public func detectReviewBombing(providerId : Principal) : async Result<Bool> {
-        // In real implementation, this would analyze review patterns from review canister
-        // For now, return a simple result
-        return #ok(false); // No review bombing detected
-    };
-    
-    // Run detection algorithms for competitive manipulation
-    public func detectCompetitiveManipulation(providerId : Principal) : async Result<Bool> {
-        // In real implementation, this would analyze review patterns and services
-        // For now, return a simple result
-        return #ok(false); // No competitive manipulation detected
     };
 }

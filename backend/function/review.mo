@@ -50,6 +50,7 @@ actor ReviewCanister {
     private var bookingCanisterId : Principal = Principal.fromText("aaaaa-aa");
     private var serviceCanisterId : Principal = Principal.fromText("aaaaa-aa");
     private var reputationCanisterId : Principal = Principal.fromText("aaaaa-aa");
+    
 
     // Initialization
     system func preupgrade() {

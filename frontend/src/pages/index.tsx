@@ -1,26 +1,99 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth } from "@bundly/ares-react";
+import { useAuth, useClient } from "@bundly/ares-react";
+import { Actor, HttpAgent } from '@dfinity/agent';
+import { idlFactory } from '../declarations/auth/auth.did.js';
+import type { Profile } from '../declarations/auth/auth.did';
 
 import Header from "@app/components/header";
 import Hero from "@app/components/shared/Hero";
 import Features from "@app/components/shared/Features";
 import Footer from "@app/components/shared/Footer";
 
+type Result<T> = {
+  ok?: T;
+  err?: string;
+};
+
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentIdentity } = useAuth();
+  const client = useClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleRoleSelection = (role: 'Client' | 'ServiceProvider') => {
-    if (isAuthenticated) {
-      // If user is already authenticated, redirect to appropriate home page
-      router.push(role === 'Client' ? '/client/home' : '/provider/home');
-    } else {
-      // If not authenticated, redirect to login page with role parameter
-      router.push({
-        pathname: '/login',
-        query: { role }
-      });
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!isAuthenticated || !currentIdentity) return;
+
+      try {
+        setIsLoading(true);
+        // Create agent and actor for auth canister
+        const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+        const agent = new HttpAgent({ 
+          identity: currentIdentity,
+          host 
+        });
+        
+        // Only fetch root key in development
+        if (process.env.NODE_ENV === 'development') {
+          await agent.fetchRootKey();
+        }
+
+        const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
+        
+        if (!authCanisterId) {
+          throw new Error('Auth canister ID not found');
+        }
+
+        const authActor = Actor.createActor(idlFactory, {
+          agent,
+          canisterId: authCanisterId,
+        });
+
+        // Check if user has a profile
+        const profileResult = await authActor.getMyProfile() as Result<Profile>;
+        
+        if ('err' in profileResult) {
+          // No profile exists, redirect to profile creation
+          router.push('/create-profile');
+        } else if (profileResult.ok) {
+          // Profile exists, redirect based on role
+          const profile = profileResult.ok;
+          if ('Client' in profile.role) {
+            router.push('/client/home');
+          } else {
+            router.push('/provider/home');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        setError('Failed to check profile. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkProfile();
+  }, [isAuthenticated, currentIdentity, router]);
+
+  const handleIILogin = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const provider = client.getProvider("internet-identity");
+      if (!provider) {
+        throw new Error('Internet Identity provider not found');
+      }
+
+      // Connect to Internet Identity
+      await provider.connect();
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -34,19 +107,35 @@ export default function HomePage() {
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">Ready to get started?</h2>
+            {error && (
+              <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-md mx-auto">
+                {error}
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button
-                onClick={() => handleRoleSelection('Client')}
-                className="btn-primary"
-              >
-                I Need a Service
-              </button>
-              <button
-                onClick={() => handleRoleSelection('ServiceProvider')}
-                className="btn-secondary"
-              >
-                I Provide Services
-              </button>
+              {!isAuthenticated ? (
+                <button
+                  onClick={handleIILogin}
+                  disabled={isLoading}
+                  className={`btn-primary ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Logging in...
+                    </div>
+                  ) : (
+                    'Login with Internet Identity'
+                  )}
+                </button>
+              ) : (
+                <div className="text-center">
+                  <p className="text-xl mb-4">Checking your profile...</p>
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -66,7 +155,7 @@ export default function HomePage() {
                     <p className="text-xl">You're already signed in!</p>
                   ) : (
                     <button
-                      onClick={() => router.push('/login')}
+                      onClick={handleIILogin}
                       className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
                     >
                       Get Started

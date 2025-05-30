@@ -28,6 +28,11 @@ type Service =
    title: text;
    updatedAt: Time;
  };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: ServiceCategory;
+ };
 type Result = 
  variant {
    err: text;
@@ -44,6 +49,8 @@ type Location =
    state: text;
  };
 service : {
+  addCategory: (name: text, description: text, parentId: opt text, slug:
+   text, imageUrl: text) -> (Result_1);
   createService: (title: text, description: text, categoryId: text, price:
    nat, location: Location) -> (Result);
   getAllCategories: () -> (vec ServiceCategory) query;

@@ -13,7 +13,7 @@ export interface Location {
 }
 export type Result = { 'ok' : Service } |
   { 'err' : string };
-export type Result_1 = { 'ok' : ServiceCategory } |
+export type Result_1 = { 'ok' : Array<Service> } |
   { 'err' : string };
 export interface Service {
   'id' : string,
@@ -41,24 +41,14 @@ export type ServiceStatus = { 'Available' : null } |
   { 'Unavailable' : null };
 export type Time = bigint;
 export interface _SERVICE {
-  'addCategory' : ActorMethod<
-    [string, string, [] | [string], string, string],
-    Result_1
-  >,
-  'createService' : ActorMethod<
-    [string, string, string, bigint, Location],
-    Result
-  >,
   'getAllCategories' : ActorMethod<[], Array<ServiceCategory>>,
+  'getAllServices' : ActorMethod<[], Array<Service>>,
   'getService' : ActorMethod<[string], Result>,
-  'getServicesByCategory' : ActorMethod<[string], Array<Service>>,
-  'getServicesByProvider' : ActorMethod<[Principal], Array<Service>>,
-  'searchServicesByLocation' : ActorMethod<
-    [Location, number, [] | [string]],
-    Array<Service>
-  >,
-  'updateServiceRating' : ActorMethod<[string, number, bigint], Result>,
-  'updateServiceStatus' : ActorMethod<[string, ServiceStatus], Result>,
+  'testCreateService' : ActorMethod<[], Result>,
+  'testGetServiceByProvider' : ActorMethod<[], Result_1>,
+  'testSearchServicesByLocation' : ActorMethod<[], Result_1>,
+  'testUpdateServiceRating' : ActorMethod<[], Result>,
+  'testUpdateServiceStatus' : ActorMethod<[], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

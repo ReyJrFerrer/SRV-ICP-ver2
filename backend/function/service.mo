@@ -10,7 +10,6 @@ import Int "mo:base/Int";
 import Debug "mo:base/Debug";
 
 import Types "../types/shared";
-import Helpers "../utils/helpers";
 
 actor ServiceCanister {
     // Type definitions
@@ -26,6 +25,25 @@ actor ServiceCanister {
     
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
     private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
+
+    // Helper functions
+    func generateId() : Text {
+        let now = Int.abs(Time.now());
+        let random = Int.abs(Time.now()) % 10000;
+        return Int.toText(now) # "-" # Int.toText(random);
+    };
+
+    func calculateDistance(loc1 : Location, loc2 : Location) : Float {
+        // Haversine formula for distance calculation
+        let R = 6371.0; // Earth's radius in kilometers
+        let dLat = (loc2.latitude - loc1.latitude) * Float.pi / 180.0;
+        let dLon = (loc2.longitude - loc1.longitude) * Float.pi / 180.0;
+        let a = Float.sin(dLat/2.0) * Float.sin(dLat/2.0) +
+                Float.cos(loc1.latitude * Float.pi / 180.0) * Float.cos(loc2.latitude * Float.pi / 180.0) *
+                Float.sin(dLon/2.0) * Float.sin(dLon/2.0);
+        let c = 2.0 * Float.arctan2(Float.sqrt(a), Float.sqrt(1.0 - a));
+        return R * c;
+    };
 
     // Static data initialization
     private func initializeStaticData() {
@@ -185,7 +203,7 @@ actor ServiceCanister {
             };
         };
         
-        let serviceId = Helpers.generateId();
+        let serviceId = generateId();
         
         let newService : Service = {
             id = serviceId;
@@ -231,11 +249,11 @@ actor ServiceCanister {
     };
     
     // Get services by category
-    public query func getServicesByCategory(categoryId : Text) : async Result<[Service]> {
+    public query func getServicesByCategory(categoryId : Text) : async [Service] {
         // Validate category exists
         switch (categories.get(categoryId)) {
             case (null) {
-                return #err("Category not found");
+                return [];
             };
             case (?_) {
                 let categoryServices = Array.filter<Service>(
@@ -245,7 +263,7 @@ actor ServiceCanister {
                     }
                 );
                 
-                return #ok(categoryServices);
+                return categoryServices;
             };
         };
     };
@@ -292,7 +310,7 @@ actor ServiceCanister {
         userLocation : Location,
         maxDistance : Float,
         categoryId : ?Text
-    ) : async Result<[Service]> {
+    ) : async [Service] {
         let allServices = Iter.toArray(services.vals());
         
         let filteredServices = Array.filter<Service>(
@@ -303,12 +321,12 @@ actor ServiceCanister {
                     case (null) true;
                 };
                 
-                let distance = Helpers.calculateDistance(userLocation, service.location);
+                let distance = calculateDistance(userLocation, service.location);
                 return service.status == #Available and categoryMatch and distance <= maxDistance;
             }
         );
         
-        return #ok(filteredServices);
+        return filteredServices;
     };
     
     // Update service rating (called by Review Canister)
@@ -370,7 +388,7 @@ actor ServiceCanister {
             case (null) {};
         };
         
-        let categoryId = Helpers.generateId();
+        let categoryId = generateId();
         
         let newCategory : ServiceCategory = {
             id = categoryId;

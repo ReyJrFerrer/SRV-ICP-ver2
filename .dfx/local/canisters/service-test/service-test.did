@@ -31,7 +31,7 @@ type Service =
 type Result_1 = 
  variant {
    err: text;
-   ok: ServiceCategory;
+   ok: vec Service;
  };
 type Result = 
  variant {
@@ -49,17 +49,12 @@ type Location =
    state: text;
  };
 service : {
-  addCategory: (name: text, description: text, parentId: opt text, slug:
-   text, imageUrl: text) -> (Result_1);
-  createService: (title: text, description: text, categoryId: text, price:
-   nat, location: Location) -> (Result);
   getAllCategories: () -> (vec ServiceCategory) query;
+  getAllServices: () -> (vec Service) query;
   getService: (serviceId: text) -> (Result) query;
-  getServicesByCategory: (categoryId: text) -> (vec Service) query;
-  getServicesByProvider: (providerId: principal) -> (vec Service) query;
-  searchServicesByLocation: (userLocation: Location, maxDistance: float64,
-   categoryId: opt text) -> (vec Service) query;
-  updateServiceRating: (serviceId: text, newRating: float64, newReviewCount:
-   nat) -> (Result);
-  updateServiceStatus: (serviceId: text, status: ServiceStatus) -> (Result);
+  testCreateService: () -> (Result);
+  testGetServiceByProvider: () -> (Result_1);
+  testSearchServicesByLocation: () -> (Result_1);
+  testUpdateServiceRating: () -> (Result);
+  testUpdateServiceStatus: () -> (Result);
 }

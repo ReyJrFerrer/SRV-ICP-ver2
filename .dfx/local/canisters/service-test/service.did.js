@@ -6,7 +6,12 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'parentId' : IDL.Opt(IDL.Text),
   });
-  const Result_1 = IDL.Variant({ 'ok' : ServiceCategory, 'err' : IDL.Text });
+  const ServiceStatus = IDL.Variant({
+    'Available' : IDL.Null,
+    'Suspended' : IDL.Null,
+    'Unavailable' : IDL.Null,
+  });
+  const Time = IDL.Int;
   const Location = IDL.Record({
     'latitude' : IDL.Float64,
     'country' : IDL.Text,
@@ -16,12 +21,6 @@ export const idlFactory = ({ IDL }) => {
     'longitude' : IDL.Float64,
     'address' : IDL.Text,
   });
-  const ServiceStatus = IDL.Variant({
-    'Available' : IDL.Null,
-    'Suspended' : IDL.Null,
-    'Unavailable' : IDL.Null,
-  });
-  const Time = IDL.Int;
   const Service = IDL.Record({
     'id' : IDL.Text,
     'status' : ServiceStatus,
@@ -37,40 +36,16 @@ export const idlFactory = ({ IDL }) => {
     'location' : Location,
   });
   const Result = IDL.Variant({ 'ok' : Service, 'err' : IDL.Text });
+  const Result_1 = IDL.Variant({ 'ok' : IDL.Vec(Service), 'err' : IDL.Text });
   return IDL.Service({
-    'addCategory' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
-        [Result_1],
-        [],
-      ),
-    'createService' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Nat, Location],
-        [Result],
-        [],
-      ),
     'getAllCategories' : IDL.Func([], [IDL.Vec(ServiceCategory)], ['query']),
+    'getAllServices' : IDL.Func([], [IDL.Vec(Service)], ['query']),
     'getService' : IDL.Func([IDL.Text], [Result], ['query']),
-    'getServicesByCategory' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(Service)],
-        ['query'],
-      ),
-    'getServicesByProvider' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(Service)],
-        ['query'],
-      ),
-    'searchServicesByLocation' : IDL.Func(
-        [Location, IDL.Float64, IDL.Opt(IDL.Text)],
-        [IDL.Vec(Service)],
-        ['query'],
-      ),
-    'updateServiceRating' : IDL.Func(
-        [IDL.Text, IDL.Float64, IDL.Nat],
-        [Result],
-        [],
-      ),
-    'updateServiceStatus' : IDL.Func([IDL.Text, ServiceStatus], [Result], []),
+    'testCreateService' : IDL.Func([], [Result], []),
+    'testGetServiceByProvider' : IDL.Func([], [Result_1], []),
+    'testSearchServicesByLocation' : IDL.Func([], [Result_1], []),
+    'testUpdateServiceRating' : IDL.Func([], [Result], []),
+    'testUpdateServiceStatus' : IDL.Func([], [Result], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

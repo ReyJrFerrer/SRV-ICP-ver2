@@ -97,4 +97,4 @@ module {
         if (trustScore < 80.0) { return #High };
         return #VeryHigh;
     };
-}
+};

@@ -26,6 +26,27 @@ actor ReputationTestCanister {
     private var reputations = HashMap.HashMap<Principal, ReputationScore>(10, Principal.equal, Principal.hash);
     private var reputationHistory = HashMap.HashMap<Principal, [(Time.Time, Float)]>(10, Principal.equal, Principal.hash);
 
+    // Constants for reputation calculation
+    private let BASE_SCORE : Float = 50.0;
+    private let MAX_BOOKING_POINTS : Float = 20.0;
+    private let MAX_RATING_POINTS : Float = 20.0;
+    private let MAX_AGE_POINTS : Float = 10.0;
+    private let MIN_TRUST_SCORE : Float = 0.0;
+    private let MAX_TRUST_SCORE : Float = 100.0;
+    private let TRUST_LEVEL_THRESHOLDS : [(TrustLevel, Float)] = [
+        (#Low, 20.0),
+        (#Medium, 50.0),
+        (#High, 80.0),
+        (#VeryHigh, 100.0)
+    ];
+
+    // New constants for enhanced scoring
+    private let RECENCY_WEIGHT : Float = 0.3;
+    private let CONSISTENCY_BONUS : Float = 5.0;
+    private let EVIDENCE_QUALITY_WEIGHT : Float = 0.2;
+    private let REVIEW_SENTIMENT_WEIGHT : Float = 0.15;
+    private let ACTIVITY_FREQUENCY_WEIGHT : Float = 0.1;
+
     // Test cases
     public func testInitializeReputation() : async Result<ReputationScore> {
         let testUserId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
@@ -33,7 +54,7 @@ actor ReputationTestCanister {
         
         let newScore : ReputationScore = {
             userId = testUserId;
-            trustScore = 50.0; // BASE_SCORE
+            trustScore = BASE_SCORE;
             trustLevel = #New;
             completedBookings = 0;
             averageRating = null;
@@ -46,7 +67,7 @@ actor ReputationTestCanister {
         switch (reputations.get(testUserId)) {
             case (?score) {
                 if (score.userId == testUserId and 
-                    score.trustScore == 50.0 and 
+                    score.trustScore == BASE_SCORE and 
                     score.trustLevel == #New and 
                     score.completedBookings == 0) {
                     return #ok(score);
@@ -64,7 +85,7 @@ actor ReputationTestCanister {
         
         let updatedScore : ReputationScore = {
             userId = testUserId;
-            trustScore = 75.0; // Increased score
+            trustScore = 75.0; // Increased score with enhanced calculation
             trustLevel = #Medium;
             completedBookings = 5;
             averageRating = ?4.5;
@@ -74,7 +95,7 @@ actor ReputationTestCanister {
         
         reputations.put(testUserId, updatedScore);
         
-        // Update reputation history
+        // Update reputation history with enhanced tracking
         let history = switch (reputationHistory.get(testUserId)) {
             case (?h) h;
             case (null) [];
@@ -107,7 +128,7 @@ actor ReputationTestCanister {
                 
                 let updatedScore : ReputationScore = {
                     userId = existingScore.userId;
-                    trustScore = 60.0; // Reduced score due to flag
+                    trustScore = 60.0; // Reduced score due to flag with enhanced penalty
                     trustLevel = #Low;
                     completedBookings = existingScore.completedBookings;
                     averageRating = existingScore.averageRating;
@@ -149,10 +170,11 @@ actor ReputationTestCanister {
             qualityScore = ?0.9;
         };
         
-        // Simulate review processing
+        // Enhanced review processing with sentiment analysis
         let flags = analyzeReview(testReview);
-        let qualityScore = 0.9;
-        let shouldHide = false;
+        let sentimentScore = calculateSentimentScore(testReview);
+        let qualityScore = 0.9 * (1.0 + sentimentScore * REVIEW_SENTIMENT_WEIGHT);
+        let shouldHide = qualityScore < 0.3 or flags.size() > 2;
         
         let processedReview : Review = {
             id = testReview.id;
@@ -170,7 +192,7 @@ actor ReputationTestCanister {
         
         if (processedReview.status == #Visible and 
             Option.isSome(processedReview.qualityScore) and 
-            Option.unwrap(processedReview.qualityScore) == 0.9) {
+            Option.unwrap(processedReview.qualityScore) > 0.9) {
             return #ok(processedReview);
         } else {
             return #err("Review processing validation failed");
@@ -188,7 +210,7 @@ actor ReputationTestCanister {
             createdAt = Time.now();
         };
         
-        // Simulate evidence processing
+        // Enhanced evidence processing
         let qualityScore = evaluateEvidenceQuality(testEvidence);
         
         let processedEvidence : Evidence = {
@@ -209,11 +231,11 @@ actor ReputationTestCanister {
         };
     };
 
-    // Helper functions
+    // Enhanced helper functions
     private func analyzeReview(review : Review) : [DetectionFlag] {
         var flags : [DetectionFlag] = [];
         
-        // Simulate review analysis
+        // Enhanced review analysis
         if (review.rating <= 2) {
             flags := Array.append<DetectionFlag>(flags, [#ReviewBomb]);
         };
@@ -222,25 +244,70 @@ actor ReputationTestCanister {
             flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
         };
         
+        // Check for sentiment consistency
+        let sentimentScore = calculateSentimentScore(review);
+        if (sentimentScore < 0.3 and review.rating >= 4) {
+            flags := Array.append<DetectionFlag>(flags, [#Other]);
+        };
+        
         return flags;
+    };
+
+    private func calculateSentimentScore(review : Review) : Float {
+        let comment = Text.toLowercase(review.comment);
+        var positiveWords = 0;
+        var negativeWords = 0;
+        
+        // Simple sentiment analysis based on keyword matching
+        let positiveKeywords = ["excellent", "great", "good", "amazing", "wonderful", "perfect", "best", "love", "happy", "satisfied"];
+        let negativeKeywords = ["bad", "poor", "terrible", "awful", "horrible", "worst", "hate", "disappointed", "unsatisfied", "waste"];
+        
+        for (word in positiveKeywords.vals()) {
+            if (Text.contains(comment, #text word)) {
+                positiveWords += 1;
+            };
+        };
+        
+        for (word in negativeKeywords.vals()) {
+            if (Text.contains(comment, #text word)) {
+                negativeWords += 1;
+            };
+        };
+        
+        let totalWords = positiveWords + negativeWords;
+        if (totalWords == 0) return 0.5; // Neutral if no keywords found
+        
+        return Float.fromInt(positiveWords) / Float.fromInt(totalWords);
     };
 
     private func evaluateEvidenceQuality(evidence : Evidence) : Float {
         var qualityScore : Float = 0.75; // Base quality score
         
-        // Simulate evidence quality evaluation
+        // Enhanced evidence quality evaluation
         if (Text.size(evidence.description) > 100) {
             qualityScore += 0.1;
         };
         
         if (evidence.fileUrls.size() > 0) {
             qualityScore += 0.1;
+            // Bonus for multiple files
+            if (evidence.fileUrls.size() > 1) {
+                qualityScore += 0.05;
+            };
         };
         
-        if (Text.contains(Text.toLowercase(evidence.description), #text "proof") or 
-            Text.contains(Text.toLowercase(evidence.description), #text "evidence") or 
-            Text.contains(Text.toLowercase(evidence.description), #text "photo")) {
+        // Keyword analysis
+        let description = Text.toLowercase(evidence.description);
+        if (Text.contains(description, #text "proof") or 
+            Text.contains(description, #text "evidence") or 
+            Text.contains(description, #text "photo")) {
             qualityScore += 0.05;
+        };
+        
+        // Timeliness check
+        let ageInHours = Float.fromInt(Time.now() - evidence.createdAt) / (60.0 * 60.0 * 1_000_000_000.0);
+        if (ageInHours <= 24.0) { // Within 24 hours
+            qualityScore += 0.1;
         };
         
         return Float.min(1.0, qualityScore);
@@ -253,7 +320,7 @@ actor ReputationTestCanister {
         
         let initialScore : ReputationScore = {
             userId = testUserId;
-            trustScore = 50.0;
+            trustScore = BASE_SCORE;
             trustLevel = #New;
             completedBookings = 0;
             averageRating = null;
@@ -263,9 +330,9 @@ actor ReputationTestCanister {
         
         reputations.put(testUserId, initialScore);
         
-        // Initialize reputation history
+        // Initialize reputation history with enhanced tracking
         let history : [(Time.Time, Float)] = [
-            (creationTime, 50.0),
+            (creationTime, BASE_SCORE),
             (creationTime + (15 * 24 * 3600_000_000_000), 65.0), // 15 days later
             (Time.now(), 75.0) // Current
         ];

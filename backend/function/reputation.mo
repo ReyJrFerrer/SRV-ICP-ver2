@@ -80,7 +80,6 @@ actor ReputationCanister {
         var score : Float = BASE_SCORE;
         
         // 1. Booking Activity Score (max 20 points)
-        // Base points for completed bookings
         let bookingPoints = Float.min(MAX_BOOKING_POINTS, Float.fromInt(completedBookings));
         score += bookingPoints;
         
@@ -107,43 +106,47 @@ actor ReputationCanister {
             switch (averageRating) {
                 case (?rating) {
                     if (rating >= 4.0) {
-                        score += 5.0; // Full bonus for consistent high ratings
+                        score += CONSISTENCY_BONUS; // Full bonus for consistent high ratings
                     } else if (rating >= 3.5) {
-                        score += 3.0; // Partial bonus for good ratings
+                        score += CONSISTENCY_BONUS * 0.6; // Partial bonus for good ratings
                     };
                 };
                 case (null) {};
             };
         };
         
-        // 5. Penalties for Suspicious Activity
+        // 5. Recency Weight (up to 15 points)
+        let recencyScore = calculateRecencyScore(completedBookings, accountAge);
+        score += recencyScore * RECENCY_WEIGHT;
+        
+        // 6. Activity Frequency Score (up to 10 points)
+        let frequencyScore = calculateActivityFrequency(completedBookings, accountAge);
+        score += frequencyScore * ACTIVITY_FREQUENCY_WEIGHT;
+        
+        // 7. Penalties for Suspicious Activity
         var penaltyPoints : Float = 0.0;
         for (flag in flags.vals()) {
             switch (flag) {
                 case (#ReviewBomb) { 
                     penaltyPoints += 15.0;
-                    // Additional penalty if multiple review bombs
                     if (flags.size() > 1) {
                         penaltyPoints += 5.0;
                     };
                 };
                 case (#CompetitiveManipulation) { 
                     penaltyPoints += 15.0;
-                    // Additional penalty for competitive manipulation
                     if (flags.size() > 1) {
                         penaltyPoints += 5.0;
                     };
                 };
                 case (#FakeEvidence) { 
                     penaltyPoints += 10.0;
-                    // Additional penalty for multiple fake evidence
                     if (flags.size() > 1) {
                         penaltyPoints += 3.0;
                     };
                 };
                 case (#IdentityFraud) { 
                     penaltyPoints += 15.0;
-                    // Maximum penalty for identity fraud
                     if (flags.size() > 1) {
                         penaltyPoints += 10.0;
                     };
@@ -155,18 +158,212 @@ actor ReputationCanister {
         };
         
         // Apply penalties with a cap
-        score -= Float.min(penaltyPoints, score * 0.5); // Cap penalties at 50% of current score
+        score -= Float.min(penaltyPoints, score * 0.5);
         
-        // 6. Minimum Activity Threshold
+        // 8. Minimum Activity Threshold
         if (completedBookings < 3 and ageInDays < 30.0) {
-            // Reduce score for new users with low activity
             score *= 0.8;
         };
         
         // Ensure final score is between 0 and 100
         return Float.max(MIN_TRUST_SCORE, Float.min(MAX_TRUST_SCORE, score));
     };
+
+    // New helper functions for enhanced scoring
+    private func calculateRecencyScore(completedBookings : Nat, accountAge : Time.Time) : Float {
+        if (completedBookings == 0) return 0.0;
+        
+        let now = Time.now();
+        let ageInDays = Float.fromInt(now - accountAge) / (24.0 * 60.0 * 60.0 * 1_000_000_000.0);
+        
+        // Higher score for recent activity
+        if (ageInDays <= 30.0) { // Last 30 days
+            return 15.0;
+        } else if (ageInDays <= 90.0) { // Last 90 days
+            return 10.0;
+        } else if (ageInDays <= 180.0) { // Last 180 days
+            return 5.0;
+        };
+        
+        return 0.0;
+    };
+
+    private func calculateActivityFrequency(completedBookings : Nat, accountAge : Time.Time) : Float {
+        if (completedBookings == 0) return 0.0;
+        
+        let ageInDays = Float.fromInt(Time.now() - accountAge) / (24.0 * 60.0 * 60.0 * 1_000_000_000.0);
+        let bookingsPerMonth = Float.fromInt(completedBookings) / (ageInDays / 30.0);
+        
+        // Score based on booking frequency
+        if (bookingsPerMonth >= 5.0) {
+            return 10.0;
+        } else if (bookingsPerMonth >= 3.0) {
+            return 7.0;
+        } else if (bookingsPerMonth >= 1.0) {
+            return 4.0;
+        };
+        
+        return 0.0;
+    };
+
+    // Enhanced review analysis
+    private func analyzeReview(review : Review) : [DetectionFlag] {
+        var flags : [DetectionFlag] = [];
+        
+        // 1. Check for review bombing
+        if (review.rating <= 2) {
+            flags := Array.append<DetectionFlag>(flags, [#ReviewBomb]);
+        };
+        
+        // 2. Check for competitive manipulation
+        if (review.rating == 5 and Text.size(review.comment) < 20) {
+            flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
+        };
+        
+        // 3. Check for sentiment consistency
+        let sentimentScore = calculateSentimentScore(review);
+        if (sentimentScore < 0.3 and review.rating >= 4) {
+            flags := Array.append<DetectionFlag>(flags, [#Other]);
+        };
+        
+        return flags;
+    };
+
+    private func calculateSentimentScore(review : Review) : Float {
+        let comment = Text.toLowercase(review.comment);
+        var positiveWords = 0;
+        var negativeWords = 0;
+        
+        // Simple sentiment analysis based on keyword matching
+        let positiveKeywords = ["excellent", "great", "good", "amazing", "wonderful", "perfect", "best", "love", "happy", "satisfied"];
+        let negativeKeywords = ["bad", "poor", "terrible", "awful", "horrible", "worst", "hate", "disappointed", "unsatisfied", "waste"];
+        
+        for (word in positiveKeywords.vals()) {
+            if (Text.contains(comment, #text word)) {
+                positiveWords += 1;
+            };
+        };
+        
+        for (word in negativeKeywords.vals()) {
+            if (Text.contains(comment, #text word)) {
+                negativeWords += 1;
+            };
+        };
+        
+        let totalWords = positiveWords + negativeWords;
+        if (totalWords == 0) return 0.5; // Neutral if no keywords found
+        
+        return Float.fromInt(positiveWords) / Float.fromInt(totalWords);
+    };
+
+    // Enhanced evidence quality evaluation
+    private func evaluateEvidenceQuality(evidence : Evidence) : Float {
+        var qualityScore : Float = 0.75; // Base quality score
+        
+        // 1. Description length and quality
+        if (Text.size(evidence.description) > 100) {
+            qualityScore += 0.1;
+        };
+        
+        // 2. File evidence
+        if (evidence.fileUrls.size() > 0) {
+            qualityScore += 0.1;
+            // Bonus for multiple files
+            if (evidence.fileUrls.size() > 1) {
+                qualityScore += 0.05;
+            };
+        };
+        
+        // 3. Keyword analysis
+        let description = Text.toLowercase(evidence.description);
+        if (Text.contains(description, #text "proof") or 
+            Text.contains(description, #text "evidence") or 
+            Text.contains(description, #text "photo")) {
+            qualityScore += 0.05;
+        };
+        
+        // 4. Timeliness
+        let ageInHours = Float.fromInt(Time.now() - evidence.createdAt) / (60.0 * 60.0 * 1_000_000_000.0);
+        if (ageInHours <= 24.0) { // Within 24 hours
+            qualityScore += 0.1;
+        };
+        
+        return Float.min(1.0, qualityScore);
+    };
+
+    // Enhanced reputation history tracking
+    private func updateReputationHistory(userId : Principal, newScore : Float) {
+        let now = Time.now();
+        switch (reputationHistory.get(userId)) {
+            case (?history) {
+                let newHistory = Array.append([(now, newScore)], history);
+                reputationHistory.put(userId, newHistory);
+            };
+            case (null) {
+                reputationHistory.put(userId, [(now, newScore)]);
+            };
+        };
+    };
+
+    // Enhanced reputation update
+    public func updateUserReputation(userId : Principal) : async Result<ReputationScore> {
+        switch (reputations.get(userId)) {
+            case (null) {
+                return #err("User reputation not found");
+            };
+            case (?existingScore) {
+                // Get completed bookings from booking canister
+                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
+                    getProviderCompletedBookings : (Principal) -> async [Booking];
+                };
+                let completedBookings = await bookingCanister.getProviderCompletedBookings(userId);
+                
+                // Get ratings from review canister
+                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
+                    calculateUserAverageRating : (Principal) -> async Result<Float>;
+                };
+                let averageRating = switch (await reviewCanister.calculateUserAverageRating(userId)) {
+                    case (#ok(rating)) ?rating;
+                    case (#err(_)) null;
+                };
+                
+                // Get account age from auth canister
+                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
+                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
+                };
+                let accountAge = switch (await authCanister.getProfile(userId)) {
+                    case (#ok(profile)) profile.createdAt;
+                    case (#err(_)) existingScore.lastUpdated;
+                };
+                
+                let newTrustScore = calculateTrustScore(
+                    completedBookings.size(),
+                    averageRating,
+                    accountAge,
+                    existingScore.detectionFlags
+                );
+                
+                let newTrustLevel = determineTrustLevel(newTrustScore);
+                
+                let updatedScore : ReputationScore = {
+                    userId = existingScore.userId;
+                    trustScore = newTrustScore;
+                    trustLevel = newTrustLevel;
+                    completedBookings = completedBookings.size();
+                    averageRating = averageRating;
+                    detectionFlags = existingScore.detectionFlags;
+                    lastUpdated = Time.now();
+                };
+                
+                reputations.put(userId, updatedScore);
+                updateReputationHistory(userId, newTrustScore);
+                
+                return #ok(updatedScore);
+            };
+        };
+    };
     
+    // Helper functions
     private func determineTrustLevel(trustScore : Float) : TrustLevel {
         for ((level, threshold) in TRUST_LEVEL_THRESHOLDS.vals()) {
             if (trustScore <= threshold) {
@@ -176,62 +373,6 @@ actor ReputationCanister {
         return #VeryHigh;
     };
     
-    // Analyze a review for potential fraud or manipulation
-    private func analyzeReview(review : Review) : [DetectionFlag] {
-        var flags : [DetectionFlag] = [];
-        
-        // Rule 1: Check for review bombing (multiple negative reviews in short time)
-        // This is a simplified version for demo purposes
-        if (review.rating <= 2) {
-            flags := Array.append<DetectionFlag>(flags, [#ReviewBomb]);
-        };
-        
-        // Rule 2: Check for competitive manipulation
-        // This is a simplified version for demo purposes
-        if (review.rating == 5 and Text.size(review.comment) < 20) {
-            flags := Array.append<DetectionFlag>(flags, [#CompetitiveManipulation]);
-        };
-        
-        return flags;
-    };
-    
-    // Evaluate evidence quality
-    private func evaluateEvidenceQuality(evidence : Evidence) : Float {
-        var qualityScore : Float = 0.75; // Base quality score
-        
-        // Rule 1: Check description length
-        if (Text.size(evidence.description) > 100) {
-            qualityScore += 0.1;
-        };
-        
-        // Rule 2: Check number of files
-        if (evidence.fileUrls.size() > 0) {
-            qualityScore += 0.1;
-        };
-        
-        // Rule 3: Check for specific keywords in description
-        let description = Text.toLowercase(evidence.description);
-        if (Text.contains(description, #text "proof") or 
-            Text.contains(description, #text "evidence") or 
-            Text.contains(description, #text "photo")) {
-            qualityScore += 0.05;
-        };
-        
-        return Float.min(1.0, qualityScore);
-    };
-
-    // Helper functions for TrustLevel
-    private func trustLevelEqual(a : TrustLevel, b : TrustLevel) : Bool {
-        switch (a, b) {
-            case (#New, #New) true;
-            case (#Low, #Low) true;
-            case (#Medium, #Medium) true;
-            case (#High, #High) true;
-            case (#VeryHigh, #VeryHigh) true;
-            case (_, _) false;
-        }
-    };
-
     // Public functions
     
     // Initialize reputation for a new user
@@ -324,98 +465,6 @@ actor ReputationCanister {
         ignore await updateUserReputation(evidence.submitterId);
         
         return #ok(updatedEvidence);
-    };
-    
-    // Update user reputation based on all activities
-    public func updateUserReputation(userId : Principal) : async Result<ReputationScore> {
-        switch (reputations.get(userId)) {
-            case (null) {
-                return #err("User reputation not found");
-            };
-            case (?existingScore) {
-                // Get completed bookings from booking canister
-                let bookingCanister = actor(Principal.toText(Option.unwrap(bookingCanisterId))) : actor {
-                    getProviderCompletedBookings : (Principal) -> async [Booking];
-                };
-                let completedBookings = await bookingCanister.getProviderCompletedBookings(userId);
-                
-                // Get ratings from review canister
-                let reviewCanister = actor(Principal.toText(Option.unwrap(reviewCanisterId))) : actor {
-                    calculateUserAverageRating : (Principal) -> async Result<Float>;
-                };
-                let averageRating = switch (await reviewCanister.calculateUserAverageRating(userId)) {
-                    case (#ok(rating)) ?rating;
-                    case (#err(_)) null;
-                };
-                
-                // Get account age from auth canister
-                let authCanister = actor(Principal.toText(Option.unwrap(authCanisterId))) : actor {
-                    getProfile : (Principal) -> async Result<{ createdAt : Time.Time }>;
-                };
-                let accountAge = switch (await authCanister.getProfile(userId)) {
-                    case (#ok(profile)) profile.createdAt;
-                    case (#err(_)) existingScore.lastUpdated;
-                };
-                
-                let newTrustScore = calculateTrustScore(
-                    completedBookings.size(),
-                    averageRating,
-                    accountAge,
-                    existingScore.detectionFlags
-                );
-                
-                let newTrustLevel = determineTrustLevel(newTrustScore);
-                
-                let updatedScore : ReputationScore = {
-                    userId = existingScore.userId;
-                    trustScore = newTrustScore;
-                    trustLevel = newTrustLevel;
-                    completedBookings = completedBookings.size();
-                    averageRating = averageRating;
-                    detectionFlags = existingScore.detectionFlags;
-                    lastUpdated = Time.now();
-                };
-                
-                reputations.put(userId, updatedScore);
-                return #ok(updatedScore);
-            };
-        };
-    };
-    
-    // Add detection flag to a user
-    public func addDetectionFlag(userId : Principal, flag : DetectionFlag) : async Result<ReputationScore> {
-        switch (reputations.get(userId)) {
-            case (null) {
-                return #err("User reputation not found");
-            };
-            case (?existingScore) {
-                // Add the new flag
-                var newFlags = Array.append<DetectionFlag>(existingScore.detectionFlags, [flag]);
-                
-                // Recalculate trust score
-                let newTrustScore = calculateTrustScore(
-                    existingScore.completedBookings,
-                    existingScore.averageRating,
-                    existingScore.lastUpdated,
-                    newFlags
-                );
-                
-                let newTrustLevel = determineTrustLevel(newTrustScore);
-                
-                let updatedScore : ReputationScore = {
-                    userId = existingScore.userId;
-                    trustScore = newTrustScore;
-                    trustLevel = newTrustLevel;
-                    completedBookings = existingScore.completedBookings;
-                    averageRating = existingScore.averageRating;
-                    detectionFlags = newFlags;
-                    lastUpdated = Time.now();
-                };
-                
-                reputations.put(userId, updatedScore);
-                return #ok(updatedScore);
-            };
-        };
     };
     
     // Set canister references (admin function)

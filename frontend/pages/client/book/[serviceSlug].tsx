@@ -2,8 +2,8 @@ import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Service, SERVICES } from '../../../public/data/services'; // Adjust path
-import BookingPageComponent from 'frontend/ui/components/client/ClientBookingPageComponent'; // We'll create this
-import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css'; // We'll create this
+import BookingPageComponent from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent'; 
+import styles from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent.module.css'; 
 
 export async function getStaticPaths() {
   const paths = SERVICES.map((service) => ({

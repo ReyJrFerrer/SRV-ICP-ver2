@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import styles from '../../ui/styles/Client.module.css';
-import ClientHome from '../../ui/components/client/ClientHome';
-import ClientChat from '../../ui/components/client/ClientChat';
+import ClientHome from '../../ui/components/client/home/ClientHome';
+import ClientChat from '../../ui/components/client/chat/ClientChat';
 
 type TabType = 'home' | 'chat';
 

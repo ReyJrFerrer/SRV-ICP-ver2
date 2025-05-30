@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './ClientChat.module.css';
+import styles from 'frontend/ui/components/client/chat/ClientChat.module.css';
 
 // Mock chat data
 const mockChats = [

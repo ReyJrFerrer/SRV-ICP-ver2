@@ -1,8 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { Service as OriginalServiceType } from 'frontend/public/data/services'; // Adjusted path
-import styles from 'frontend/ui/components/client/ServiceDetailPageComponent.module.css';
-import { useRouter } from 'next/router'; // Import useRouter
+import styles from 'frontend/ui/components/client/serviceDetails/ServiceDetailPageComponent.module.css';
+import { useRouter } from 'next/router'; 
 
 interface ServiceDetailPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {

@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Service, SERVICES } from '../../../public/data/services'; 
-import ServiceDetailPageComponent from '../../../ui/components/client/ServiceDetailPageComponent'; 
+import ServiceDetailPageComponent from '../../../ui/components/client/serviceDetails/ServiceDetailPageComponent'; 
 import styles from '../../../ui/styles/ClientServicePage.module.css'; 
 
 export async function getStaticPaths() {

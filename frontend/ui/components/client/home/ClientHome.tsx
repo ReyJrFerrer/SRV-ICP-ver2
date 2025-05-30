@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from './ClientHome.module.css';
-import ListHeader from './../shared/ListHeader';
-import ServiceCard from './ServiceCard';
-import { SERVICES } from '../../../public/data/services';
+import ListHeader from '../../shared/ListHeader';
+import ServiceCard from '../serviceCard/ServiceCard';
+import { SERVICES } from '../../../../public/data/services';
 
 export default function ClientHome() {
   return (

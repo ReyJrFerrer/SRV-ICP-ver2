@@ -1,12 +1,13 @@
-import React, { useState, ChangeEvent, FC, useEffect } from 'react'; 
+import React, { useState, ChangeEvent, FC, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Adjust path
-import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css';
+import { Service as OriginalServiceType, ServicePackage } from '../../../public/data/services'; // Corrected path assuming standard structure
+import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css'; // Corrected path assuming standard structure
 
 interface BookingPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {
     createdAt: string;
     updatedAt: string;
+    packages: OriginalServiceType['packages'];
   };
 }
 
@@ -15,25 +16,8 @@ interface SelectablePackageItem extends ServicePackage {
 }
 
 interface PackageSelectionProps {
-  packages: SelectablePackageItem[]; 
+  packages: SelectablePackageItem[];
   onPackageChange: (packageId: string) => void;
-}
-
-interface LocationInfoProps {
-  houseNumber: string;
-  onHouseNumberChange: (value: string) => void;
-  street: string;
-  onStreetChange: (value: string) => void;
-  barangay: string;
-  onBarangayChange: (value: string) => void;
-  municipalityCity: string;
-  onMunicipalityCityChange: (value: string) => void;
-  province: string;
-  onProvinceChange: (value: string) => void;
-  onUseCurrentLocation: () => void;
-  currentLocationStatus: string;
-  showManualAddressForm: boolean; 
-  onToggleManualAddress: () => void; 
 }
 
 const PackageSelection: FC<PackageSelectionProps> = ({ packages, onPackageChange }) => (
@@ -49,10 +33,8 @@ const PackageSelection: FC<PackageSelectionProps> = ({ packages, onPackageChange
         {pkg.name}
       </label>
     ))}
-    <button className={styles.linkButton}>+ Add Custom Task</button>
   </div>
 );
-
 
 const ConcernsInput: FC<{concerns: string; onConcernsChange: (value: string) => void;}> = ({ concerns, onConcernsChange }) => (
   <div className={styles.formSection}>
@@ -107,98 +89,88 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
   </div>
 );
 
+interface LocationInfoProps {
+  houseNumber: string;
+  onHouseNumberChange: (value: string) => void;
+  street: string;
+  onStreetChange: (value: string) => void;
+  barangay: string;
+  onBarangayChange: (value: string) => void;
+  municipalityCity: string;
+  onMunicipalityCityChange: (value: string) => void;
+  province: string;
+  onProvinceChange: (value: string) => void;
+  onUseCurrentLocation: () => void;
+  currentLocationStatus: string;
+  showManualAddressForm: boolean;
+  onToggleManualAddress: () => void;
+}
+
 const LocationInfo: FC<LocationInfoProps> = ({
-houseNumber, onHouseNumberChange,
+  houseNumber, onHouseNumberChange,
   street, onStreetChange,
   barangay, onBarangayChange,
   municipalityCity, onMunicipalityCityChange,
   province, onProvinceChange,
   onUseCurrentLocation,
   currentLocationStatus,
-  showManualAddressForm, // Use this prop
-  onToggleManualAddress  // Use this prop
+  showManualAddressForm,
+  onToggleManualAddress
 }) => (
   <div className={styles.formSection}>
     <h3 className={styles.sectionTitle}>Service Location</h3>
-    
     <button onClick={onUseCurrentLocation} className={styles.actionButton} style={{marginBottom: '10px'}}>
       📍 Use Current Location
     </button>
     {currentLocationStatus && <p className={styles.locationStatus}>{currentLocationStatus}</p>}
-
     {!showManualAddressForm && (
       <button onClick={onToggleManualAddress} className={styles.secondaryButton} style={{marginTop: '5px'}}>
         Enter Address Manually
       </button>
     )}
-
     {showManualAddressForm && (
       <>
         <p className={styles.manualAddressLabel}>Enter address manually:</p>
         <div className={styles.addressInputGroup}>
-          <input
-            type="text"
-            placeholder="House No. / Unit / Building"
-            value={houseNumber}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onHouseNumberChange(e.target.value)}
-            className={styles.addressInput}
-          />
-          <input
-            type="text"
-            placeholder="Street Name"
-            value={street}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onStreetChange(e.target.value)}
-            className={styles.addressInput}
-          />
-          <input
-            type="text"
-            placeholder="Barangay"
-            value={barangay}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onBarangayChange(e.target.value)}
-            className={styles.addressInput}
-          />
-          <input
-            type="text"
-            placeholder="Municipality / City"
-            value={municipalityCity}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onMunicipalityCityChange(e.target.value)}
-            className={styles.addressInput}
-          />
-          <input
-            type="text"
-            placeholder="Province"
-            value={province}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onProvinceChange(e.target.value)}
-            className={styles.addressInput}
-          />
+          <input type="text" placeholder="House No. / Unit / Building" value={houseNumber} onChange={(e) => onHouseNumberChange(e.target.value)} className={styles.addressInput}/>
+          <input type="text" placeholder="Street Name" value={street} onChange={(e) => onStreetChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Barangay" value={barangay} onChange={(e) => onBarangayChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Municipality / City" value={municipalityCity} onChange={(e) => onMunicipalityCityChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Province" value={province} onChange={(e) => onProvinceChange(e.target.value)} className={styles.addressInput} />
         </div>
       </>
     )}
   </div>
 );
 
-
 const PaymentInfoDisplay: FC = () => (
   <div className={styles.formSection}><h3 className={styles.sectionTitle}>Payment</h3><p className={styles.paymentNote}>💸 Cash payment only.</p></div>
 );
 
-
 const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
+  const router = useRouter();
+
   const [packages, setPackages] = useState<SelectablePackageItem[]>([]);
-  const router = useRouter(); // Initialize router
-
-  useEffect(() => {
-    if (service && service.packages) {
-      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false }))); 
-    }
-  }, [service]); 
-
   const [concerns, setConcerns] = useState<string>('');
-  
   const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  
+
+  const [houseNumber, setHouseNumber] = useState('');
+  const [street, setStreet] = useState('');
+  const [barangay, setBarangay] = useState('');
+  const [municipalityCity, setMunicipalityCity] = useState('');
+  const [province, setProvince] = useState('');
+  const [currentLocationStatus, setCurrentLocationStatus] = useState('');
+  const [useGpsLocation, setUseGpsLocation] = useState(false);
+  const [showManualAddress, setShowManualAddress] = useState(false);
+
+  useEffect(() => {
+    if (service && service.packages) {
+      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false })));
+    }
+  }, [service]);
+
   const handlePackageChange = (packageId: string) => {
     setPackages(prevPackages =>
       prevPackages.map(pkg =>
@@ -207,55 +179,20 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
     );
   };
 
-    const toggleManualAddressForm = () => {
+  const toggleManualAddressForm = () => {
     setShowManualAddress(prev => !prev);
-    setUseGpsLocation(false); // If user opens manual form, assume they don't want to use last GPS attempt
-    setCurrentLocationStatus(''); // Clear GPS status
-  };
-
-  const handleConfirmBooking = () => {
-    const bookingDetails = {
-      providerName: service.name,
-      serviceId: service.id,
-      serviceSlug: service.slug, 
-      serviceName: service.title,
-      selectedPackages: packages.filter(p => p.checked).map(p => ({id: p.id, name: p.name})), 
-      concerns,
-      bookingType: bookingOption,
-      date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : null),
-      time: bookingOption === 'scheduled' ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (25-40 mins estimate)' : null),
-    };
-    console.log('Booking Details:', bookingDetails);
-
-     router.push({
-      pathname: '/client/booking/confirmation',
-      query: { details: JSON.stringify(bookingDetails) },
-    });
-  
-  
-  };
-
-  const [houseNumber, setHouseNumber] = useState('');
-  const [street, setStreet] = useState('');
-  const [barangay, setBarangay] = useState('');
-  const [municipalityCity, setMunicipalityCity] = useState('');
-  const [province, setProvince] = useState('');
-  const [currentLocationStatus, setCurrentLocationStatus] = useState('');
-  const [useGpsLocation, setUseGpsLocation] = useState(false); // To track if GPS location should be used
-  const [showManualAddress, setShowManualAddress] = useState(false); // New state
-
-  useEffect(() => {
-    if (service && service.packages) {
-      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false })));
+    if (!showManualAddress) { 
+        setUseGpsLocation(false);
+        setCurrentLocationStatus(''); 
     }
-  }, [service]);
+  };
 
   const handleUseCurrentLocation = () => {
     setCurrentLocationStatus('Fetching location...');
-    setUseGpsLocation(true); // Indicate intent to use GPS
+    setUseGpsLocation(true);
     setShowManualAddress(false); // Hide manual form when attempting GPS
 
-     if (navigator.geolocation) {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -264,53 +201,47 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         },
         (error) => {
           console.error("Error getting location:", error);
-          let statusMessage = 'Could not get location.';
-          if (error.code === error.PERMISSION_DENIED) {
-            statusMessage = 'Location permission denied. Please enter manually.';
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            statusMessage = 'Location information is unavailable.';
-          } else if (error.code === error.TIMEOUT) {
-            statusMessage = 'Location request timed out.';
-          }
           setCurrentLocationStatus(`⚠️ Could not get location. Please enter manually or try again.`);
           setUseGpsLocation(false);
-          setShowManualAddress(true); // Show manual form if GPS fails
+          setShowManualAddress(true);
         }
       );
     } else {
-      setCurrentLocationStatus("Geolocation is not supported by this browser.");
+      setCurrentLocationStatus("Geolocation is not supported. Please enter address manually.");
       setUseGpsLocation(false);
-      setShowManualAddress(true); // Show manual form if GPS fails
+      setShowManualAddress(true);
     }
+  };
 
-    const handleConfirmBooking = () => {
-    let finalAddress = '';
+  const handleConfirmBooking = () => {
+    let finalAddress = "Address not specified."; // Default
+
     if (useGpsLocation && currentLocationStatus.startsWith('📍')) {
-      finalAddress = `Current Location: ${currentLocationStatus.replace('📍 ','').replace(' (Using this)','')}`;
+      finalAddress = `${currentLocationStatus.replace('📍 ','').replace(' (Using this)','')}`;
     } else {
-      // Construct address from manual inputs, only if they are filled
-      const addressParts = [houseNumber, street, barangay, municipalityCity, province].filter(part => part.trim() !== '');
-      if (addressParts.length > 0) {
-        finalAddress = addressParts.join(', ');
-      } else if (useGpsLocation) { // If tried GPS but it failed, and manual is empty
-        finalAddress = "Location not specified or GPS failed.";
-      } else { // If neither GPS tried nor manual input
-        finalAddress = "No address provided.";
-      }
-    }
+      const manualAddressParts = [houseNumber, street, barangay, municipalityCity, province]
+        .map(part => part.trim())
+        .filter(part => part !== '');
 
+      if (manualAddressParts.length > 0) {
+        finalAddress = manualAddressParts.join(', ');
+      } else if (useGpsLocation) { 
+        finalAddress = `GPS location failed. Address not manually entered.`;
+      }
+    
+    }
 
     const bookingDetails = {
       serviceId: service.id,
       serviceSlug: service.slug,
       serviceName: service.title,
-      providerName: service.name,
+      providerName: service.name, 
       selectedPackages: packages.filter(p => p.checked).map(p => ({id: p.id, name: p.name})),
-      concerns: concerns || "No specific concerns.",
+      concerns: concerns.trim() || "No specific concerns.",
       bookingType: bookingOption,
       date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : "N/A"),
       time: bookingOption === 'scheduled' && selectedTime ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (est. 25-40 mins)' : "N/A"),
-      location: finalAddress, // Add the determined location
+      location: finalAddress, // Include the determined location
     };
     console.log('Booking Details to send:', bookingDetails);
 
@@ -319,10 +250,9 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
       query: { details: JSON.stringify(bookingDetails) },
     });
   };
-  };
 
   if (!service) {
-    return <div>Loading service details...</div>; // Or handle error
+    return <div>Loading service details...</div>;
   }
 
   return (
@@ -336,9 +266,8 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         onDateChange={setSelectedDate}
         selectedTime={selectedTime}
         onTimeChange={setSelectedTime}
-        
       />
-       <LocationInfo
+      <LocationInfo
         houseNumber={houseNumber} onHouseNumberChange={setHouseNumber}
         street={street} onStreetChange={setStreet}
         barangay={barangay} onBarangayChange={setBarangay}
@@ -346,8 +275,8 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         province={province} onProvinceChange={setProvince}
         onUseCurrentLocation={handleUseCurrentLocation}
         currentLocationStatus={currentLocationStatus}
-        showManualAddressForm={showManualAddress}     // Pass state
-        onToggleManualAddress={toggleManualAddressForm} // Pass handler
+        showManualAddressForm={showManualAddress}
+        onToggleManualAddress={toggleManualAddressForm}
       />
       <PaymentInfoDisplay />
 

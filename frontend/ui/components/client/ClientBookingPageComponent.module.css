@@ -251,3 +251,43 @@
 .confirmButton:hover {
   background-color: #218838;
 }
+
+.locationStatus {
+  font-size: 13px;
+  color: #555;
+  margin-top: 5px; /* Adjusted */
+  margin-bottom: 10px; /* Adjusted */
+  padding: 8px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.manualAddressLabel {
+  font-size: 13px;
+  color: #666;
+  margin-top: 15px; 
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.addressInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addressInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 5px; 
+}
+
+.addressInput::placeholder {
+  color: #999;
+}
+
+.formSection .actionButton:last-of-type {
+  margin-bottom: 15px; 
+}

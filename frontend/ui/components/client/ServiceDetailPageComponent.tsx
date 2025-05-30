@@ -103,10 +103,10 @@ const ServiceImagesSection: React.FC<{ service: ServiceDetailPageComponentProps[
             <Image
               src={imageUrl}
               alt={`${service.title} gallery image ${index + 1}`}
-              width={100} // Specify appropriate width
-              height={100} // Specify appropriate height
-              className={styles.galleryImage} // Add a class for specific styling
-              objectFit="cover" // Or "contain", depending on your needs
+              width={100}
+              height={100}
+              className={styles.galleryImage} 
+              objectFit="cover" 
             />
           </div>
         ))}

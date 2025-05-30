@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
+import Debug "mo:base/Debug";
 
 import Types "../types/shared";
 
@@ -25,6 +26,138 @@ actor BookingCanister {
     private stable var evidenceEntries : [(Text, Evidence)] = [];
     private var evidences = HashMap.HashMap<Text, Evidence>(10, Text.equal, Text.hash);
 
+    // Constants
+    private let MIN_PRICE : Nat = 100;
+    private let MAX_PRICE : Nat = 1_000_000;
+    private let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
+    private let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds
+
+    // Helper functions
+    private func generateId() : Text {
+        let now = Int.abs(Time.now());
+        let random = Int.abs(Time.now()) % 10000;
+        return Int.toText(now) # "-" # Int.toText(random);
+    };
+    
+    private func isBookingEligibleForReview(booking : Booking) : Bool {
+        return booking.status == #Completed and 
+               Option.isSome(booking.completedDate) and
+               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+    };
+
+    private func validatePrice(price : Nat) : Bool {
+        price >= MIN_PRICE and price <= MAX_PRICE
+    };
+
+    private func validateScheduledDate(requestedDate : Time.Time, scheduledDate : Time.Time) : Bool {
+        let now = Time.now();
+        let timeUntilScheduled = scheduledDate - now;
+        timeUntilScheduled >= MIN_SCHEDULE_AHEAD and timeUntilScheduled <= MAX_SCHEDULE_AHEAD
+    };
+
+    private func isValidStatusTransition(currentStatus : BookingStatus, newStatus : BookingStatus) : Bool {
+        switch (currentStatus, newStatus) {
+            case (#Requested, #Accepted) true;
+            case (#Requested, #Declined) true;
+            case (#Requested, #Cancelled) true;
+            case (#Accepted, #InProgress) true;
+            case (#Accepted, #Cancelled) true;
+            case (#InProgress, #Completed) true;
+            case (#InProgress, #Disputed) true;
+            case (#Completed, #Disputed) true;
+            case (_, #Disputed) true;
+            case (_, _) false;
+        }
+    };
+
+    private func updateBookingStatus(
+        existingBooking : Booking,
+        newStatus : BookingStatus,
+        caller : Principal,
+        isProvider : Bool
+    ) : Result<Booking> {
+        if (not isValidStatusTransition(existingBooking.status, newStatus)) {
+            return #err("Invalid status transition from " # debug_show(existingBooking.status) # " to " # debug_show(newStatus));
+        };
+
+        if (isProvider and existingBooking.providerId != caller) {
+            return #err("Not authorized to update this booking");
+        };
+
+        if (not isProvider and existingBooking.clientId != caller) {
+            return #err("Not authorized to update this booking");
+        };
+
+        let updatedBooking : Booking = {
+            id = existingBooking.id;
+            clientId = existingBooking.clientId;
+            providerId = existingBooking.providerId;
+            serviceId = existingBooking.serviceId;
+            status = newStatus;
+            requestedDate = existingBooking.requestedDate;
+            scheduledDate = existingBooking.scheduledDate;
+            completedDate = if (newStatus == #Completed) ?Time.now() else existingBooking.completedDate;
+            price = existingBooking.price;
+            location = existingBooking.location;
+            evidence = existingBooking.evidence;
+            createdAt = existingBooking.createdAt;
+            updatedAt = Time.now();
+        };
+
+        #ok(updatedBooking)
+    };
+
+    // Static data initialization
+    private func initializeStaticData() {
+        let sampleLocation : Location = {
+            latitude = 16.4145;
+            longitude = 120.5960;
+            address = "Baguio City - Session Road";
+            city = "Baguio City";
+            state = "Benguet";
+            country = "Philippines";
+            postalCode = "2600"
+        };
+
+        let staticBookings : [(Text, Booking)] = [
+            ("bk-001", {
+                id = "bk-001";
+                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                serviceId = "svc-001";
+                status = #Completed;
+                requestedDate = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
+                scheduledDate = ?(Time.now() - (1 * 24 * 3600_000_000_000)); // 1 day ago
+                completedDate = ?(Time.now() - (12 * 3600_000_000_000)); // 12 hours ago
+                price = 5000;
+                location = sampleLocation;
+                evidence = null;
+                createdAt = Time.now() - (3 * 24 * 3600_000_000_000); // 3 days ago
+                updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
+            }),
+            ("bk-002", {
+                id = "bk-002";
+                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                serviceId = "svc-002";
+                status = #InProgress;
+                requestedDate = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
+                scheduledDate = ?Time.now();
+                completedDate = null;
+                price = 6000;
+                location = sampleLocation;
+                evidence = null;
+                createdAt = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
+                updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
+            })
+        ];
+
+        // Add bookings to HashMap
+        for ((id, booking) in staticBookings.vals()) {
+            bookings.put(id, booking);
+        };
+    };
+
     // Initialization
     system func preupgrade() {
         bookingEntries := Iter.toArray(bookings.entries());
@@ -37,19 +170,11 @@ actor BookingCanister {
         
         evidences := HashMap.fromIter<Text, Evidence>(evidenceEntries.vals(), 10, Text.equal, Text.hash);
         evidenceEntries := [];
-    };
-    //TODO: Why put helper functions here?
-    // Helper functions
-    private func generateId() : Text {
-        let now = Int.abs(Time.now());
-        let random = Int.abs(Time.now()) % 10000;
-        return Int.toText(now) # "-" # Int.toText(random);
-    };
-    
-    private func isBookingEligibleForReview(booking : Booking) : Bool {
-        return booking.status == #Completed and 
-               Option.isSome(booking.completedDate) and
-               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
+
+        // Initialize static data if bookings are empty
+        if (bookings.size() == 0) {
+            initializeStaticData();
+        };
     };
 
     // Public functions
@@ -66,6 +191,14 @@ actor BookingCanister {
         
         if (Principal.isAnonymous(caller)) {
             return #err("Anonymous principal not allowed");
+        };
+
+        if (not validatePrice(price)) {
+            return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+        };
+
+        if (not validateScheduledDate(requestedDate, requestedDate)) {
+            return #err("Requested date must be between 1 hour and 30 days from now");
         };
         
         let bookingId = generateId();
@@ -135,32 +268,35 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (existingBooking.providerId != caller) {
-                    return #err("Not authorized to accept this booking");
+                if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
+                    return #err("Scheduled date must be between 1 hour and 30 days from now");
                 };
-                
-                if (existingBooking.status != #Requested) {
-                    return #err("Booking cannot be accepted in its current state");
+
+                switch (updateBookingStatus(existingBooking, #Accepted, caller, true)) {
+                    case (#ok(updatedBooking)) {
+                        let finalBooking : Booking = {
+                            id = updatedBooking.id;
+                            clientId = updatedBooking.clientId;
+                            providerId = updatedBooking.providerId;
+                            serviceId = updatedBooking.serviceId;
+                            status = updatedBooking.status;
+                            requestedDate = updatedBooking.requestedDate;
+                            scheduledDate = ?scheduledDate;
+                            completedDate = updatedBooking.completedDate;
+                            price = updatedBooking.price;
+                            location = updatedBooking.location;
+                            evidence = updatedBooking.evidence;
+                            createdAt = updatedBooking.createdAt;
+                            updatedAt = updatedBooking.updatedAt;
+                        };
+                        
+                        bookings.put(bookingId, finalBooking);
+                        return #ok(finalBooking);
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
                 };
-                
-                let updatedBooking : Booking = {
-                    id = existingBooking.id;
-                    clientId = existingBooking.clientId;
-                    providerId = existingBooking.providerId;
-                    serviceId = existingBooking.serviceId;
-                    status = #Accepted;
-                    requestedDate = existingBooking.requestedDate;
-                    scheduledDate = ?scheduledDate;
-                    completedDate = existingBooking.completedDate;
-                    price = existingBooking.price;
-                    location = existingBooking.location;
-                    evidence = existingBooking.evidence;
-                    createdAt = existingBooking.createdAt;
-                    updatedAt = Time.now();
-                };
-                
-                bookings.put(bookingId, updatedBooking);
-                return #ok(updatedBooking);
             };
             case (null) {
                 return #err("Booking not found");
@@ -174,32 +310,15 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (existingBooking.providerId != caller) {
-                    return #err("Not authorized to decline this booking");
+                switch (updateBookingStatus(existingBooking, #Declined, caller, true)) {
+                    case (#ok(updatedBooking)) {
+                        bookings.put(bookingId, updatedBooking);
+                        return #ok(updatedBooking);
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
                 };
-                
-                if (existingBooking.status != #Requested) {
-                    return #err("Booking cannot be declined in its current state");
-                };
-                
-                let updatedBooking : Booking = {
-                    id = existingBooking.id;
-                    clientId = existingBooking.clientId;
-                    providerId = existingBooking.providerId;
-                    serviceId = existingBooking.serviceId;
-                    status = #Declined;
-                    requestedDate = existingBooking.requestedDate;
-                    scheduledDate = existingBooking.scheduledDate;
-                    completedDate = existingBooking.completedDate;
-                    price = existingBooking.price;
-                    location = existingBooking.location;
-                    evidence = existingBooking.evidence;
-                    createdAt = existingBooking.createdAt;
-                    updatedAt = Time.now();
-                };
-                
-                bookings.put(bookingId, updatedBooking);
-                return #ok(updatedBooking);
             };
             case (null) {
                 return #err("Booking not found");
@@ -213,32 +332,15 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (existingBooking.providerId != caller) {
-                    return #err("Not authorized to start this booking");
+                switch (updateBookingStatus(existingBooking, #InProgress, caller, true)) {
+                    case (#ok(updatedBooking)) {
+                        bookings.put(bookingId, updatedBooking);
+                        return #ok(updatedBooking);
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
                 };
-                
-                if (existingBooking.status != #Accepted) {
-                    return #err("Booking cannot be started in its current state");
-                };
-                
-                let updatedBooking : Booking = {
-                    id = existingBooking.id;
-                    clientId = existingBooking.clientId;
-                    providerId = existingBooking.providerId;
-                    serviceId = existingBooking.serviceId;
-                    status = #InProgress;
-                    requestedDate = existingBooking.requestedDate;
-                    scheduledDate = existingBooking.scheduledDate;
-                    completedDate = existingBooking.completedDate;
-                    price = existingBooking.price;
-                    location = existingBooking.location;
-                    evidence = existingBooking.evidence;
-                    createdAt = existingBooking.createdAt;
-                    updatedAt = Time.now();
-                };
-                
-                bookings.put(bookingId, updatedBooking);
-                return #ok(updatedBooking);
             };
             case (null) {
                 return #err("Booking not found");
@@ -252,32 +354,15 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (existingBooking.providerId != caller) {
-                    return #err("Not authorized to complete this booking");
+                switch (updateBookingStatus(existingBooking, #Completed, caller, true)) {
+                    case (#ok(updatedBooking)) {
+                        bookings.put(bookingId, updatedBooking);
+                        return #ok(updatedBooking);
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
                 };
-                
-                if (existingBooking.status != #InProgress) {
-                    return #err("Booking cannot be completed in its current state");
-                };
-                
-                let updatedBooking : Booking = {
-                    id = existingBooking.id;
-                    clientId = existingBooking.clientId;
-                    providerId = existingBooking.providerId;
-                    serviceId = existingBooking.serviceId;
-                    status = #Completed;
-                    requestedDate = existingBooking.requestedDate;
-                    scheduledDate = existingBooking.scheduledDate;
-                    completedDate = ?Time.now();
-                    price = existingBooking.price;
-                    location = existingBooking.location;
-                    evidence = existingBooking.evidence;
-                    createdAt = existingBooking.createdAt;
-                    updatedAt = Time.now();
-                };
-                
-                bookings.put(bookingId, updatedBooking);
-                return #ok(updatedBooking);
             };
             case (null) {
                 return #err("Booking not found");
@@ -291,32 +376,15 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (existingBooking.clientId != caller) {
-                    return #err("Not authorized to cancel this booking");
+                switch (updateBookingStatus(existingBooking, #Cancelled, caller, false)) {
+                    case (#ok(updatedBooking)) {
+                        bookings.put(bookingId, updatedBooking);
+                        return #ok(updatedBooking);
+                    };
+                    case (#err(msg)) {
+                        return #err(msg);
+                    };
                 };
-                
-                if (existingBooking.status != #Requested and existingBooking.status != #Accepted) {
-                    return #err("Booking cannot be cancelled in its current state");
-                };
-                
-                let updatedBooking : Booking = {
-                    id = existingBooking.id;
-                    clientId = existingBooking.clientId;
-                    providerId = existingBooking.providerId;
-                    serviceId = existingBooking.serviceId;
-                    status = #Cancelled;
-                    requestedDate = existingBooking.requestedDate;
-                    scheduledDate = existingBooking.scheduledDate;
-                    completedDate = existingBooking.completedDate;
-                    price = existingBooking.price;
-                    location = existingBooking.location;
-                    evidence = existingBooking.evidence;
-                    createdAt = existingBooking.createdAt;
-                    updatedAt = Time.now();
-                };
-                
-                bookings.put(bookingId, updatedBooking);
-                return #ok(updatedBooking);
             };
             case (null) {
                 return #err("Booking not found");
@@ -432,4 +500,101 @@ actor BookingCanister {
             };
         };
     };
+
+    // Get bookings by status
+    public query func getBookingsByStatus(status : BookingStatus) : async [Booking] {
+        let statusBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.status == status;
+            }
+        );
+        
+        return statusBookings;
+    };
+
+    // Get active bookings for a client
+    public query func getClientActiveBookings(clientId : Principal) : async [Booking] {
+        let activeBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.clientId == clientId and 
+                       (booking.status == #Requested or 
+                        booking.status == #Accepted or 
+                        booking.status == #InProgress);
+            }
+        );
+        
+        return activeBookings;
+    };
+
+    // Get active bookings for a provider
+    public query func getProviderActiveBookings(providerId : Principal) : async [Booking] {
+        let activeBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.providerId == providerId and 
+                       (booking.status == #Requested or 
+                        booking.status == #Accepted or 
+                        booking.status == #InProgress);
+            }
+        );
+        
+        return activeBookings;
+    };
+
+    // Get completed bookings for a client
+    public query func getClientCompletedBookings(clientId : Principal) : async [Booking] {
+        let completedBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.clientId == clientId and booking.status == #Completed;
+            }
+        );
+        
+        return completedBookings;
+    };
+
+    // Get completed bookings for a provider
+    public query func getProviderCompletedBookings(providerId : Principal) : async [Booking] {
+        let completedBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.providerId == providerId and booking.status == #Completed;
+            }
+        );
+        
+        return completedBookings;
+    };
+
+    // Get disputed bookings
+    public query func getDisputedBookings() : async [Booking] {
+        let disputedBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.status == #Disputed;
+            }
+        );
+        
+        return disputedBookings;
+    };
+
+    // Get bookings by date range
+    public query func getBookingsByDateRange(
+        startDate : Time.Time,
+        endDate : Time.Time
+    ) : async [Booking] {
+        let dateRangeBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.createdAt >= startDate and booking.createdAt <= endDate;
+            }
+        );
+        
+        return dateRangeBookings;
+    };
+
+    // TODO: Payment Integration
+    // Current implementation tracks price but defers actual payment processing
+    // to be implemented in future versions
 }

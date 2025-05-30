@@ -46,32 +46,21 @@ export type Result = { 'ok' : Evidence } |
   { 'err' : string };
 export type Result_1 = { 'ok' : Booking } |
   { 'err' : string };
-export type Result_2 = { 'ok' : boolean } |
+export type Result_2 = { 'ok' : Array<Booking> } |
   { 'err' : string };
 export type Time = bigint;
 export interface _SERVICE {
-  'acceptBooking' : ActorMethod<[string, Time], Result_1>,
-  'cancelBooking' : ActorMethod<[string], Result_1>,
-  'completeBooking' : ActorMethod<[string], Result_1>,
-  'createBooking' : ActorMethod<
-    [string, Principal, bigint, Location, Time],
-    Result_1
-  >,
-  'declineBooking' : ActorMethod<[string], Result_1>,
-  'disputeBooking' : ActorMethod<[string], Result_1>,
+  'getAllBookings' : ActorMethod<[], Array<Booking>>,
+  'getAllEvidences' : ActorMethod<[], Array<Evidence>>,
   'getBooking' : ActorMethod<[string], Result_1>,
-  'getBookingsByDateRange' : ActorMethod<[Time, Time], Array<Booking>>,
-  'getBookingsByStatus' : ActorMethod<[BookingStatus], Array<Booking>>,
-  'getClientActiveBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'getClientBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'getClientCompletedBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'getDisputedBookings' : ActorMethod<[], Array<Booking>>,
-  'getProviderActiveBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'getProviderBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'getProviderCompletedBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'isEligibleForReview' : ActorMethod<[string, Principal], Result_2>,
-  'startBooking' : ActorMethod<[string], Result_1>,
-  'submitEvidence' : ActorMethod<[string, string, Array<string>], Result>,
+  'testAcceptBooking' : ActorMethod<[], Result_1>,
+  'testCompleteBooking' : ActorMethod<[], Result_1>,
+  'testCreateBooking' : ActorMethod<[], Result_1>,
+  'testDisputeBooking' : ActorMethod<[], Result_1>,
+  'testGetClientBookings' : ActorMethod<[], Result_2>,
+  'testGetProviderBookings' : ActorMethod<[], Result_2>,
+  'testStartBooking' : ActorMethod<[], Result_1>,
+  'testSubmitEvidence' : ActorMethod<[], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

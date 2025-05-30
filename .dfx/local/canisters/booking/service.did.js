@@ -57,12 +57,43 @@ export const idlFactory = ({ IDL }) => {
     'declineBooking' : IDL.Func([IDL.Text], [Result_1], []),
     'disputeBooking' : IDL.Func([IDL.Text], [Result_1], []),
     'getBooking' : IDL.Func([IDL.Text], [Result_1], ['query']),
+    'getBookingsByDateRange' : IDL.Func(
+        [Time, Time],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
+    'getBookingsByStatus' : IDL.Func(
+        [BookingStatus],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
+    'getClientActiveBookings' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
     'getClientBookings' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(Booking)],
         ['query'],
       ),
+    'getClientCompletedBookings' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
+    'getDisputedBookings' : IDL.Func([], [IDL.Vec(Booking)], ['query']),
+    'getProviderActiveBookings' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
     'getProviderBookings' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Booking)],
+        ['query'],
+      ),
+    'getProviderCompletedBookings' : IDL.Func(
         [IDL.Principal],
         [IDL.Vec(Booking)],
         ['query'],

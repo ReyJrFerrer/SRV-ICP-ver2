@@ -42,9 +42,9 @@ export interface Service {
   title: string;
   description: string;
   isActive: boolean;
-  createdAt: Date; // Keep as Date here, will be serialized for page props
-  updatedAt: Date; // Keep as Date here
-  price: ServicePrice; // This might become a base price or vary by package
+  createdAt: Date; 
+  updatedAt: Date; 
+  price: ServicePrice; 
   location: ServiceLocation;
   availability: ServiceAvailability;
   rating: ServiceRating;

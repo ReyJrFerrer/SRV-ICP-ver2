@@ -1,0 +1,122 @@
+/* SRV-ICP-1/ui/styles/ViewBookingDetailsComponent.module.css */
+.detailsCard {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 420px; /* Or adjust to fit within pageContainer */
+  text-align: left; /* Details are usually left-aligned */
+}
+
+.statusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.statusHeader h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.statusBadge {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+/* Badge colors from BookingItemCard.module.css */
+.statusBadge.pending { background-color: #f39c12; } 
+.statusBadge.confirmed { background-color: #2ecc71; } 
+.statusBadge.completed { background-color: #3498db; } 
+.statusBadge.cancelled { background-color: #e74c3c; } 
+
+.providerInfo, .bookedOnInfo {
+  font-size: 13px;
+  color: #7f8c8d;
+  margin-bottom: 16px;
+}
+.bookedOnInfo {
+    margin-bottom: 20px;
+}
+
+.providerInfo strong {
+    color: #555;
+}
+
+.summarySection {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f9f9f9; /* Light background for summary */
+  border-radius: 8px;
+  border: 1px solid #efefef;
+}
+
+.summarySection h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.summarySection p, .summarySection div {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.summarySection strong {
+  color: #2c3e50;
+}
+
+.packagesSection {
+    margin-top: 8px;
+}
+.packagesSection ul {
+  list-style: disc;
+  padding-left: 20px; /* Indent list */
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+.packagesSection ul li {
+  margin-bottom: 4px;
+}
+
+.priceHighlight {
+    font-weight: 600;
+    color: #27ae60; /* Green for price */
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+.actionButton { /* For "Book This Service Again" */
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 20px;
+  transition: background-color 0.2s ease;
+}
+.actionButton:hover {
+  background-color: #0056b3;
+}

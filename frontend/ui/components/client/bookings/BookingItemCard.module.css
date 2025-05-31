@@ -1,0 +1,125 @@
+/* SRV-ICP-1/ui/styles/BookingItemCard.module.css */
+.card {
+  background-color: #fff;
+  border-radius: 10px; /* Slightly more rounded */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Softer shadow */
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: flex-start; /* Align items to the top */
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.serviceImageContainer {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.serviceImage {
+  display: block; /* Remove extra space below image */
+}
+
+.serviceInfo {
+  flex-grow: 1;
+}
+
+.serviceName {
+  font-size: 16px; /* Adjusted */
+  font-weight: 600;
+  color: #2c3e50; /* Darker blue/grey */
+  margin-bottom: 2px;
+}
+
+.providerName {
+    font-size: 12px;
+    color: #7f8c8d; /* Grey color */
+    margin-bottom: 4px;
+}
+
+.rating { /* Style for rating if you add it */
+  font-size: 12px;
+  color: #7f8c8d; /* Grey color */
+  display: flex;
+  align-items: center;
+}
+
+.statusBadge {
+  padding: 5px 12px; /* Adjusted padding */
+  border-radius: 15px; /* Pill shape */
+  font-size: 11px;
+  font-weight: 600; /* Bolder */
+  color: white;
+  align-self: flex-start; /* Keep badge at the top */
+  margin-left: auto; /* Pushes to the right if serviceInfo takes up space */
+  white-space: nowrap;
+}
+
+/* Status badge colors - ensure these match your BookingStatus types */
+.statusBadge.pending { background-color: #f39c12; } /* Orange/Yellow */
+.statusBadge.confirmed { background-color: #2ecc71; } /* Green */
+.statusBadge.completed { background-color: #3498db; } /* Blue */
+.statusBadge.cancelled { background-color: #e74c3c; } /* Red */
+
+
+.detailsGrid {
+  display: grid;
+  gap: 8px; /* Space between detail items */
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #555;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detailIcon {
+  font-size: 16px; /* Slightly larger icons */
+  color: #555; /* Consistent icon color */
+}
+
+.actions {
+  margin-top: 12px; /* Reduced margin */
+  display: flex;
+  gap: 12px;
+}
+
+.viewButton, .bookAgainButton {
+  flex: 1;
+  padding: 10px 12px; /* Adjusted padding */
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 13px; /* Slightly smaller font */
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  text-align: center;
+}
+
+.viewButton {
+  background-color: #3498db; /* Blue consistent with "Completed" */
+  border-color: #3498db;
+  color: white;
+}
+.viewButton:hover {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.bookAgainButton {
+  background-color: #f0f0f0; /* Light grey */
+  border-color: #d0d0d0;
+  color: #333;
+}
+.bookAgainButton:hover {
+  background-color: #e0e0e0;
+}

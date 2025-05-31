@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import Head from 'next/head';
 import styles from '../../ui/styles/Client.module.css';
 import ClientHome from '../../ui/components/client/home/ClientHome';
-import ClientChat from '../../ui/components/client/chat/ClientChat';
-
-type TabType = 'home' | 'chat';
+import MyBookingsComponent from 'frontend/ui/components/client/bookings/MyBookingsComponent'; 
+type TabType = 'home' | 'bookings'; // Changed 'chat' to 'bookings'
 
 export default function ClientInterface() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -13,8 +12,8 @@ export default function ClientInterface() {
     switch (activeTab) {
       case 'home':
         return <ClientHome />;
-      case 'chat':
-        return <ClientChat />;
+      case 'bookings': // Changed 'chat' to 'bookings'
+        return <MyBookingsComponent />; 
       default:
         return <ClientHome />;
     }
@@ -30,12 +29,10 @@ export default function ClientInterface() {
       </Head>
 
       <main className={styles.main}>
-        {/* Content Area */}
         <div className={styles.content}>
           {renderContent()}
         </div>
 
-        {/* Bottom Tab Navigation */}
         <nav className={styles.bottomNav}>
           <button
             className={`${styles.tabButton} ${activeTab === 'home' ? styles.activeTab : ''}`}
@@ -46,11 +43,11 @@ export default function ClientInterface() {
           </button>
           
           <button
-            className={`${styles.tabButton} ${activeTab === 'chat' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('chat')}
+            className={`${styles.tabButton} ${activeTab === 'bookings' ? styles.activeTab : ''}`} // Changed
+            onClick={() => setActiveTab('bookings')} // Changed
           >
-            <div className={styles.tabIcon}>💬</div>
-            <span className={styles.tabLabel}>Chat</span>
+            <div className={styles.tabIcon}>📅</div> {/* Changed Icon */}
+            <span className={styles.tabLabel}>My Bookings</span> {/* Changed Label */}
           </button>
         </nav>
       </main>

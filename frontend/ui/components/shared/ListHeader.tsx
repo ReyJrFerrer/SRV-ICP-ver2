@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import styles from './ListHeader.module.css';
+import styles from 'frontend/ui/components/shared/ListHeader.module.css'; 
 import UserLocationComponent from './UserLocationComponent';
 import SearchBarComponent from './SearchBarComponent';
 import { CATEGORIES, Category } from '../../../public/data/categories';
 
-export default function ListHeader() {
-  const [showAll, setShowAll] = useState(false);
+interface ListHeaderProps {
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+}
 
-  const getCategoryIcon = (iconName: string) => {
+export default function ListHeader({ searchQuery, onSearchQueryChange }: ListHeaderProps) {
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const getCategoryIcon = (iconName: string): string => {
     const icons: { [key: string]: string } = {
       'home': '🏠',
       'broom': '🧹',
@@ -18,10 +23,16 @@ export default function ListHeader() {
       'camera': '📸',
       'graduation-cap': '🎓'
     };
-    return icons[iconName] || '🔧';
+    return icons[iconName] || '🔧'; 
   };
 
-  const displayedCategories: Category[] = showAll ? CATEGORIES : CATEGORIES.slice(0, 3);
+  const initialCategoryDisplayCount = 3; // Number of categories to show 
+  
+  const displayedCategories: Category[] = showAllCategories 
+    ? CATEGORIES 
+    : CATEGORIES.slice(0, initialCategoryDisplayCount);
+
+  const needsMoreButton = CATEGORIES.length > initialCategoryDisplayCount;
 
   return (
     <div className={styles.headerContainer}>
@@ -34,7 +45,7 @@ export default function ListHeader() {
           <button className={styles.bookingsButton}>
             <span className={styles.bookingIcon}>📅</span>
             <div className={styles.badgeContainer}>
-              <span className={styles.badgeText}>3</span>
+              <span className={styles.badgeText}>3</span> {/* This is static, make dynamic if needed */}
             </div>
           </button>
         </div>
@@ -42,7 +53,10 @@ export default function ListHeader() {
 
       {/* Search Bar */}
       <div className={styles.searchBarContainer}>
-        <SearchBarComponent />
+        <SearchBarComponent 
+          searchQuery={searchQuery}
+          onSearchQueryChange={onSearchQueryChange}
+        />
       </div>
 
       {/* Categories */}
@@ -59,19 +73,25 @@ export default function ListHeader() {
             </div>
           ))}
 
-          <div
-            className={styles.moreButton}
-            onClick={() => setShowAll(prev => !prev)}
-          >
-            <div className={styles.categoryIconContainer}>
-              <span className={styles.categoryIcon}>
-                {showAll ? '⬆' : '⋯'}
+          {/* Conditionally render the More/Less button */}
+          {needsMoreButton && (
+            <div
+              className={styles.moreButton} 
+              onClick={() => setShowAllCategories(prev => !prev)}
+              role="button" 
+              tabIndex={0} 
+              onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowAllCategories(prev => !prev);}} // Accessibility
+            >
+              <div className={styles.categoryIconContainer}>
+                <span className={styles.categoryIcon}>
+                  {showAllCategories ? '⬆️' : '⋯'} {/* Using a more distinct up arrow emoji */}
+                </span>
+              </div>
+              <span className={styles.categoryText}>
+                {showAllCategories ? 'Less' : 'More'}
               </span>
             </div>
-            <span className={styles.categoryText}>
-              {showAll ? 'Less' : 'More'}
-            </span>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,31 +1,24 @@
-import React, { useState } from 'react';
-import styles from './SearchBarComponent.module.css';
+import React from 'react'; 
+import styles from 'frontend/ui/components/shared/SearchBarComponent.module.css';
 
 interface SearchBarComponentProps {
-  onPress?: () => void;
-  placeholder?: string;
-  mapScreen?: boolean;
+    placeholder?: string;
+  searchQuery: string; 
+  onSearchQueryChange: (query: string) => void; 
 }
 
 export default function SearchBarComponent({ 
-  onPress, 
   placeholder = 'Search for services', 
-  mapScreen = false 
+  searchQuery,
+  onSearchQueryChange
 }: SearchBarComponentProps) {
-  const [searchText, setSearchText] = useState('');
-
-  const handleInputClick = () => {
-    if (!mapScreen && onPress) {
-      onPress();
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
+    onSearchQueryChange(e.target.value);
   };
 
-  const handleSearch = () => {
-    console.log('Searching for:', searchText);
+  const handleClearSearch = () => {
+    onSearchQueryChange('');
   };
 
   return (
@@ -36,13 +29,11 @@ export default function SearchBarComponent({
           type="text"
           className={styles.searchInput}
           placeholder={placeholder}
-          value={searchText}
-          onChange={handleInputChange}
-          onClick={handleInputClick}
-          readOnly={!mapScreen}
+          value={searchQuery} 
+          onChange={handleInputChange} 
         />
-        {searchText && (
-          <button className={styles.clearButton} onClick={() => setSearchText('')}>
+        {searchQuery && (
+          <button className={styles.clearButton} onClick={handleClearSearch}>
             <span className={styles.clearIcon}>✕</span>
           </button>
         )}

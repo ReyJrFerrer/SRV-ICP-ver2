@@ -1,7 +1,7 @@
 import React, { useState, ChangeEvent, FC, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Corrected path assuming standard structure
-import styles from 'frontend/ui/components/client/ClientBookingPageComponent.module.css'; // Corrected path assuming standard structure
+import styles from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent.module.css'; // Corrected path assuming standard structure
 
 interface BookingPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {

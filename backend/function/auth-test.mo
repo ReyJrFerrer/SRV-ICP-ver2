@@ -1,10 +1,10 @@
 import Principal "mo:base/Principal";
-import Text "mo:base/Text";
+import _Text "mo:base/Text";
 import Time "mo:base/Time";
 import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Iter "mo:base/Iter";
-import Debug "mo:base/Debug";
+import _Debug "mo:base/Debug";
 
 import Types "../types/shared";
 
@@ -29,6 +29,8 @@ actor AuthTestCanister {
             createdAt = Time.now();
             updatedAt = Time.now();
             isVerified = false;
+            profilePicture = null;
+            biography = null;
         };
         profiles.put(testId, testProfile);
         
@@ -60,6 +62,8 @@ actor AuthTestCanister {
             createdAt = Time.now();
             updatedAt = Time.now();
             isVerified = false;
+            profilePicture = null;
+            biography = null;
         };
         profiles.put(testId, testProfile);
         
@@ -87,6 +91,8 @@ actor AuthTestCanister {
             createdAt = Time.now();
             updatedAt = Time.now();
             isVerified = false;
+            profilePicture = null;
+            biography = null;
         };
         profiles.put(testId, testProfile);
         
@@ -115,6 +121,8 @@ actor AuthTestCanister {
                     createdAt = profile.createdAt;
                     updatedAt = Time.now();
                     isVerified = true;
+                    profilePicture = profile.profilePicture;
+                    biography = profile.biography;
                 };
                 profiles.put(testId, verifiedProfile);
                 
@@ -146,6 +154,8 @@ actor AuthTestCanister {
                     createdAt = profile.createdAt;
                     updatedAt = Time.now();
                     isVerified = profile.isVerified;
+                    profilePicture = profile.profilePicture;
+                    biography = profile.biography;
                 };
                 profiles.put(testId, updatedProfile);
                 
@@ -193,6 +203,8 @@ actor AuthTestCanister {
             createdAt = Time.now();
             updatedAt = Time.now();
             isVerified = true;
+            profilePicture = null;
+            biography = null;
         };
         profiles.put(providerId, providerProfile);
 
@@ -207,6 +219,8 @@ actor AuthTestCanister {
             createdAt = Time.now();
             updatedAt = Time.now();
             isVerified = true;
+            profilePicture = null;
+            biography = null;
         };
         profiles.put(clientId, clientProfile);
     };

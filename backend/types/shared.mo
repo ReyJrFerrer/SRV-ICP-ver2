@@ -14,6 +14,11 @@ module {
         #ServiceProvider;
     };
 
+    public type ProfileImage = {
+        imageUrl: Text;
+        thumbnailUrl: Text;
+    };
+
     public type Profile = {
         id: Principal;
         name: Text;
@@ -23,6 +28,8 @@ module {
         createdAt: Time.Time;
         updatedAt: Time.Time;
         isVerified: Bool;
+        profilePicture: ?ProfileImage;
+        biography: ?Text;
     };
 
     // Service types

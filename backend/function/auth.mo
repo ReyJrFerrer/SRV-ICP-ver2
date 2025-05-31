@@ -153,7 +153,7 @@ actor AuthCanister {
     };
 
     // Set canister references
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         reputation : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
@@ -199,7 +199,7 @@ actor AuthCanister {
         };
         
         switch (profiles.get(caller)) {
-            case (?existingProfile) {
+            case (?_existingProfile) {
                 return #err("Profile already exists");
             };
             case (null) {
@@ -212,6 +212,8 @@ actor AuthCanister {
                     createdAt = Time.now();
                     updatedAt = Time.now();
                     isVerified = false;
+                    profilePicture = null;
+                    biography = null;
                 };
                 
                 profiles.put(caller, newProfile);
@@ -324,6 +326,8 @@ actor AuthCanister {
                     createdAt = existingProfile.createdAt;
                     updatedAt = Time.now();
                     isVerified = existingProfile.isVerified;
+                    profilePicture = existingProfile.profilePicture;
+                    biography = existingProfile.biography;
                 };
 
                 // Update email and phone mappings if changed
@@ -382,6 +386,8 @@ actor AuthCanister {
                     createdAt = profile.createdAt;
                     updatedAt = Time.now();
                     isVerified = true;
+                    profilePicture = profile.profilePicture;
+                    biography = profile.biography;
                 };
                 
                 profiles.put(userId, updatedProfile);

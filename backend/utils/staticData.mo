@@ -66,9 +66,83 @@ module {
         postalCode = "2600";
     };
 
-    // Static User Profiles - temporarily returning empty to avoid Principal issues
+    // Static User Profiles with image references
     public func getStaticProfiles() : [(Principal, Profile)] {
-        return []; // Empty array for now
+        return [
+            (Principal.fromText("2vxsx-fae"), {
+                id = Principal.fromText("2vxsx-fae");
+                name = "Mary Gold";
+                email = "mary.gold@example.com";
+                phone = "+1234567890";
+                role = #ServiceProvider;
+                createdAt = 1640995200000000000; // 2022-01-01
+                updatedAt = 1640995200000000000;
+                isVerified = true;
+                profilePicture = ?{
+                    imageUrl = "/images/Maid1.jpg";
+                    thumbnailUrl = "/images/Maid1.jpg";
+                };
+                biography = ?"Experienced house maid with over 10 years of experience in residential cleaning and organizing.";
+            }),
+            (Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"), {
+                id = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+                name = "Silverston Eliot";
+                email = "silverston.eliot@example.com";
+                phone = "+1987654321";
+                role = #ServiceProvider;
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+                isVerified = true;
+                profilePicture = ?{
+                    imageUrl = "/images/Plumber1.jpg";
+                    thumbnailUrl = "/images/Plumber1.jpg";
+                };
+                biography = ?"Emergency plumbing specialist with expertise in fixing leaks, clogs, and plumbing installations. Available 24/7 for urgent calls.";
+            }),
+            (Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), {
+                id = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+                name = "Juan Del JoJo";
+                email = "juan.deljojo@example.com";
+                phone = "+1122334455";
+                role = #ServiceProvider;
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+                isVerified = true;
+                profilePicture = ?{
+                    imageUrl = "/images/Technician1.jpg";
+                    thumbnailUrl = "/images/Technician1.jpg";
+                };
+                biography = ?"Skilled appliance repair technician with experience fixing refrigerators, washing machines, dryers, and other major household appliances.";
+            }),
+            (Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai"), {
+                id = Principal.fromText("r7inp-6aaaa-aaaaa-aaabq-cai");
+                name = "Sophie Chen";
+                email = "sophie.chen@example.com";
+                phone = "+1555666777";
+                role = #ServiceProvider;
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+                isVerified = true;
+                profilePicture = ?{
+                    imageUrl = "/images/BeautyServices-Hairstylist1.jpg";
+                    thumbnailUrl = "/images/BeautyServices-Hairstylist1.jpg";
+                };
+                biography = ?"Professional hairstylist specializing in cuts, colors, and styling for all hair types.";
+            }),
+            // Sample client accounts
+            (Principal.fromText("uxrrr-q7777-77774-qaaaq-cai"), {
+                id = Principal.fromText("uxrrr-q7777-77774-qaaaq-cai");
+                name = "John Client";
+                email = "john.client@example.com";
+                phone = "+1999888777";
+                role = #Client;
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+                isVerified = true;
+                profilePicture = null;
+                biography = null;
+            })
+        ];
     };
 
     // Static Services

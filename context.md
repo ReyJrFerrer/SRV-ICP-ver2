@@ -221,4 +221,90 @@
 - Service IDs connect ratings to providers
 - Evidence IDs link proof to specific interactions
 
-This architecture ensures that reputation management is seamlessly integrated throughout the user journey while maintaining the decentralized, automated nature required for your hackathon dApp.
+
+setCanister Work
+### 5. **Canister Principal IDs**
+- Auth
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        reputation : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        reputationCanisterId := reputation;
+        return #ok("Canister references set successfully");
+    };
+
+- Booking
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        auth : ?Principal,
+        service : ?Principal,
+        review : ?Principal,
+        reputation : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := auth;
+        serviceCanisterId := service;
+        reviewCanisterId := review;
+        reputationCanisterId := reputation;
+        return #ok("Canister references set successfully");
+    };
+- Service 
+
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        auth : ?Principal,
+        booking : ?Principal,
+        review : ?Principal,
+        reputation : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := auth;
+        bookingCanisterId := booking;
+        reviewCanisterId := review;
+        reputationCanisterId := reputation;
+        return #ok("Canister references set successfully");
+    };
+
+
+
+- Review
+    // Set canister references (admin function)
+    public shared(_msg) func setCanisterReferences(
+        booking : Principal,
+        service : Principal,
+        reputation : Principal,
+        auth : Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        bookingCanisterId := ?booking;
+        serviceCanisterId := ?service;
+        reputationCanisterId := ?reputation;
+        authCanisterId := ?auth;
+        
+        return #ok("Canister references set successfully");
+    };
+    
+
+- Reputation
+    // Set canister references (admin function)
+    public shared(msg) func setCanisterReferences(
+        auth : Principal,
+        booking : Principal,
+        review : Principal,
+        service : Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := ?auth;
+        bookingCanisterId := ?booking;
+        reviewCanisterId := ?review;
+        serviceCanisterId := ?service;
+        
+        return #ok("Canister references set successfully");
+    };
+
+
+
+
+
+

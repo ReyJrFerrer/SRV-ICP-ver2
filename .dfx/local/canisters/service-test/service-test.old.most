@@ -11,7 +11,14 @@ type Location__726251617 =
   };
 type ServiceCategory__18075912 = ServiceCategory__231591993;
 type ServiceCategory__231591993 =
-  {description : Text; id : Text; name : Text; parentId : ?Text; slug : Text};
+  {
+    description : Text;
+    id : Text;
+    imageUrl : Text;
+    name : Text;
+    parentId : ?Text;
+    slug : Text
+  };
 type ServiceStatus__906036687 = {#Available; #Suspended; #Unavailable};
 type Service__149533164 =
   {

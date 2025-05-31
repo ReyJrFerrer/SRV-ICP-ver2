@@ -13,6 +13,7 @@ import Debug "mo:base/Debug";
 import Buffer "mo:base/Buffer";
 
 import Types "../types/shared";
+import StaticData "../utils/staticData";
 
 actor ReviewCanister {
     // Type definitions
@@ -28,6 +29,7 @@ actor ReviewCanister {
     private var bookingCanisterId : ?Principal = null;
     private var serviceCanisterId : ?Principal = null;
     private var reputationCanisterId : ?Principal = null;
+    private var authCanisterId : ?Principal = null;
 
     // Constants
     private let REVIEW_WINDOW_DAYS : Nat = 30;
@@ -45,50 +47,8 @@ actor ReviewCanister {
 
     // Initialize static reviews
     private func initializeStaticReviews() {
-        let staticReviews : [(Text, Review)] = [
-            ("rev-001", {
-                id = "rev-001";
-                bookingId = "bk-001";
-                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                serviceId = "svc-001";
-                rating = 5;
-                comment = "Excellent service! The provider was very professional and completed the work on time.";
-                createdAt = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
-                updatedAt = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
-                status = #Visible;
-                qualityScore = ?0.9;
-            }),
-            ("rev-002", {
-                id = "rev-002";
-                bookingId = "bk-002";
-                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                serviceId = "svc-002";
-                rating = 4;
-                comment = "Good service overall. The provider was knowledgeable but took longer than expected.";
-                createdAt = Time.now() - (5 * 24 * 3600_000_000_000); // 5 days ago
-                updatedAt = Time.now() - (5 * 24 * 3600_000_000_000); // 5 days ago
-                status = #Visible;
-                qualityScore = ?0.8;
-            }),
-            ("rev-003", {
-                id = "rev-003";
-                bookingId = "bk-003";
-                clientId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                providerId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                serviceId = "svc-003";
-                rating = 3;
-                comment = "Average service. The provider was late and the quality was not as expected.";
-                createdAt = Time.now() - (7 * 24 * 3600_000_000_000); // 7 days ago
-                updatedAt = Time.now() - (7 * 24 * 3600_000_000_000); // 7 days ago
-                status = #Hidden;
-                qualityScore = ?0.6;
-            })
-        ];
-        
-        // Add reviews to HashMap
-        for ((id, review) in staticReviews.vals()) {
+        // Add reviews to HashMap from shared static data
+        for ((id, review) in StaticData.getSTATIC_REVIEWS().vals()) {
             reviews.put(id, review);
         };
     };
@@ -555,12 +515,14 @@ actor ReviewCanister {
     public shared(msg) func setCanisterReferences(
         booking : Principal,
         service : Principal,
-        reputation : Principal
+        reputation : Principal,
+        auth : Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         bookingCanisterId := ?booking;
         serviceCanisterId := ?service;
         reputationCanisterId := ?reputation;
+        authCanisterId := ?auth;
         
         return #ok("Canister references set successfully");
     };

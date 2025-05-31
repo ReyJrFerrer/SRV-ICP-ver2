@@ -8,6 +8,7 @@ import Nat "mo:base/Nat";
 import Char "mo:base/Char";
 import Option "mo:base/Option";
 import Types "../types/shared";
+import StaticData "../utils/staticData";
 
 actor AuthCanister {
     // Type definitions
@@ -21,6 +22,9 @@ actor AuthCanister {
     private var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
     private var emailToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
     private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
+
+    // Canister references
+    private var reputationCanisterId : ?Principal = null;
 
     // Constants
     private let MIN_NAME_LENGTH : Nat = 2;
@@ -118,35 +122,12 @@ actor AuthCanister {
 
     // Static data initialization
     private func initializeStaticProfiles() {
-        let staticProfiles : [(Principal, Profile)] = [
-            (Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"), {
-                id = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                name = "Demo Service Provider";
-                email = "provider@example.com";
-                phone = "1234567890";
-                role = #ServiceProvider;
-                createdAt = Time.now();
-                updatedAt = Time.now();
-                isVerified = true;
-            }),
-            (Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"), {
-                id = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                name = "Demo Client";
-                email = "client@example.com";
-                phone = "9876543210";
-                role = #Client;
-                createdAt = Time.now();
-                updatedAt = Time.now();
-                isVerified = true;
-            })
-        ];
-
-        // Add profiles to HashMap
-        for ((id, profile) in staticProfiles.vals()) {
-            profiles.put(id, profile);
-            verifiedUsers.put(id, true);
-            emailToPrincipal.put(profile.email, id);
-            phoneToPrincipal.put(profile.phone, id);
+        // Add profiles from shared static data
+        for ((principal, profile) in StaticData.getSTATIC_PROFILES().vals()) {
+            profiles.put(principal, profile);
+            verifiedUsers.put(principal, true);
+            emailToPrincipal.put(profile.email, principal);
+            phoneToPrincipal.put(profile.phone, principal);
         };
     };
 
@@ -169,6 +150,15 @@ actor AuthCanister {
         if (profiles.size() == 0) {
             initializeStaticProfiles();
         };
+    };
+
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        reputation : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        reputationCanisterId := reputation;
+        return #ok("Canister references set successfully");
     };
 
     // Public functions
@@ -228,6 +218,20 @@ actor AuthCanister {
                 verifiedUsers.put(caller, false);
                 emailToPrincipal.put(email, caller);
                 phoneToPrincipal.put(phone, caller);
+                
+                // Initialize reputation for new user
+                switch (reputationCanisterId) {
+                    case (?repId) {
+                        let reputationCanister = actor(Principal.toText(repId)) : actor {
+                            initializeReputation : (Principal, Time.Time) -> async Types.Result<Types.ReputationScore>;
+                        };
+                        ignore await reputationCanister.initializeReputation(caller, Time.now());
+                    };
+                    case (null) {
+                        // Reputation canister not set, continue without initializing reputation
+                    };
+                };
+                
                 return #ok(newProfile);
             };
         };

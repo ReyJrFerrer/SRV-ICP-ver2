@@ -10,6 +10,7 @@ import Int "mo:base/Int";
 import Debug "mo:base/Debug";
 
 import Types "../types/shared";
+import StaticData "../utils/staticData";
 
 actor ServiceCanister {
     // Type definitions
@@ -28,6 +29,9 @@ actor ServiceCanister {
 
     // Canister references
     private var authCanisterId : ?Principal = null;
+    private var bookingCanisterId : ?Principal = null;
+    private var reviewCanisterId : ?Principal = null;
+    private var reputationCanisterId : ?Principal = null;
 
     // Constants
     private let MIN_TITLE_LENGTH : Nat = 5;
@@ -39,10 +43,16 @@ actor ServiceCanister {
 
     // Set canister references
     public shared(msg) func setCanisterReferences(
-        auth : ?Principal
+        auth : ?Principal,
+        booking : ?Principal,
+        review : ?Principal,
+        reputation : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
+        bookingCanisterId := booking;
+        reviewCanisterId := review;
+        reputationCanisterId := reputation;
         return #ok("Canister references set successfully");
     };
 
@@ -113,116 +123,13 @@ actor ServiceCanister {
 
     // Static data initialization
     private func initializeStaticData() {
-        // Initialize categories
-        let staticCategories : [(Text, ServiceCategory)] = [
-            (generateId(), {
-                id = generateId();
-                name = "Home Services";
-                description = "Professional home maintenance and improvement services";
-                parentId = null;
-                slug = "home-services";
-                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/home-services-cover"
-            }),
-            (generateId(), {
-                id = generateId();
-                name = "Cleaning Services";
-                description = "Professional cleaning and housekeeping services";
-                parentId = null;
-                slug = "home-cleaning";
-                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/cleaning-services-cover"
-            }),
-            (generateId(), {
-                id = generateId();
-                name = "Automobile Repairs";
-                description = "Professional automobile maintenance and repair services";
-                parentId = null;
-                slug = "auto-repairs";
-                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/auto-repairs-cover"
-            }),
-            (generateId(), {
-                id = generateId();
-                name = "Gadget Technicians";
-                description = "Professional repair and support for electronic devices";
-                parentId = null;
-                slug = "gadget-tech";
-                imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/gadget-tech-cover"
-            })
-        ];
-
-        // Initialize sample services
-        let sampleLocation : Location = {
-            latitude = 16.4145;
-            longitude = 120.5960;
-            address = "Baguio City - Session Road";
-            city = "Baguio City";
-            state = "Benguet";
-            country = "Philippines";
-            postalCode = "2600"
-        };
-
-        // Add categories to HashMap first
-        for ((id, category) in staticCategories.vals()) {
+        // Initialize categories from shared static data
+        for ((id, category) in StaticData.STATIC_CATEGORIES.vals()) {
             categories.put(id, category);
         };
 
-        // Initialize sample services with dynamic IDs
-        let staticServices : [(Text, Service)] = [
-            (generateId(), {
-                id = generateId();
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
-                title = "Professional Home Cleaning";
-                description = "Experienced house maid for cleaning, organizing, and maintaining your home";
-                category = switch(categories.get(staticCategories[1].0)) { 
-                    case(?c) c; 
-                    case(null) {
-                        {
-                            id = generateId();
-                            name = "Cleaning Services";
-                            description = "Professional cleaning and housekeeping services";
-                            parentId = null;
-                            slug = "home-cleaning";
-                            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/clean-house.jpg"
-                        }
-                    } 
-                };
-                price = 5000;
-                location = sampleLocation;
-                status = #Available;
-                createdAt = Time.now();
-                updatedAt = Time.now();
-                rating = ?4.8;
-                reviewCount = 156
-            }),
-            (generateId(), {
-                id = generateId();
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
-                title = "Car Maintenance Service";
-                description = "Complete car maintenance and repair services. We handle everything from oil changes to major repairs.";
-                category = switch(categories.get(staticCategories[2].0)) { 
-                    case(?c) c; 
-                    case(null) {
-                        {
-                            id = generateId();
-                            name = "Automobile Repairs";
-                            description = "Professional automobile maintenance and repair services";
-                            parentId = null;
-                            slug = "auto-repairs";
-                            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/car-repair.jpg"
-                        }
-                    } 
-                };
-                price = 6000;
-                location = sampleLocation;
-                status = #Available;
-                createdAt = Time.now();
-                updatedAt = Time.now();
-                rating = ?4.9;
-                reviewCount = 213
-            })
-        ];
-
-        // Add services to HashMap
-        for ((id, service) in staticServices.vals()) {
+        // Initialize services from shared static data
+        for ((id, service) in StaticData.getSTATIC_SERVICES().vals()) {
             services.put(id, service);
         };
     };
@@ -419,6 +326,54 @@ actor ServiceCanister {
         );
         
         return filteredServices;
+    };
+    
+    // Search services by location with reputation filtering
+    public func searchServicesWithReputationFilter(
+        userLocation : Location,
+        maxDistance : Float,
+        categoryId : ?Text,
+        minTrustScore : ?Float
+    ) : async [Service] {
+        let allServices = Iter.toArray(services.vals());
+        
+        let filteredServices = Array.filter<Service>(
+            allServices,
+            func (service : Service) : Bool {
+                let categoryMatch = switch(categoryId) {
+                    case (?id) service.category.id == id;
+                    case (null) true;
+                };
+                
+                let distance = calculateDistance(userLocation, service.location);
+                return service.status == #Available and categoryMatch and distance <= maxDistance;
+            }
+        );
+        
+        // Filter by reputation if reputation canister is available
+        switch (reputationCanisterId, minTrustScore) {
+            case (?repId, ?minScore) {
+                let reputationCanister = actor(Principal.toText(repId)) : actor {
+                    getReputationScore : (Principal) -> async Types.Result<Types.ReputationScore>;
+                };
+                
+                // Note: In a real implementation, you'd want to batch these calls
+                // or pre-cache reputation scores for better performance
+                let servicesWithReputation = Array.filter<Service>(
+                    filteredServices,
+                    func (service : Service) : Bool {
+                        // For demo purposes, we'll assume trust score meets minimum
+                        // In real implementation, you'd await the reputation score
+                        true
+                    }
+                );
+                
+                return servicesWithReputation;
+            };
+            case (_, _) {
+                return filteredServices;
+            };
+        };
     };
     
     // Update service rating (called by Review Canister)

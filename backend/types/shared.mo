@@ -32,6 +32,7 @@ module {
         description: Text;
         parentId: ?Text;
         slug: Text;
+        imageUrl: Text;
     };
 
     public type Location = {

@@ -10,6 +10,7 @@ import Int "mo:base/Int";
 import Debug "mo:base/Debug";
 
 import Types "../types/shared";
+import StaticData "../utils/staticData";
 
 actor BookingCanister {
     // Type definitions
@@ -29,6 +30,8 @@ actor BookingCanister {
     // Canister references
     private var authCanisterId : ?Principal = null;
     private var serviceCanisterId : ?Principal = null;
+    private var reviewCanisterId : ?Principal = null;
+    private var reputationCanisterId : ?Principal = null;
 
     // Constants
     private let MIN_PRICE : Nat = 100;
@@ -113,65 +116,9 @@ actor BookingCanister {
 
     // Static data initialization
     private func initializeStaticData() {
-        let sampleLocation : Location = {
-            latitude = 16.4145;
-            longitude = 120.5960;
-            address = "Baguio City - Session Road";
-            city = "Baguio City";
-            state = "Benguet";
-            country = "Philippines";
-            postalCode = "2600"
-        };
-
-        // Get service details from service canister
-        switch (serviceCanisterId) {
-            case (?serviceCanisterId) {
-                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
-                    getService : (Text) -> async Types.Result<Types.Service>;
-                };
-                
-                // Initialize sample bookings with dynamic IDs
-                let staticBookings : [(Text, Booking)] = [
-                    (generateId(), {
-                        id = generateId();
-                        clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"); // This should be replaced with actual client ID
-                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
-                        serviceId = generateId(); // This should be replaced with actual service ID
-                        status = #Completed;
-                        requestedDate = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
-                        scheduledDate = ?(Time.now() - (1 * 24 * 3600_000_000_000)); // 1 day ago
-                        completedDate = ?(Time.now() - (12 * 3600_000_000_000)); // 12 hours ago
-                        price = 5000;
-                        location = sampleLocation;
-                        evidence = null;
-                        createdAt = Time.now() - (3 * 24 * 3600_000_000_000); // 3 days ago
-                        updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
-                    }),
-                    (generateId(), {
-                        id = generateId();
-                        clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"); // This should be replaced with actual client ID
-                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
-                        serviceId = generateId(); // This should be replaced with actual service ID
-                        status = #InProgress;
-                        requestedDate = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
-                        scheduledDate = ?Time.now();
-                        completedDate = null;
-                        price = 6000;
-                        location = sampleLocation;
-                        evidence = null;
-                        createdAt = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
-                        updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
-                    })
-                ];
-
-                // Add bookings to HashMap
-                for ((id, booking) in staticBookings.vals()) {
-                    bookings.put(id, booking);
-                };
-            };
-            case (null) {
-                Debug.print("Service canister reference not set, skipping static data initialization");
-            };
+        // Add bookings from shared static data
+        for ((id, booking) in StaticData.getSTATIC_BOOKINGS().vals()) {
+            bookings.put(id, booking);
         };
     };
 
@@ -197,11 +144,15 @@ actor BookingCanister {
     // Set canister references
     public shared(msg) func setCanisterReferences(
         auth : ?Principal,
-        service : ?Principal
+        service : ?Principal,
+        review : ?Principal,
+        reputation : ?Principal
     ) : async Result<Text> {
         // In real implementation, need to check if caller has admin rights
         authCanisterId := auth;
         serviceCanisterId := service;
+        reviewCanisterId := review;
+        reputationCanisterId := reputation;
         return #ok("Canister references set successfully");
     };
 
@@ -441,6 +392,23 @@ actor BookingCanister {
                 switch (updateBookingStatus(existingBooking, #Completed, caller, true)) {
                     case (#ok(updatedBooking)) {
                         bookings.put(bookingId, updatedBooking);
+                        
+                        // Update reputation scores for both provider and client
+                        switch (reputationCanisterId) {
+                            case (?repId) {
+                                let reputationCanister = actor(Principal.toText(repId)) : actor {
+                                    updateUserReputation : (Principal) -> async Types.Result<Types.ReputationScore>;
+                                };
+                                // Update provider reputation
+                                ignore await reputationCanister.updateUserReputation(updatedBooking.providerId);
+                                // Update client reputation
+                                ignore await reputationCanister.updateUserReputation(updatedBooking.clientId);
+                            };
+                            case (null) {
+                                // Reputation canister not set, continue without updating reputation
+                            };
+                        };
+                        
                         return #ok(updatedBooking);
                     };
                     case (#err(msg)) {

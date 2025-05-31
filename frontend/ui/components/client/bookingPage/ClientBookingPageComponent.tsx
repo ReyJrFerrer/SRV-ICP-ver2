@@ -1,7 +1,10 @@
 import React, { useState, ChangeEvent, FC, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services'; // Corrected path assuming standard structure
-import styles from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent.module.css'; // Corrected path assuming standard structure
+import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/data/services';
+import styles from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent.module.css'; 
+import DatePicker from 'react-datepicker'; 
+import "react-datepicker/dist/react-datepicker.css"; 
+
 
 interface BookingPageComponentProps {
   service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt' | 'availability'> & {
@@ -53,26 +56,13 @@ const ConcernsInput: FC<{concerns: string; onConcernsChange: (value: string) => 
   </div>
 );
 
-const SimpleCalendar: FC<{selectedDate: Date | null, onDateSelect: (date: Date) => void}> = ({selectedDate, onDateSelect}) => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const isSelected = (date: Date) => selectedDate && date.toDateString() === selectedDate.toDateString();
-  return (
-    <div className={styles.calendarPlaceholder}>
-      <p>Select a date:</p>
-      <button onClick={() => onDateSelect(today)} className={isSelected(today) ? `${styles.dateButton} ${styles.dateButtonSelected}` : styles.dateButton}>Today ({today.toLocaleDateString()})</button>
-      <button onClick={() => onDateSelect(tomorrow)} className={isSelected(tomorrow) ? `${styles.dateButton} ${styles.dateButtonSelected}` : styles.dateButton}>Tomorrow ({tomorrow.toLocaleDateString()})</button>
-      {selectedDate && <p>Selected: {selectedDate.toLocaleDateString()}</p>}
-    </div>
-  );
-};
+
 
 interface BookingOptionsProps {
   bookingOption: 'sameday' | 'scheduled';
   onOptionChange: (option: 'sameday' | 'scheduled') => void;
   selectedDate: Date | null;
-  onDateChange: (date: Date | null) => void;
+  onDateChange: (date: Date | null) => void; 
   selectedTime: string;
   onTimeChange: (time: string) => void;
   isSameDayAvailable: boolean;
@@ -80,22 +70,17 @@ interface BookingOptionsProps {
 
 const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
   bookingOption, onOptionChange, selectedDate, onDateChange, selectedTime, onTimeChange,
-  isSameDayAvailable // Use this prop
+  isSameDayAvailable
 }) => (
   <div className={styles.formSection}>
     <h3 className={styles.sectionTitle}>Booking Schedule</h3>
     <div className={styles.optionGroup}>
       <button
         className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`}
-        onClick={() => { 
-          if (isSameDayAvailable) { // Only change state if it's clickable
-            onOptionChange('sameday'); 
-            onDateChange(null); 
-          }
-        }}
-        disabled={!isSameDayAvailable} // <<<< KEY: Disables button if not available
+        onClick={() => { if (isSameDayAvailable) { onOptionChange('sameday'); onDateChange(null); }}}
+        disabled={!isSameDayAvailable}
       >
-        Within the hour <span className={styles.optionDetail}>25 - 40 mins</span>
+        Same day <span className={styles.optionDetail}>25 - 40 mins</span>
       </button>
       <button
         className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`}
@@ -104,10 +89,33 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
         Scheduled
       </button>
     </div>
+
     {bookingOption === 'scheduled' && (
       <div className={styles.scheduledOptions}>
-        <SimpleCalendar selectedDate={selectedDate} onDateSelect={onDateChange} />
-        {selectedDate && (<><input type="time" className={styles.timeInput} value={selectedTime} onChange={(e: ChangeEvent<HTMLInputElement>) => onTimeChange(e.target.value)} /> </>)}
+        <p className={styles.inputLabel}>Select Date:</p>
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date: Date | null) => onDateChange(date)} // react-datepicker passes Date or null
+          className={styles.datePickerInput} // Apply custom styling to the input
+          placeholderText="Click to select a date"
+          dateFormat="MMMM d, yyyy" // How the date is displayed in the input
+          minDate={new Date()} // Prevent selecting past dates
+          // You can add many more props for customization
+        />
+        
+        {selectedDate && (
+          <div style={{ marginTop: '15px' }}>
+            <p className={styles.inputLabel}>Select Time:</p>
+            <input
+              type="time"
+              className={styles.timeInput} // Use existing style or create a new one
+              value={selectedTime}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => onTimeChange(e.target.value)}
+            />
+            {/* The button for "Select Time" might no longer be needed if input type="time" is intuitive enough */}
+            {/* <button className={styles.actionButton} style={{marginTop: '10px', backgroundColor: '#f0f0f0', color: '#333'}}>Select Time</button> */}
+          </div>
+        )}
       </div>
     )}
   </div>
@@ -189,7 +197,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
 
- const [houseNumber, setHouseNumber] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
   const [street, setStreet] = useState('');
   const [barangay, setBarangay] = useState('');
   const [municipalityCity, setMunicipalityCity] = useState('');
@@ -197,9 +205,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const [currentLocationStatus, setCurrentLocationStatus] = useState('');
   const [useGpsLocation, setUseGpsLocation] = useState(false);
   const [showManualAddress, setShowManualAddress] = useState(false);
-
   const [formError, setFormError] = useState<string | null>(null);
-
 
   useEffect(() => {
     if (service && service.packages) {
@@ -209,6 +215,16 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         setBookingOption('scheduled');
     }
   }, [service]);
+
+  useEffect(() => {
+    if (!selectedDate) {
+      setSelectedTime('');
+    }
+  }, [selectedDate]);
+
+  if (!service) {
+    return <div>Loading service details...</div>;
+  }
 
   const handlePackageChange = (packageId: string) => {
     setPackages(prevPackages =>
@@ -328,14 +344,14 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
     <div className={styles.bookingFormContainer}>
       <PackageSelection packages={packages} onPackageChange={handlePackageChange} />
       <ConcernsInput concerns={concerns} onConcernsChange={setConcerns} />
-       <BookingOptionsDisplay
+        <BookingOptionsDisplay
         bookingOption={bookingOption}
         onOptionChange={setBookingOption}
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={setSelectedDate} 
         selectedTime={selectedTime}
         onTimeChange={setSelectedTime}
-        isSameDayAvailable={service.availability.isAvailableNow} // <<<< Pass the availability status
+        isSameDayAvailable={service.availability.isAvailableNow}
       />
       <LocationInfo
         houseNumber={houseNumber} onHouseNumberChange={setHouseNumber}

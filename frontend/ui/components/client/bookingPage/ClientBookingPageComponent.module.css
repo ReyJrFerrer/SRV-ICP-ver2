@@ -292,9 +292,6 @@
   margin-bottom: 15px; 
 }
 
-/* SRV-ICP-1/ui/styles/BookingPageComponent.module.css */
-/* ... (keep all existing styles) ... */
-
 .formErrorMessage {
   color: red;
   background-color: #ffe0e0;
@@ -304,4 +301,44 @@
   border-radius: 6px;
   font-size: 14px;
   text-align: center;
+}
+
+.scheduledOptions {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background-color: #fdfdfd; /* Slightly off-white background for this section */
+}
+
+.inputLabel { /* New style for labels above inputs */
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.datePickerInput { /* Style for the DatePicker input field */
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: white; /* Ensure it looks like an input */
+}
+.datePickerInput::placeholder {
+  color: #999;
+}
+
+
+.timeInput {
+  width: 100%;
+  padding: 10px;
+  /* margin-top: 10px; /* This is now handled by the div wrapper */
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
 }

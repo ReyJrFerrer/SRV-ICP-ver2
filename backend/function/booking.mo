@@ -183,6 +183,33 @@ actor BookingCanister {
         };
     };
 
+    // Helper function to validate provider availability
+    private func validateProviderAvailability(providerId : Principal, requestedDateTime : Time.Time) : async Result<Bool> {
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    isProviderAvailable : (Principal, Time.Time) -> async Types.Result<Bool>;
+                };
+                
+                switch (await serviceCanister.isProviderAvailable(providerId, requestedDateTime)) {
+                    case (#ok(isAvailable)) {
+                        if (isAvailable) {
+                            return #ok(true);
+                        } else {
+                            return #err("Provider is not available at the requested date and time");
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Availability check failed: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
     // Create a new booking request
     public shared(msg) func createBooking(
         serviceId : Text,
@@ -234,6 +261,14 @@ actor BookingCanister {
 
         if (not validateScheduledDate(requestedDate, requestedDate)) {
             return #err("Requested date must be between 1 hour and 30 days from now");
+        };
+
+        // Validate provider availability
+        switch (await validateProviderAvailability(providerId, requestedDate)) {
+            case (#err(msg)) {
+                return #err(msg);
+            };
+            case (#ok(_)) {};
         };
         
         let bookingId = generateId();
@@ -644,6 +679,111 @@ actor BookingCanister {
         );
         
         return dateRangeBookings;
+    };
+
+    // CLIENT AVAILABILITY QUERY FUNCTIONS
+
+    // Get provider's available time slots for a specific date
+    public func getProviderAvailableSlots(
+        providerId : Principal,
+        date : Time.Time
+    ) : async Result<[Types.AvailableSlot]> {
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getAvailableTimeSlots : (Principal, Time.Time) -> async Types.Result<[Types.AvailableSlot]>;
+                };
+                
+                return await serviceCanister.getAvailableTimeSlots(providerId, date);
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
+    // Get provider's availability settings
+    public func getProviderAvailabilitySettings(providerId : Principal) : async Result<Types.ProviderAvailability> {
+        switch (serviceCanisterId) {
+            case (?serviceId) {
+                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                    getProviderAvailability : (Principal) -> async Types.Result<Types.ProviderAvailability>;
+                };
+                
+                return await serviceCanister.getProviderAvailability(providerId);
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
+    // Check if provider is available for booking at specific date/time
+    public func checkProviderAvailability(
+        providerId : Principal,
+        requestedDateTime : Time.Time
+    ) : async Result<Bool> {
+        return await validateProviderAvailability(providerId, requestedDateTime);
+    };
+
+    // Get provider's booking conflicts for a date range
+    public func getProviderBookingConflicts(
+        providerId : Principal,
+        startDate : Time.Time,
+        endDate : Time.Time
+    ) : async [Booking] {
+        let providerBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.providerId == providerId and 
+                       (booking.status == #Accepted or booking.status == #InProgress) and
+                       (switch (booking.scheduledDate) {
+                           case (?scheduled) {
+                               scheduled >= startDate and scheduled <= endDate
+                           };
+                           case (null) {
+                               booking.requestedDate >= startDate and booking.requestedDate <= endDate
+                           };
+                       });
+            }
+        );
+        
+        return providerBookings;
+    };
+
+    // Get daily booking count for a provider on a specific date
+    public query func getDailyBookingCount(
+        providerId : Principal,
+        date : Time.Time
+    ) : async Nat {
+        let startOfDay = getStartOfDay(date);
+        let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
+        
+        let dailyBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.providerId == providerId and 
+                       (booking.status == #Accepted or booking.status == #InProgress) and
+                       (switch (booking.scheduledDate) {
+                           case (?scheduled) {
+                               scheduled >= startOfDay and scheduled < endOfDay
+                           };
+                           case (null) {
+                               booking.requestedDate >= startOfDay and booking.requestedDate < endOfDay
+                           };
+                       });
+            }
+        );
+        
+        return dailyBookings.size();
+    };
+
+    // Helper function to get start of day timestamp
+    private func getStartOfDay(timestamp : Time.Time) : Time.Time {
+        let secondsSinceEpoch = timestamp / 1_000_000_000;
+        let daysSinceEpoch = secondsSinceEpoch / 86400;
+        let startOfDaySeconds = daysSinceEpoch * 86400;
+        startOfDaySeconds * 1_000_000_000
     };
 
     // TODO: Payment Integration

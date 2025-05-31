@@ -6,38 +6,51 @@
   - Environments: .env
 
    Creating an optimized production build ...
+ ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
+Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
+Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
  ✓ Compiled successfully
    Linting and checking validity of types ...
  ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
    Collecting page data ...
-   Generating static pages (0/14) ...
-   Generating static pages (3/14) 
-   Generating static pages (6/14) 
-   Generating static pages (10/14) 
- ✓ Generating static pages (14/14)
+   Generating static pages (0/15) ...
+   Generating static pages (3/15) 
+   Generating static pages (7/15) 
+   Generating static pages (11/15) 
+ ✓ Generating static pages (15/15)
    Finalizing page optimization ...
    Collecting build traces ...
 
 
 Route (pages)                              Size     First Load JS
-┌ ○ / (463 ms)                             4.75 kB         185 kB
-├   /_app                                  0 B             178 kB
-├ ○ /404                                   181 B           178 kB
-├ ○ /client (409 ms)                       3.24 kB         184 kB
-├ ○ /client/categories/[slug] (459 ms)     2.75 kB         189 kB
+┌ ○ /                                      4.75 kB         186 kB
+├   /_app                                  0 B             179 kB
+├ ○ /404                                   181 B           179 kB
+├ ○ /client                                3.24 kB         184 kB
+├ ƒ /client/book/[slug]                    48.9 kB         227 kB
+├ ○ /client/booking/confirmation           1.24 kB         182 kB
+├ ○ /client/categories/[slug]              3.13 kB         189 kB
 ├ ○ /client/chat                           2.38 kB         183 kB
-├ ○ /client/home (459 ms)                  4.76 kB         191 kB
-├ ○ /client/service-maps                   3.99 kB         190 kB
-├ ○ /client/service/[slug]                 4.27 kB         191 kB
-├ ○ /client/service/view-all (412 ms)      2.5 kB          189 kB
-├ ○ /create-profile (461 ms)               2.89 kB         181 kB
-├ ○ /provider                              3.24 kB         184 kB
-└ ○ /provider/home (367 ms)                8.01 kB         189 kB
-+ First Load JS shared by all              185 kB
-  ├ chunks/framework-f193041683c5bfd5.js   44.8 kB
-  ├ chunks/main-313b4d8d397186dc.js        34 kB
-  ├ chunks/pages/_app-b218e77bf1a1f95b.js  97.7 kB
-  └ other shared chunks (total)            7.88 kB
+├ ○ /client/home (452 ms)                  7.49 kB         197 kB
+├ ○ /client/service-maps (432 ms)          2.02 kB         191 kB
+├ ○ /client/service/[slug] (392 ms)        4.36 kB         191 kB
+├ ○ /client/service/view-all (432 ms)      2.87 kB         189 kB
+├ ○ /create-profile (449 ms)               2.89 kB         181 kB
+├ ○ /provider (318 ms)                     3.24 kB         184 kB
+└ ○ /provider/home (435 ms)                8.01 kB         189 kB
++ First Load JS shared by all              188 kB
+  ├ chunks/framework-3f6905f6df109714.js   44.8 kB
+  ├ chunks/main-27e6c91b60120ee4.js        34 kB
+  ├ chunks/pages/_app-c36bfa93d7f9f2dd.js  97.8 kB
+  └ other shared chunks (total)            11.6 kB
 
-○  (Static)  prerendered as static content
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
 

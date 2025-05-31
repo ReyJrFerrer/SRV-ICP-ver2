@@ -19,6 +19,12 @@ actor ServiceCanister {
     type ServiceStatus = Types.ServiceStatus;
     type Location = Types.Location;
     type Result<T> = Types.Result<T>;
+    type ProviderAvailability = Types.ProviderAvailability;
+    type DayOfWeek = Types.DayOfWeek;
+    type DayAvailability = Types.DayAvailability;
+    type TimeSlot = Types.TimeSlot;
+    type VacationPeriod = Types.VacationPeriod;
+    type AvailableSlot = Types.AvailableSlot;
 
     // State variables
     private stable var serviceEntries : [(Text, Service)] = [];
@@ -26,6 +32,10 @@ actor ServiceCanister {
     
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
     private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
+
+    // Availability state variables
+    private stable var availabilityEntries : [(Principal, ProviderAvailability)] = [];
+    private var providerAvailabilities = HashMap.HashMap<Principal, ProviderAvailability>(10, Principal.equal, Principal.hash);
 
     // Canister references
     private var authCanisterId : ?Principal = null;
@@ -142,6 +152,7 @@ actor ServiceCanister {
     system func preupgrade() {
         serviceEntries := Iter.toArray(services.entries());
         categoryEntries := Iter.toArray(categories.entries());
+        availabilityEntries := Iter.toArray(providerAvailabilities.entries());
     };
 
     system func postupgrade() {
@@ -150,6 +161,9 @@ actor ServiceCanister {
         
         categories := HashMap.fromIter<Text, ServiceCategory>(categoryEntries.vals(), 10, Text.equal, Text.hash);
         categoryEntries := [];
+        
+        providerAvailabilities := HashMap.fromIter<Principal, ProviderAvailability>(availabilityEntries.vals(), 10, Principal.equal, Principal.hash);
+        availabilityEntries := [];
         
         // Initialize static data if categories are empty
         if (categories.size() == 0) {
@@ -457,5 +471,428 @@ actor ServiceCanister {
     // Get all categories
     public query func getAllCategories() : async [ServiceCategory] {
         return Iter.toArray(categories.vals());
+    };
+
+    // AVAILABILITY MANAGEMENT FUNCTIONS
+
+    // Set provider availability
+    public shared(msg) func setProviderAvailability(
+        weeklySchedule : [(DayOfWeek, DayAvailability)],
+        instantBookingEnabled : Bool,
+        bookingNoticeHours : Nat,
+        maxBookingsPerDay : Nat
+    ) : async Result<ProviderAvailability> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // Validate provider
+        switch (await validateProvider(caller)) {
+            case (#err(msg)) {
+                return #err(msg);
+            };
+            case (#ok(_)) {};
+        };
+
+        // Validate booking notice hours
+        if (bookingNoticeHours > 720) { // Maximum 30 days
+            return #err("Booking notice hours cannot exceed 720 (30 days)");
+        };
+
+        // Validate max bookings per day
+        if (maxBookingsPerDay == 0 or maxBookingsPerDay > 50) {
+            return #err("Max bookings per day must be between 1 and 50");
+        };
+
+        // Get existing availability or create new one
+        let currentAvailability = providerAvailabilities.get(caller);
+        let existingVacationDates = switch (currentAvailability) {
+            case (?availability) availability.vacationDates;
+            case (null) [];
+        };
+
+        let newAvailability : ProviderAvailability = {
+            providerId = caller;
+            weeklySchedule = weeklySchedule;
+            vacationDates = existingVacationDates;
+            instantBookingEnabled = instantBookingEnabled;
+            bookingNoticeHours = bookingNoticeHours;
+            maxBookingsPerDay = maxBookingsPerDay;
+            isActive = true;
+            createdAt = switch (currentAvailability) {
+                case (?availability) availability.createdAt;
+                case (null) Time.now();
+            };
+            updatedAt = Time.now();
+        };
+
+        providerAvailabilities.put(caller, newAvailability);
+        return #ok(newAvailability);
+    };
+
+    // Get provider availability
+    public query func getProviderAvailability(providerId : Principal) : async Result<ProviderAvailability> {
+        switch (providerAvailabilities.get(providerId)) {
+            case (?availability) {
+                return #ok(availability);
+            };
+            case (null) {
+                return #err("Provider availability not found");
+            };
+        };
+    };
+
+    // Add vacation dates
+    public shared(msg) func addVacationDates(
+        startDate : Time.Time,
+        endDate : Time.Time,
+        reason : ?Text
+    ) : async Result<ProviderAvailability> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // Validate dates
+        if (startDate >= endDate) {
+            return #err("Start date must be before end date");
+        };
+
+        if (startDate < Time.now()) {
+            return #err("Cannot set vacation dates in the past");
+        };
+
+        // Get existing availability
+        switch (providerAvailabilities.get(caller)) {
+            case (?availability) {
+                let vacationId = generateId();
+                let newVacation : VacationPeriod = {
+                    id = vacationId;
+                    startDate = startDate;
+                    endDate = endDate;
+                    reason = reason;
+                    createdAt = Time.now();
+                };
+
+                let updatedVacationDates = Array.append<VacationPeriod>(availability.vacationDates, [newVacation]);
+
+                let updatedAvailability : ProviderAvailability = {
+                    providerId = availability.providerId;
+                    weeklySchedule = availability.weeklySchedule;
+                    vacationDates = updatedVacationDates;
+                    instantBookingEnabled = availability.instantBookingEnabled;
+                    bookingNoticeHours = availability.bookingNoticeHours;
+                    maxBookingsPerDay = availability.maxBookingsPerDay;
+                    isActive = availability.isActive;
+                    createdAt = availability.createdAt;
+                    updatedAt = Time.now();
+                };
+
+                providerAvailabilities.put(caller, updatedAvailability);
+                return #ok(updatedAvailability);
+            };
+            case (null) {
+                return #err("Provider availability not found. Please set availability first.");
+            };
+        };
+    };
+
+    // Remove vacation dates
+    public shared(msg) func removeVacationDates(vacationId : Text) : async Result<ProviderAvailability> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+
+        // Get existing availability
+        switch (providerAvailabilities.get(caller)) {
+            case (?availability) {
+                let updatedVacationDates = Array.filter<VacationPeriod>(
+                    availability.vacationDates,
+                    func (vacation : VacationPeriod) : Bool {
+                        vacation.id != vacationId
+                    }
+                );
+
+                if (updatedVacationDates.size() == availability.vacationDates.size()) {
+                    return #err("Vacation period not found");
+                };
+
+                let updatedAvailability : ProviderAvailability = {
+                    providerId = availability.providerId;
+                    weeklySchedule = availability.weeklySchedule;
+                    vacationDates = updatedVacationDates;
+                    instantBookingEnabled = availability.instantBookingEnabled;
+                    bookingNoticeHours = availability.bookingNoticeHours;
+                    maxBookingsPerDay = availability.maxBookingsPerDay;
+                    isActive = availability.isActive;
+                    createdAt = availability.createdAt;
+                    updatedAt = Time.now();
+                };
+
+                providerAvailabilities.put(caller, updatedAvailability);
+                return #ok(updatedAvailability);
+            };
+            case (null) {
+                return #err("Provider availability not found");
+            };
+        };
+    };
+
+    // Get available time slots for a specific date and provider
+    public func getAvailableTimeSlots(
+        providerId : Principal,
+        date : Time.Time
+    ) : async Result<[AvailableSlot]> {
+        
+        // Get provider availability
+        let availability = switch (providerAvailabilities.get(providerId)) {
+            case (?avail) avail;
+            case (null) {
+                return #err("Provider availability not found");
+            };
+        };
+
+        if (not availability.isActive) {
+            return #err("Provider is not currently accepting bookings");
+        };
+
+        // Check if date is in vacation period
+        let isVacation = Array.find<VacationPeriod>(
+            availability.vacationDates,
+            func (vacation : VacationPeriod) : Bool {
+                date >= vacation.startDate and date <= vacation.endDate
+            }
+        );
+
+        if (isVacation != null) {
+            return #ok([]);
+        };
+
+        // Get day of week for the requested date
+        let dayOfWeek = getDayOfWeekFromTime(date);
+        
+        // Find the day's availability in the weekly schedule
+        let dayAvailability = Array.find<(DayOfWeek, DayAvailability)>(
+            availability.weeklySchedule,
+            func ((day, _) : (DayOfWeek, DayAvailability)) : Bool {
+                day == dayOfWeek
+            }
+        );
+
+        switch (dayAvailability) {
+            case (?((_, dayAvail))) {
+                if (not dayAvail.isAvailable) {
+                    return #ok([]);
+                };
+
+                // Get conflicting bookings for this date
+                let conflictingBookings = await getBookingsForDate(providerId, date);
+
+                // Create available slots
+                let availableSlots = Array.map<TimeSlot, AvailableSlot>(
+                    dayAvail.slots,
+                    func (slot : TimeSlot) : AvailableSlot {
+                        let conflicts = getConflictingBookingIds(slot, conflictingBookings);
+                        {
+                            date = date;
+                            timeSlot = slot;
+                            isAvailable = conflicts.size() == 0;
+                            conflictingBookings = conflicts;
+                        }
+                    }
+                );
+
+                return #ok(availableSlots);
+            };
+            case (null) {
+                return #ok([]);
+            };
+        };
+    };
+
+    // Check if provider is available at specific date and time
+    public func isProviderAvailable(
+        providerId : Principal,
+        requestedDateTime : Time.Time
+    ) : async Result<Bool> {
+        
+        let availability = switch (providerAvailabilities.get(providerId)) {
+            case (?avail) avail;
+            case (null) {
+                return #err("Provider availability not found");
+            };
+        };
+
+        if (not availability.isActive) {
+            return #ok(false);
+        };
+
+        // Check booking notice requirement
+        let currentTime = Time.now();
+        let requiredNoticeNanos = availability.bookingNoticeHours * 3600_000_000_000; // Convert hours to nanoseconds
+        
+        if (requestedDateTime < (currentTime + requiredNoticeNanos)) {
+            return #ok(false);
+        };
+
+        // Check if date is in vacation period
+        let isVacation = Array.find<VacationPeriod>(
+            availability.vacationDates,
+            func (vacation : VacationPeriod) : Bool {
+                requestedDateTime >= vacation.startDate and requestedDateTime <= vacation.endDate
+            }
+        );
+
+        if (isVacation != null) {
+            return #ok(false);
+        };
+
+        // Check day availability
+        let dayOfWeek = getDayOfWeekFromTime(requestedDateTime);
+        let dayAvailability = Array.find<(DayOfWeek, DayAvailability)>(
+            availability.weeklySchedule,
+            func ((day, _) : (DayOfWeek, DayAvailability)) : Bool {
+                day == dayOfWeek
+            }
+        );
+
+        switch (dayAvailability) {
+            case (?((_, dayAvail))) {
+                if (not dayAvail.isAvailable) {
+                    return #ok(false);
+                };
+
+                // Check if time falls within available slots
+                let timeOfDay = getTimeOfDayFromTimestamp(requestedDateTime);
+                let isWithinSlot = Array.find<TimeSlot>(
+                    dayAvail.slots,
+                    func (slot : TimeSlot) : Bool {
+                        isTimeWithinSlot(timeOfDay, slot)
+                    }
+                );
+
+                if (isWithinSlot == null) {
+                    return #ok(false);
+                };
+
+                // Check daily booking limit
+                let dailyBookingCount = await getDailyBookingCount(providerId, requestedDateTime);
+                if (dailyBookingCount >= availability.maxBookingsPerDay) {
+                    return #ok(false);
+                };
+
+                return #ok(true);
+            };
+            case (null) {
+                return #ok(false);
+            };
+        };
+    };
+
+    // HELPER FUNCTIONS FOR AVAILABILITY
+
+    // Convert timestamp to day of week
+    private func getDayOfWeekFromTime(timestamp : Time.Time) : DayOfWeek {
+        // Convert nanoseconds to seconds, then to days since epoch
+        let secondsSinceEpoch = timestamp / 1_000_000_000;
+        let daysSinceEpoch = secondsSinceEpoch / 86400; // 86400 seconds in a day
+        
+        // January 1, 1970 was a Thursday (epoch day 0 = Thursday)
+        // So: 0=Thursday, 1=Friday, 2=Saturday, 3=Sunday, 4=Monday, 5=Tuesday, 6=Wednesday
+        let dayIndex = (daysSinceEpoch + 4) % 7;
+        
+        switch (dayIndex) {
+            case (0) #Sunday;
+            case (1) #Monday;
+            case (2) #Tuesday;
+            case (3) #Wednesday;
+            case (4) #Thursday;
+            case (5) #Friday;
+            case (6) #Saturday;
+            case (_) #Monday; // fallback
+        }
+    };
+
+    // Extract time of day from timestamp (format: "HH:MM")
+    private func getTimeOfDayFromTimestamp(timestamp : Time.Time) : Text {
+        let secondsSinceEpoch = timestamp / 1_000_000_000;
+        let secondsInDay = secondsSinceEpoch % 86400;
+        let hours = secondsInDay / 3600;
+        let minutes = (secondsInDay % 3600) / 60;
+        
+        let hoursNat = Int.abs(hours);
+        let minutesNat = Int.abs(minutes);
+        
+        let hoursStr = if (hoursNat < 10) "0" # Nat.toText(hoursNat) else Nat.toText(hoursNat);
+        let minutesStr = if (minutesNat < 10) "0" # Nat.toText(minutesNat) else Nat.toText(minutesNat);
+        
+        hoursStr # ":" # minutesStr
+    };
+
+    // Check if a time is within a time slot
+    private func isTimeWithinSlot(timeStr : Text, slot : TimeSlot) : Bool {
+        // Compare time strings directly (assuming HH:MM format)
+        timeStr >= slot.startTime and timeStr <= slot.endTime
+    };
+
+    // Get bookings for a specific date and provider
+    private func getBookingsForDate(providerId : Principal, date : Time.Time) : async [Text] {
+        // Call booking canister to get conflicting bookings
+        switch (bookingCanisterId) {
+            case (?bookingId) {
+                let bookingCanister = actor(Principal.toText(bookingId)) : actor {
+                    getProviderBookingConflicts : (Principal, Time.Time, Time.Time) -> async [Types.Booking];
+                };
+                
+                let startOfDay = getStartOfDay(date);
+                let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
+                
+                let conflicts = await bookingCanister.getProviderBookingConflicts(providerId, startOfDay, endOfDay);
+                Array.map<Types.Booking, Text>(conflicts, func (booking : Types.Booking) : Text { booking.id });
+            };
+            case (null) {
+                []
+            };
+        }
+    };
+
+    // Get conflicting booking IDs for a time slot
+    private func getConflictingBookingIds(slot : TimeSlot, bookings : [Text]) : [Text] {
+        // For now, if there are any bookings on the date, consider the slot as having conflicts
+        // In a more sophisticated implementation, you would check actual time overlaps
+        if (bookings.size() > 0) {
+            bookings
+        } else {
+            []
+        }
+    };
+
+    // Get daily booking count for a provider and date
+    private func getDailyBookingCount(providerId : Principal, date : Time.Time) : async Nat {
+        switch (bookingCanisterId) {
+            case (?bookingId) {
+                let bookingCanister = actor(Principal.toText(bookingId)) : actor {
+                    getDailyBookingCount : (Principal, Time.Time) -> async Nat;
+                };
+                
+                await bookingCanister.getDailyBookingCount(providerId, date);
+            };
+            case (null) {
+                0
+            };
+        }
+    };
+
+    // Helper function to get start of day timestamp
+    private func getStartOfDay(timestamp : Time.Time) : Time.Time {
+        let secondsSinceEpoch = timestamp / 1_000_000_000;
+        let daysSinceEpoch = secondsSinceEpoch / 86400;
+        let startOfDaySeconds = daysSinceEpoch * 86400;
+        startOfDaySeconds * 1_000_000_000
     };
 }

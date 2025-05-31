@@ -58,6 +58,54 @@ module {
         #Suspended;
     };
 
+    // Availability types
+    public type TimeSlot = {
+        startTime: Text; // Format: "HH:MM" (24-hour format)
+        endTime: Text;   // Format: "HH:MM" (24-hour format)
+    };
+
+    public type DayOfWeek = {
+        #Monday;
+        #Tuesday;
+        #Wednesday;
+        #Thursday;
+        #Friday;
+        #Saturday;
+        #Sunday;
+    };
+
+    public type DayAvailability = {
+        isAvailable: Bool;
+        slots: [TimeSlot];
+    };
+
+    public type VacationPeriod = {
+        id: Text;
+        startDate: Time.Time;
+        endDate: Time.Time;
+        reason: ?Text;
+        createdAt: Time.Time;
+    };
+
+    public type ProviderAvailability = {
+        providerId: Principal;
+        weeklySchedule: [(DayOfWeek, DayAvailability)];
+        vacationDates: [VacationPeriod];
+        instantBookingEnabled: Bool;
+        bookingNoticeHours: Nat; // Minimum hours in advance for booking
+        maxBookingsPerDay: Nat;
+        isActive: Bool;
+        createdAt: Time.Time;
+        updatedAt: Time.Time;
+    };
+
+    public type AvailableSlot = {
+        date: Time.Time;
+        timeSlot: TimeSlot;
+        isAvailable: Bool;
+        conflictingBookings: [Text]; // Booking IDs that conflict
+    };
+
     public type Service = {
         id: Text;
         providerId: Principal;

@@ -1,4 +1,27 @@
+type VacationPeriod = 
+ record {
+   createdAt: Time;
+   endDate: Time;
+   id: text;
+   reason: opt text;
+   startDate: Time;
+ };
+type TimeSlot = 
+ record {
+   endTime: text;
+   startTime: text;
+ };
 type Time = int;
+type Result_5 = 
+ variant {
+   err: text;
+   ok: ProviderAvailability;
+ };
+type Result_4 = 
+ variant {
+   err: text;
+   ok: vec AvailableSlot;
+ };
 type Result_3 = 
  variant {
    err: text;
@@ -19,6 +42,21 @@ type Result =
    err: text;
    ok: Evidence;
  };
+type ProviderAvailability = 
+ record {
+   bookingNoticeHours: nat;
+   createdAt: Time;
+   instantBookingEnabled: bool;
+   isActive: bool;
+   maxBookingsPerDay: nat;
+   providerId: principal;
+   updatedAt: Time;
+   vacationDates: vec VacationPeriod;
+   weeklySchedule: vec record {
+                         DayOfWeek;
+                         DayAvailability;
+                       };
+ };
 type Location = 
  record {
    address: text;
@@ -38,6 +76,21 @@ type Evidence =
    id: text;
    qualityScore: opt float64;
    submitterId: principal;
+ };
+type DayOfWeek = 
+ variant {
+   Friday;
+   Monday;
+   Saturday;
+   Sunday;
+   Thursday;
+   Tuesday;
+   Wednesday;
+ };
+type DayAvailability = 
+ record {
+   isAvailable: bool;
+   slots: vec TimeSlot;
  };
 type BookingStatus = 
  variant {
@@ -65,9 +118,18 @@ type Booking =
    status: BookingStatus;
    updatedAt: Time;
  };
+type AvailableSlot = 
+ record {
+   conflictingBookings: vec text;
+   date: Time;
+   isAvailable: bool;
+   timeSlot: TimeSlot;
+ };
 service : {
   acceptBooking: (bookingId: text, scheduledDate: Time) -> (Result_1);
   cancelBooking: (bookingId: text) -> (Result_1);
+  checkProviderAvailability: (providerId: principal, requestedDateTime:
+   Time) -> (Result_3);
   completeBooking: (bookingId: text) -> (Result_1);
   createBooking: (serviceId: text, providerId: principal, price: nat,
    location: Location, requestedDate: Time) -> (Result_1);
@@ -80,8 +142,14 @@ service : {
   getClientActiveBookings: (clientId: principal) -> (vec Booking) query;
   getClientBookings: (clientId: principal) -> (vec Booking) query;
   getClientCompletedBookings: (clientId: principal) -> (vec Booking) query;
+  getDailyBookingCount: (providerId: principal, date: Time) -> (nat) query;
   getDisputedBookings: () -> (vec Booking) query;
   getProviderActiveBookings: (providerId: principal) -> (vec Booking) query;
+  getProviderAvailabilitySettings: (providerId: principal) -> (Result_5);
+  getProviderAvailableSlots: (providerId: principal, date: Time) ->
+   (Result_4);
+  getProviderBookingConflicts: (providerId: principal, startDate: Time,
+   endDate: Time) -> (vec Booking);
   getProviderBookings: (providerId: principal) -> (vec Booking) query;
   getProviderCompletedBookings: (providerId: principal) ->
    (vec Booking) query;

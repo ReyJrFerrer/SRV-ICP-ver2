@@ -3,6 +3,7 @@ import "tailwindcss/tailwind.css";
 import "@app/styles/globals.css";
 import "@app/styles/client-components.css";
 import "@app/styles/provider.css";
+import "react-datepicker/dist/react-datepicker.css";
 
 import { Client, InternetIdentity } from "@bundly/ares-core";
 import { IcpConnectContextProvider } from "@bundly/ares-react";

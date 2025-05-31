@@ -299,13 +299,8 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
   const displayService = service || createPlaceholderService();
 
   const handleBookingRequest = () => {
-    if (service) {
-      // Navigate to the booking page, passing the service slug
-      router.push(`/client/book/${service.slug}`);
-    } else {
-      // Show message for placeholder data
-      alert('Service booking will be available once connected to backend');
-    }
+    // Navigate to booking page with the service slug (works for both real and placeholder data)
+    router.push(`/client/book/${displayService.slug}`);
   };
 
   return (

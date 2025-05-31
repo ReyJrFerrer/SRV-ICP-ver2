@@ -7,9 +7,16 @@ import { CATEGORIES, Category } from '../../../public/data/categories';
 interface ListHeaderProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  selectedCategoryId: string | null; // <<<< NEW: ID of the selected category
+  onSelectCategory: (categoryId: string | null) => void; // <<<< NEW: Handler for category selection
 }
 
-export default function ListHeader({ searchQuery, onSearchQueryChange }: ListHeaderProps) {
+export default function ListHeader({ 
+  searchQuery, 
+  onSearchQueryChange,
+  selectedCategoryId,
+  onSelectCategory
+}: ListHeaderProps) {
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const getCategoryIcon = (iconName: string): string => {
@@ -26,13 +33,17 @@ export default function ListHeader({ searchQuery, onSearchQueryChange }: ListHea
     return icons[iconName] || '🔧'; 
   };
 
-  const initialCategoryDisplayCount = 3; // Number of categories to show 
-  
+ const initialCategoryDisplayCount = 3;
   const displayedCategories: Category[] = showAllCategories 
     ? CATEGORIES 
     : CATEGORIES.slice(0, initialCategoryDisplayCount);
-
   const needsMoreButton = CATEGORIES.length > initialCategoryDisplayCount;
+
+  const handleCategoryClick = (categoryId: string) => {
+    // If the clicked category is already selected, deselect it (show all)
+    // Otherwise, select the new category.
+    onSelectCategory(selectedCategoryId === categoryId ? null : categoryId);
+  };
 
   return (
     <div className={styles.headerContainer}>
@@ -59,11 +70,18 @@ export default function ListHeader({ searchQuery, onSearchQueryChange }: ListHea
         />
       </div>
 
-      {/* Categories */}
+      {/* Container */}
       <div className={styles.categoriesContainer}>
         <div className={styles.categoriesRow}>
           {displayedCategories.map((category) => (
-            <div key={category.id} className={styles.category}>
+            <div 
+              key={category.id} 
+              className={`${styles.category} ${selectedCategoryId === category.id ? styles.categoryActive : ''}`} // <<<< Apply active style
+              onClick={() => handleCategoryClick(category.id)} // <<<< Handle click
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCategoryClick(category.id);}}
+            >
               <div className={styles.categoryIconContainer}>
                 <span className={styles.categoryIcon}>
                   {getCategoryIcon(category.icon)}
@@ -73,18 +91,17 @@ export default function ListHeader({ searchQuery, onSearchQueryChange }: ListHea
             </div>
           ))}
 
-          {/* Conditionally render the More/Less button */}
           {needsMoreButton && (
             <div
-              className={styles.moreButton} 
+              className={`${styles.moreButton} ${showAllCategories ? styles.categoryActive : ''}`} // Optional: highlight "More/Less" if active in a sense
               onClick={() => setShowAllCategories(prev => !prev)}
-              role="button" 
-              tabIndex={0} 
-              onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowAllCategories(prev => !prev);}} // Accessibility
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => { if (e.key === 'Enter' || e.key === ' ') setShowAllCategories(prev => !prev);}}
             >
               <div className={styles.categoryIconContainer}>
                 <span className={styles.categoryIcon}>
-                  {showAllCategories ? '⬆️' : '⋯'} {/* Using a more distinct up arrow emoji */}
+                  {showAllCategories ? '⬆️' : '⋯'}
                 </span>
               </div>
               <span className={styles.categoryText}>

@@ -123,6 +123,42 @@
   line-height: 1.2;
 }
 
+/* SRV-ICP-1/ui/styles/ListHeader.module.css */
+/* ... (your existing styles) ... */
+
+.category,
+.moreButton {
+  /* ... your existing styles for .category and .moreButton ... */
+  cursor: pointer; /* Ensure it looks clickable */
+  transition: background-color 0.2s ease, transform 0.1s ease; /* Smooth transitions */
+}
+
+.category:hover,
+.moreButton:hover {
+  background-color: #f0f0f0; /* Consistent hover */
+  transform: translateY(-1px);
+}
+
+.categoryActive { /* <<<< NEW STYLE for active category */
+  background-color: #e0e0e0; /* Or your theme's active color */
+  /* background-color: #d1e7fd;  A light blue example */
+  /* border-bottom: 2px solid #007bff; Another way to highlight */
+  font-weight: 600;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.categoryIconContainer {
+  /* ... existing styles ... */
+  transition: background-color 0.2s ease;
+}
+
+.categoryActive .categoryIconContainer {
+  background-color: rgba(0, 123, 255, 0.15); /* Example: highlight icon container too */
+}
+
+/* ... */
+
 /* Mobile responsiveness */
 @media (max-width: 480px) {
   .headerContainer {
@@ -146,4 +182,5 @@
   .categoryText {
     font-size: 11px;
   }
+
 }

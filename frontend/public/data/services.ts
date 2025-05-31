@@ -51,8 +51,8 @@ export interface Service {
   slug: string;
   packages: ServicePackage[];
   categoryId: string;
-  contactEmail?: string;    // <<<< NEW FIELD
-  contactPhone?: string;    // <<<< NEW FIELD
+  contactEmail?: string;    
+  contactPhone?: string;    
 }
 
 export const SERVICES: Service[] = [

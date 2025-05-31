@@ -1,14 +1,15 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { Booking } from '../../../../public/data/bookings'; 
+import { Booking, BookingStatus } from '../../../../public/data/bookings'; 
 import styles from 'frontend/ui/components/client/bookings/BookingItemCard.module.css'; 
 
 interface BookingItemCardProps {
   booking: Booking;
+   onUpdateBookingStatus: (bookingId: string, newStatus: BookingStatus) => void; // <<<< NEW PROP
 }
 
-const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
+const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBookingStatus }) => {
   const router = useRouter();
 
   const handleViewBooking = () => {
@@ -22,9 +23,11 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
     router.push(`/client/book/${booking.serviceSlug}`);
   };
 
-   const handleCancelBooking = () => {
-    alert(`Cancel booking ID: ${booking.id}? (Implement cancellation logic)`);
-    console.log("Attempting to cancel booking:", booking.id);
+    const handleCancelBooking = () => {
+    // Confirm with the user before cancelling
+    if (window.confirm(`Are you sure you want to cancel this booking for "${booking.serviceName}"?`)) {
+      onUpdateBookingStatus(booking.id, 'Cancelled'); // <<<< CALL THE PROP FUNCTION
+    }
   };
 
    const handleContactProvider = () => {
@@ -33,7 +36,7 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
   };
 
   return (
-    <div className={styles.card}>
+     <div className={styles.card}>
       <div className={styles.cardTopRow}>
         <div className={styles.serviceImageContainer}>
           <Image 
@@ -77,10 +80,21 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
         )}
       </div>
       
-       <div className={styles.actions}>
+        <div className={styles.actions}>
         <button onClick={handleViewBooking} className={styles.viewButton}>
           View Details
         </button>
+
+        {(booking.status === 'Completed' || booking.status === 'Cancelled') && (
+          <>
+            <button onClick={handleContactProvider} className={styles.contactButton}>
+              Contact Provider
+            </button>
+            <button onClick={handleBookAgain} className={styles.bookAgainButton}>
+             Book Again
+            </button>
+          </>
+        )}
 
         {(booking.status === 'Pending') && (
           <>
@@ -88,7 +102,7 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
               Contact Provider
             </button>
             <button onClick={handleCancelBooking} className={styles.cancelButton}>
-              Cancel Booking
+             Cancel Booking
             </button>
           </>
         )}
@@ -101,16 +115,6 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
           </>
         )}
 
-        {(booking.status === 'Completed' || booking.status === 'Cancelled') && (
-            <>
-             <button onClick={handleContactProvider} className={styles.contactButton}>
-              Contact Provider
-            </button>
-            <button onClick={handleBookAgain} className={styles.bookAgainButton}>
-             Book Again
-            </button>
-            </>
-        )}
       </div>
     </div>
   );

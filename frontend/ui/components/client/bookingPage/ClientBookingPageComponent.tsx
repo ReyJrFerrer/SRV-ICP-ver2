@@ -4,10 +4,15 @@ import { Service as OriginalServiceType, ServicePackage } from 'frontend/public/
 import styles from 'frontend/ui/components/client/bookingPage/ClientBookingPageComponent.module.css'; // Corrected path assuming standard structure
 
 interface BookingPageComponentProps {
-  service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt'> & {
+  service: Omit<OriginalServiceType, 'createdAt' | 'updatedAt' | 'availability'> & {
     createdAt: string;
     updatedAt: string;
     packages: OriginalServiceType['packages'];
+    availability: { 
+      isAvailableNow: boolean;
+      schedule: string[];
+      timeSlots: string[];
+    };
   };
 }
 
@@ -70,15 +75,34 @@ interface BookingOptionsProps {
   onDateChange: (date: Date | null) => void;
   selectedTime: string;
   onTimeChange: (time: string) => void;
+  isSameDayAvailable: boolean;
 }
+
 const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
-  bookingOption, onOptionChange, selectedDate, onDateChange, selectedTime, onTimeChange
+  bookingOption, onOptionChange, selectedDate, onDateChange, selectedTime, onTimeChange,
+  isSameDayAvailable // Use this prop
 }) => (
   <div className={styles.formSection}>
     <h3 className={styles.sectionTitle}>Booking Schedule</h3>
     <div className={styles.optionGroup}>
-      <button className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`} onClick={() => { onOptionChange('sameday'); onDateChange(null); }}>Same day <span className={styles.optionDetail}>25 - 40 mins</span></button>
-      <button className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`} onClick={() => onOptionChange('scheduled')}>Scheduled</button>
+      <button
+        className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`}
+        onClick={() => { 
+          if (isSameDayAvailable) { // Only change state if it's clickable
+            onOptionChange('sameday'); 
+            onDateChange(null); 
+          }
+        }}
+        disabled={!isSameDayAvailable} // <<<< KEY: Disables button if not available
+      >
+        Within the hour <span className={styles.optionDetail}>25 - 40 mins</span>
+      </button>
+      <button
+        className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`}
+        onClick={() => onOptionChange('scheduled')}
+      >
+        Scheduled
+      </button>
     </div>
     {bookingOption === 'scheduled' && (
       <div className={styles.scheduledOptions}>
@@ -159,7 +183,9 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
 
   const [packages, setPackages] = useState<SelectablePackageItem[]>([]);
   const [concerns, setConcerns] = useState<string>('');
-  const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
+  const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>(
+    service.availability.isAvailableNow ? 'sameday' : 'scheduled'
+  );
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
 
@@ -178,6 +204,9 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   useEffect(() => {
     if (service && service.packages) {
       setPackages(service.packages.map(pkg => ({ ...pkg, checked: false })));
+    }
+    if (service && !service.availability.isAvailableNow) {
+        setBookingOption('scheduled');
     }
   }, [service]);
 
@@ -299,13 +328,14 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
     <div className={styles.bookingFormContainer}>
       <PackageSelection packages={packages} onPackageChange={handlePackageChange} />
       <ConcernsInput concerns={concerns} onConcernsChange={setConcerns} />
-      <BookingOptionsDisplay
+       <BookingOptionsDisplay
         bookingOption={bookingOption}
         onOptionChange={setBookingOption}
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
         selectedTime={selectedTime}
         onTimeChange={setSelectedTime}
+        isSameDayAvailable={service.availability.isAvailableNow} // <<<< Pass the availability status
       />
       <LocationInfo
         houseNumber={houseNumber} onHouseNumberChange={setHouseNumber}

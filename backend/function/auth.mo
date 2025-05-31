@@ -6,6 +6,7 @@ import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Char "mo:base/Char";
+import Option "mo:base/Option";
 import Types "../types/shared";
 
 actor AuthCanister {
@@ -18,6 +19,8 @@ actor AuthCanister {
     private stable var profileEntries : [(Principal, Profile)] = [];
     private var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
     private var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
+    private var emailToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
+    private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
 
     // Constants
     private let MIN_NAME_LENGTH : Nat = 2;
@@ -76,6 +79,43 @@ actor AuthCanister {
         name.size() >= MIN_NAME_LENGTH and name.size() <= MAX_NAME_LENGTH
     };
 
+    // Helper functions for duplicate checking
+    private func isEmailTaken(email : Text, excludePrincipal : ?Principal) : Bool {
+        switch (emailToPrincipal.get(email)) {
+            case (?principal) {
+                switch (excludePrincipal) {
+                    case (?exclude) {
+                        return Principal.notEqual(principal, exclude);
+                    };
+                    case (null) {
+                        return true;
+                    };
+                };
+            };
+            case (null) {
+                return false;
+            };
+        };
+    };
+
+    private func isPhoneTaken(phone : Text, excludePrincipal : ?Principal) : Bool {
+        switch (phoneToPrincipal.get(phone)) {
+            case (?principal) {
+                switch (excludePrincipal) {
+                    case (?exclude) {
+                        return Principal.notEqual(principal, exclude);
+                    };
+                    case (null) {
+                        return true;
+                    };
+                };
+            };
+            case (null) {
+                return false;
+            };
+        };
+    };
+
     // Static data initialization
     private func initializeStaticProfiles() {
         let staticProfiles : [(Principal, Profile)] = [
@@ -105,6 +145,8 @@ actor AuthCanister {
         for ((id, profile) in staticProfiles.vals()) {
             profiles.put(id, profile);
             verifiedUsers.put(id, true);
+            emailToPrincipal.put(profile.email, id);
+            phoneToPrincipal.put(profile.phone, id);
         };
     };
 
@@ -116,6 +158,12 @@ actor AuthCanister {
     system func postupgrade() {
         profiles := HashMap.fromIter<Principal, Profile>(profileEntries.vals(), 10, Principal.equal, Principal.hash);
         profileEntries := [];
+        
+        // Rebuild email and phone mappings
+        for ((principal, profile) in profiles.entries()) {
+            emailToPrincipal.put(profile.email, principal);
+            phoneToPrincipal.put(profile.phone, principal);
+        };
         
         // Initialize static data if profiles are empty
         if (profiles.size() == 0) {
@@ -150,6 +198,15 @@ actor AuthCanister {
         if (not validatePhone(phone)) {
             return #err("Invalid phone format");
         };
+
+        // Check for duplicate email and phone
+        if (isEmailTaken(email, null)) {
+            return #err("Email is already registered");
+        };
+
+        if (isPhoneTaken(phone, null)) {
+            return #err("Phone number is already registered");
+        };
         
         switch (profiles.get(caller)) {
             case (?existingProfile) {
@@ -169,6 +226,8 @@ actor AuthCanister {
                 
                 profiles.put(caller, newProfile);
                 verifiedUsers.put(caller, false);
+                emailToPrincipal.put(email, caller);
+                phoneToPrincipal.put(phone, caller);
                 return #ok(newProfile);
             };
         };
@@ -233,6 +292,9 @@ actor AuthCanister {
                         if (not validateEmail(e)) {
                             return #err("Invalid email format");
                         };
+                        if (isEmailTaken(e, ?caller)) {
+                            return #err("Email is already registered");
+                        };
                     };
                     case(null) {};
                 };
@@ -242,19 +304,39 @@ actor AuthCanister {
                         if (not validatePhone(p)) {
                             return #err("Invalid phone format");
                         };
+                        if (isPhoneTaken(p, ?caller)) {
+                            return #err("Phone number is already registered");
+                        };
                     };
                     case(null) {};
                 };
                 
                 let updatedProfile : Profile = {
                     id = existingProfile.id;
-                    name = switch(name) { case(?n) n; case(null) existingProfile.name };
-                    email = switch(email) { case(?e) e; case(null) existingProfile.email };
-                    phone = switch(phone) { case(?p) p; case(null) existingProfile.phone };
+                    name = Option.get(name, existingProfile.name);
+                    email = Option.get(email, existingProfile.email);
+                    phone = Option.get(phone, existingProfile.phone);
                     role = existingProfile.role;
                     createdAt = existingProfile.createdAt;
                     updatedAt = Time.now();
                     isVerified = existingProfile.isVerified;
+                };
+
+                // Update email and phone mappings if changed
+                switch(email) {
+                    case(?e) {
+                        emailToPrincipal.delete(existingProfile.email);
+                        emailToPrincipal.put(e, caller);
+                    };
+                    case(null) {};
+                };
+
+                switch(phone) {
+                    case(?p) {
+                        phoneToPrincipal.delete(existingProfile.phone);
+                        phoneToPrincipal.put(p, caller);
+                    };
+                    case(null) {};
                 };
                 
                 profiles.put(caller, updatedProfile);

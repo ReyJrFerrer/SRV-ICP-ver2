@@ -80,7 +80,7 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
         onClick={() => { if (isSameDayAvailable) { onOptionChange('sameday'); onDateChange(null); }}}
         disabled={!isSameDayAvailable}
       >
-        Same day <span className={styles.optionDetail}>25 - 40 mins</span>
+        Within the hour <span className={styles.optionDetail}>25 - 40 mins</span>
       </button>
       <button
         className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`}

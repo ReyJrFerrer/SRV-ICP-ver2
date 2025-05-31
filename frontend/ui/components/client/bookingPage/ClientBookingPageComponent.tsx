@@ -59,7 +59,7 @@ interface BookingOptionsProps {
   bookingOption: 'sameday' | 'scheduled';
   onOptionChange: (option: 'sameday' | 'scheduled') => void;
   selectedDate: Date | null;
-  onDateChange: (date: Date | null) => void; 
+  onDateChange: (date: Date | null) => void;
   selectedTime: string;
   onTimeChange: (time: string) => void;
   isSameDayAvailable: boolean;
@@ -72,49 +72,18 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
   <div className={styles.formSection}>
     <h3 className={styles.sectionTitle}>Booking Schedule</h3>
     <div className={styles.optionGroup}>
-      <button
-        className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`}
-        onClick={() => { if (isSameDayAvailable) { onOptionChange('sameday'); onDateChange(null); }}}
-        disabled={!isSameDayAvailable}
-      >
-        Within the hour <span className={styles.optionDetail}>25 - 40 mins</span>
-      </button>
-      <button
-        className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`}
-        onClick={() => onOptionChange('scheduled')}
-      >
-        Scheduled
-      </button>
+      <button className={`${styles.optionButton} ${bookingOption === 'sameday' ? styles.optionButtonSelected : ''}`} onClick={() => { if (isSameDayAvailable) { onOptionChange('sameday'); onDateChange(null); }}} disabled={!isSameDayAvailable}>Same day <span className={styles.optionDetail}>25 - 40 mins</span></button>
+      <button className={`${styles.optionButton} ${bookingOption === 'scheduled' ? styles.optionButtonSelected : ''}`} onClick={() => onOptionChange('scheduled')}>Scheduled</button>
     </div>
-
     {bookingOption === 'scheduled' && (
       <div className={styles.scheduledOptions}>
         <p className={styles.inputLabel}>Select Date:</p>
-        <DatePicker
-          selected={selectedDate}
-          onChange={(date: Date | null) => onDateChange(date)} 
-          className={styles.datePickerInput} 
-          placeholderText="Click to select a date"
-          dateFormat="MMMM d, yyyy" 
-          minDate={new Date()} 
-        />
-        
-        {selectedDate && (
-          <div style={{ marginTop: '15px' }}>
-            <p className={styles.inputLabel}>Select Time:</p>
-            <input
-              type="time"
-              className={styles.timeInput} 
-              value={selectedTime}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => onTimeChange(e.target.value)}
-            />
-          </div>
-        )}
+        <DatePicker selected={selectedDate} onChange={(date: Date | null) => onDateChange(date)} className={styles.datePickerInput} placeholderText="Click to select a date" dateFormat="MMMM d, yyyy" minDate={new Date()} />
+        {selectedDate && (<div style={{ marginTop: '15px' }}><p className={styles.inputLabel}>Select Time:</p><input type="time" className={styles.timeInput} value={selectedTime} onChange={(e: ChangeEvent<HTMLInputElement>) => onTimeChange(e.target.value)} /></div>)}
       </div>
     )}
   </div>
 );
-
 interface LocationInfoProps {
   houseNumber: string; onHouseNumberChange: (value: string) => void;
   street: string; onStreetChange: (value: string) => void;
@@ -185,7 +154,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
 
   useEffect(() => {
     if (service && service.packages) {
-      setPackages(service.packages.map(pkg => ({ ...pkg, checked:false })));
+      setPackages(service.packages.map(pkg => ({ ...pkg, checked: false })));
     }
     if (service && !service.availability.isAvailableNow) {
       setBookingOption('scheduled');
@@ -194,18 +163,56 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
 
   useEffect(() => {
     if (!selectedDate) {
-      setSelectedTime('');
+      setSelectedTime(''); //
+      if (bookingOption === 'scheduled') { 
+      }
+    } else {
+        if (formError === "Please select a date for your scheduled booking.") {
+            setFormError(null); 
+        }
     }
-  }, [selectedDate]);
+  }, [selectedDate, bookingOption]); 
+
+  useEffect(() => {
+    if (selectedTime.trim() !== "" && formError === "Please select a time for your scheduled booking.") {
+        setFormError(null);
+    }
+  }, [selectedTime, formError]);
+
 
 const handlePackageChange = (packageId: string) => {
-    setFormError(null); // Clear error when user interacts with packages
+    setFormError(null); 
     setPackages(prevPackages =>
       prevPackages.map(pkg =>
         pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg
       )
     );
   };
+
+  const handleBookingOptionChange = (option: 'sameday' | 'scheduled') => {
+    setFormError(null); 
+    setBookingOption(option);
+    if (option === 'sameday') {
+        setSelectedDate(null); 
+        setSelectedTime('');
+    }
+  };
+
+   const handleDateChange = (date: Date | null) => {
+    setFormError(null); 
+    setSelectedDate(date);
+    if (!date) { 
+        setSelectedTime('');
+    }
+  };
+
+  const handleTimeChange = (time: string) => {
+    if (formError === "Please select a time for your scheduled booking." && time.trim() !== "") {
+        setFormError(null); 
+    }
+    setSelectedTime(time);
+  };
+
 
    const toggleManualAddressForm = () => {
     console.log("toggleManualAddressForm called. Current showManualAddress:", showManualAddress); // DEBUG
@@ -225,7 +232,7 @@ const handlePackageChange = (packageId: string) => {
     console.log("handleUseCurrentLocation called"); // DEBUG
     setCurrentLocationStatus('Fetching location...');
     setUseGpsLocation(true);
-    setShowManualAddress(false); // Hide manual form when attempting GPS
+    setShowManualAddress(false);
 
     if (navigator.geolocation) {
       console.log("Geolocation API is available."); // DEBUG
@@ -251,69 +258,83 @@ const handlePackageChange = (packageId: string) => {
     }
   };
 
-  const handleConfirmBooking = () => {
-    setFormError(null); 
-    const anyPackageSelected = packages.some(pkg => pkg.checked);
-    if (!anyPackageSelected) {
-      setFormError("Please select at least one service package.");
-      return; // Stop processing
+ const handleConfirmBooking = () => {
+  setFormError(null);
+
+  const anyPackageSelected = packages.some(pkg => pkg.checked);
+  if (!anyPackageSelected) {
+    setFormError("Please select at least one service package.");
+    return; 
+  }
+
+  if (bookingOption === 'scheduled') {
+    if (!selectedDate) {
+      setFormError("Please select a date for your scheduled booking.");
+      return;
     }
-    let finalAddress = "Address not specified.";
-    let manualAddressProvided = false;
-    let attemptManualAddress = showManualAddress && (!useGpsLocation || (useGpsLocation && !currentLocationStatus.startsWith('📍')));
-
-
-    if (attemptManualAddress) {
-        const manualAddressParts = [
-            {label: "House No. / Unit / Building", value: houseNumber},
-            {label: "Street Name", value: street},
-            {label: "Barangay", value: barangay},
-            {label: "Municipality / City", value: municipalityCity},
-            {label: "Province", value: province}
-        ];
-        const missingFields = manualAddressParts
-            .filter(part => part.value.trim() === '')
-            .map(part => part.label);
-
-        if (missingFields.length > 0) {
-            setFormError(`Please fill in all required address fields: ${missingFields.join(', ')}.`);
-            return; // Stop processing
-        }
-        finalAddress = manualAddressParts.map(part => part.value.trim()).join(', ');
-        manualAddressProvided = true;
+    if (!selectedTime.trim()) {
+      setFormError("Please select a time for your scheduled booking.");
+      return;
     }
+  }
 
- if (!manualAddressProvided && useGpsLocation && currentLocationStatus.startsWith('📍')) {
-      finalAddress = `Current Location (GPS): ${currentLocationStatus.replace('📍 ','').replace(' (Using this)','')}`;
-    } else if (!manualAddressProvided && !attemptManualAddress && useGpsLocation) {
-      finalAddress = `GPS location failed. Address not manually entered.`;
+  let finalAddress = "Address not specified."; 
+  let manualAddressIsValid = false;
+  let triedGpsAndFailed = useGpsLocation && !currentLocationStatus.startsWith('📍');
+
+  if (showManualAddress && (!useGpsLocation || triedGpsAndFailed)) {
+    const manualAddressParts = [
+      { label: "House No. / Unit / Building", value: houseNumber },
+      { label: "Street Name", value: street },
+      { label: "Barangay", value: barangay },
+      { label: "Municipality / City", value: municipalityCity },
+      { label: "Province", value: province }
+    ];
+
+    const missingFields = manualAddressParts
+      .filter(part => part.value.trim() === '')
+      .map(part => part.label);
+
+    if (missingFields.length > 0) {
+      setFormError(`Please fill in all required manual address fields: ${missingFields.join(', ')}.`);
+      return; 
     }
-    
-    if (finalAddress === "Address not specified." && !currentLocationStatus.startsWith('📍')) {
-        setFormError("Please provide a service location using GPS or by entering it manually.");
-        return;
-    }
+    finalAddress = manualAddressParts.map(part => part.value.trim()).join(', ');
+    manualAddressIsValid = true;
+  }
 
-    const bookingDetails = {
-      serviceId: service.id,
-      serviceSlug: service.slug,
-      serviceName: service.title,
-      providerName: service.name,
-      selectedPackages: packages.filter(p => p.checked).map(p => ({id: p.id, name: p.name})),
-      concerns: concerns.trim() || "No specific concerns.",
-      bookingType: bookingOption,
-      date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : "N/A"),
-      time: bookingOption === 'scheduled' && selectedTime ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (est. 25-40 mins)' : "N/A"),
-      location: finalAddress,
-    };
-    
-    console.log('Booking Details to send:', bookingDetails);
+  if (!manualAddressIsValid && useGpsLocation && currentLocationStatus.startsWith('📍')) {
+    finalAddress = `Current Location (GPS): ${currentLocationStatus.replace('📍 ', '').replace(' (Using this)', '')}`;
+  } else if (!manualAddressIsValid && triedGpsAndFailed) {
+    finalAddress = `GPS location failed. Please complete the manual address or try GPS again.`;
+  }
 
-    router.push({
-      pathname: '/client/booking/confirmation',
-      query: { details: JSON.stringify(bookingDetails) },
-    });
+  if (finalAddress === "Address not specified." && !(useGpsLocation && currentLocationStatus.startsWith('📍'))) {
+    setFormError("Please provide a service location using GPS or by entering all manual address fields.");
+    return;
+  }
+
+  const bookingDetails = {
+    serviceId: service.id,
+    serviceSlug: service.slug,
+    serviceName: service.title,
+    providerName: service.name, 
+    selectedPackages: packages.filter(p => p.checked).map(p => ({ id: p.id, name: p.name })),
+    concerns: concerns.trim() || "No specific concerns.",
+    bookingType: bookingOption,
+    date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : "N/A"),
+    time: bookingOption === 'scheduled' && selectedTime ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (est. 25-40 mins)' : "N/A"),
+    location: finalAddress,
   };
+
+  console.log('Booking Details to send:', bookingDetails);
+
+  // Navigate to confirmation page
+  router.push({
+    pathname: '/client/booking/confirmation',
+    query: { details: JSON.stringify(bookingDetails) },
+  });
+};
 
   if (!service) {
     return <div>Loading service details...</div>;
@@ -327,11 +348,11 @@ const handlePackageChange = (packageId: string) => {
       <ConcernsInput concerns={concerns} onConcernsChange={setConcerns} />
         <BookingOptionsDisplay
         bookingOption={bookingOption}
-        onOptionChange={setBookingOption}
+        onOptionChange={handleBookingOptionChange} // Use updated handler
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate} 
+        onDateChange={handleDateChange}         // Use updated handler
         selectedTime={selectedTime}
-        onTimeChange={setSelectedTime}
+        onTimeChange={handleTimeChange}           // Use updated handler
         isSameDayAvailable={service.availability.isAvailableNow}
       />
       <LocationInfo

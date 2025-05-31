@@ -16,6 +16,8 @@ export type Result = { 'ok' : boolean } |
   { 'err' : string };
 export type Result_1 = { 'ok' : Profile } |
   { 'err' : string };
+export type Result_2 = { 'ok' : string } |
+  { 'err' : string };
 export type Time = bigint;
 export type UserRole = { 'Client' : null } |
   { 'ServiceProvider' : null };
@@ -24,6 +26,7 @@ export interface _SERVICE {
   'getAllServiceProviders' : ActorMethod<[], Array<Profile>>,
   'getMyProfile' : ActorMethod<[], Result_1>,
   'getProfile' : ActorMethod<[Principal], Result_1>,
+  'setCanisterReferences' : ActorMethod<[[] | [Principal]], Result_2>,
   'updateProfile' : ActorMethod<
     [[] | [string], [] | [string], [] | [string]],
     Result_1

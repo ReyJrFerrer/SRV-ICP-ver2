@@ -1,8 +1,13 @@
 type Time = int;
-type Result_2 = 
+type Result_3 = 
  variant {
    err: text;
    ok: bool;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: text;
  };
 type Result_1 = 
  variant {
@@ -81,7 +86,9 @@ service : {
   getProviderCompletedBookings: (providerId: principal) ->
    (vec Booking) query;
   isEligibleForReview: (bookingId: text, reviewerId: principal) ->
-   (Result_2) query;
+   (Result_3) query;
+  setCanisterReferences: (auth: opt principal, "service": opt principal,
+   review: opt principal, reputation: opt principal) -> (Result_2);
   startBooking: (bookingId: text) -> (Result_1);
   submitEvidence: (bookingId: text, description: text, fileUrls: vec text) ->
    (Result);

@@ -20,19 +20,19 @@
 
 
 Route (pages)                              Size     First Load JS
-┌ ○ / (731 ms)                             4.71 kB         185 kB
+┌ ○ / (511 ms)                             4.71 kB         185 kB
 ├   /_app                                  0 B             178 kB
 ├ ○ /404                                   181 B           178 kB
 ├ ○ /client                                3.21 kB         184 kB
-├ ○ /client/categories/[slug] (721 ms)     2.75 kB         189 kB
-├ ○ /client/chat (701 ms)                  2.38 kB         183 kB
+├ ○ /client/categories/[slug]              2.75 kB         189 kB
+├ ○ /client/chat (492 ms)                  2.38 kB         183 kB
 ├ ○ /client/home                           4.76 kB         191 kB
-├ ○ /client/service-maps                   3.99 kB         190 kB
-├ ○ /client/service/[slug] (754 ms)        4.27 kB         191 kB
-├ ○ /client/service/view-all               2.5 kB          189 kB
-├ ○ /create-profile (784 ms)               2.86 kB         181 kB
-├ ○ /provider (759 ms)                     3.21 kB         184 kB
-└ ○ /provider/home (727 ms)                8.01 kB         189 kB
+├ ○ /client/service-maps (435 ms)          3.99 kB         190 kB
+├ ○ /client/service/[slug] (496 ms)        4.27 kB         191 kB
+├ ○ /client/service/view-all (424 ms)      2.5 kB          189 kB
+├ ○ /create-profile (468 ms)               2.86 kB         181 kB
+├ ○ /provider                              3.21 kB         184 kB
+└ ○ /provider/home (465 ms)                8.01 kB         189 kB
 + First Load JS shared by all              185 kB
   ├ chunks/framework-f193041683c5bfd5.js   44.8 kB
   ├ chunks/main-313b4d8d397186dc.js        34 kB

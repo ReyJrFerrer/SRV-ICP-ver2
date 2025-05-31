@@ -9,6 +9,7 @@ type ServiceCategory =
  record {
    description: text;
    id: text;
+   imageUrl: text;
    name: text;
    parentId: opt text;
    slug: text;

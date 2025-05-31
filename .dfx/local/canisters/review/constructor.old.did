@@ -1,20 +1,21 @@
 type Time = int;
 type ReviewStatus = 
  variant {
-   active;
-   deleted;
-   flagged;
-   hidden;
+   Flagged;
+   Hidden;
+   Visible;
  };
 type Review = 
  record {
    bookingId: text;
+   clientId: principal;
    comment: text;
    createdAt: Time;
    id: text;
-   qualityScore: float64;
+   providerId: principal;
+   qualityScore: opt float64;
    rating: nat;
-   reviewerId: principal;
+   serviceId: text;
    status: ReviewStatus;
    updatedAt: Time;
  };
@@ -54,8 +55,9 @@ service : {
       totalReviews: nat;
     }) query;
   getUserReviews: (userId: principal) -> (vec Review) query;
+  initializeStaticReviewsManually: () -> (Result_1);
   setCanisterReferences: (booking: principal, "service": principal,
-   reputation: principal) -> (Result_1);
+   reputation: principal, auth: principal) -> (Result_1);
   submitReview: (bookingId: text, rating: nat, comment: text) -> (Result);
   updateReview: (reviewId: text, rating: nat, comment: text) -> (Result);
 }

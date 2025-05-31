@@ -4,6 +4,11 @@ type UserRole =
    ServiceProvider;
  };
 type Time = int;
+type Result_2 = 
+ variant {
+   err: text;
+   ok: text;
+ };
 type Result_1 = 
  variant {
    err: text;
@@ -31,6 +36,7 @@ service : {
   getAllServiceProviders: () -> (vec Profile) query;
   getMyProfile: () -> (Result_1) query;
   getProfile: (userId: principal) -> (Result_1) query;
+  setCanisterReferences: (reputation: opt principal) -> (Result_2);
   updateProfile: (name: opt text, email: opt text, phone: opt text) ->
    (Result_1);
   verifyUser: (userId: principal) -> (Result);

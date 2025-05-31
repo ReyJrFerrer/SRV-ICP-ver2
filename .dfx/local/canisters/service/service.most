@@ -10,7 +10,14 @@ type Location__726251617 =
     state : Text
   };
 type ServiceCategory__231591993 =
-  {description : Text; id : Text; name : Text; parentId : ?Text; slug : Text};
+  {
+    description : Text;
+    id : Text;
+    imageUrl : Text;
+    name : Text;
+    parentId : ?Text;
+    slug : Text
+  };
 type ServiceCategory__536850089 = ServiceCategory__231591993;
 type ServiceStatus__906036687 = {#Available; #Suspended; #Unavailable};
 type Service__1010156053 = Service__149533164;

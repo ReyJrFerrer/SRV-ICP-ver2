@@ -4,9 +4,10 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'slug' : IDL.Text,
     'description' : IDL.Text,
+    'imageUrl' : IDL.Text,
     'parentId' : IDL.Opt(IDL.Text),
   });
-  const Result_1 = IDL.Variant({ 'ok' : ServiceCategory, 'err' : IDL.Text });
+  const Result_2 = IDL.Variant({ 'ok' : ServiceCategory, 'err' : IDL.Text });
   const Location = IDL.Record({
     'latitude' : IDL.Float64,
     'country' : IDL.Text,
@@ -37,10 +38,11 @@ export const idlFactory = ({ IDL }) => {
     'location' : Location,
   });
   const Result = IDL.Variant({ 'ok' : Service, 'err' : IDL.Text });
+  const Result_1 = IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text });
   return IDL.Service({
     'addCategory' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
-        [Result_1],
+        [Result_2],
         [],
       ),
     'createService' : IDL.Func(
@@ -64,6 +66,21 @@ export const idlFactory = ({ IDL }) => {
         [Location, IDL.Float64, IDL.Opt(IDL.Text)],
         [IDL.Vec(Service)],
         ['query'],
+      ),
+    'searchServicesWithReputationFilter' : IDL.Func(
+        [Location, IDL.Float64, IDL.Opt(IDL.Text), IDL.Opt(IDL.Float64)],
+        [IDL.Vec(Service)],
+        [],
+      ),
+    'setCanisterReferences' : IDL.Func(
+        [
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+        ],
+        [Result_1],
+        [],
       ),
     'updateServiceRating' : IDL.Func(
         [IDL.Text, IDL.Float64, IDL.Nat],

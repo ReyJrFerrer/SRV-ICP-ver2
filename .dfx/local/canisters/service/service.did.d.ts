@@ -13,7 +13,9 @@ export interface Location {
 }
 export type Result = { 'ok' : Service } |
   { 'err' : string };
-export type Result_1 = { 'ok' : ServiceCategory } |
+export type Result_1 = { 'ok' : string } |
+  { 'err' : string };
+export type Result_2 = { 'ok' : ServiceCategory } |
   { 'err' : string };
 export interface Service {
   'id' : string,
@@ -34,6 +36,7 @@ export interface ServiceCategory {
   'name' : string,
   'slug' : string,
   'description' : string,
+  'imageUrl' : string,
   'parentId' : [] | [string],
 }
 export type ServiceStatus = { 'Available' : null } |
@@ -43,7 +46,7 @@ export type Time = bigint;
 export interface _SERVICE {
   'addCategory' : ActorMethod<
     [string, string, [] | [string], string, string],
-    Result_1
+    Result_2
   >,
   'createService' : ActorMethod<
     [string, string, string, bigint, Location],
@@ -56,6 +59,14 @@ export interface _SERVICE {
   'searchServicesByLocation' : ActorMethod<
     [Location, number, [] | [string]],
     Array<Service>
+  >,
+  'searchServicesWithReputationFilter' : ActorMethod<
+    [Location, number, [] | [string], [] | [number]],
+    Array<Service>
+  >,
+  'setCanisterReferences' : ActorMethod<
+    [[] | [Principal], [] | [Principal], [] | [Principal], [] | [Principal]],
+    Result_1
   >,
   'updateServiceRating' : ActorMethod<[string, number, bigint], Result>,
   'updateServiceStatus' : ActorMethod<[string, ServiceStatus], Result>,

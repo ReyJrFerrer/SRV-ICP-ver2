@@ -4,6 +4,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'slug' : IDL.Text,
     'description' : IDL.Text,
+    'imageUrl' : IDL.Text,
     'parentId' : IDL.Opt(IDL.Text),
   });
   const ServiceStatus = IDL.Variant({

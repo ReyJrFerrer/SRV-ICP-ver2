@@ -10,7 +10,6 @@ import Float "mo:base/Float";
 import Bool "mo:base/Bool";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
-import Buffer "mo:base/Buffer";
 
 import Types "../types/shared";
 import StaticData "../utils/staticData";
@@ -45,12 +44,23 @@ actor ReviewCanister {
         return Int.toText(now) # "-" # Int.toText(random);
     };
 
-    // Initialize static reviews
+    // Initialize static reviews - only on first deployment
     private func initializeStaticReviews() {
-        // Add reviews to HashMap from shared static data
-        for ((id, review) in StaticData.getSTATIC_REVIEWS().vals()) {
-            reviews.put(id, review);
+        // Temporarily disabled to avoid Principal parsing issues
+        Debug.print("Static reviews initialization disabled temporarily");
+        // TODO: Re-enable after fixing Principal ID issues
+        /*
+        // Only initialize if reviews HashMap is empty to avoid duplicates
+        if (reviews.size() == 0) {
+            // Add reviews to HashMap from shared static data
+            for ((id, review) in StaticData.getSTATIC_REVIEWS().vals()) {
+                reviews.put(id, review);
+            };
+            Debug.print("Static reviews initialized successfully. Total reviews: " # Nat.toText(reviews.size()));
+        } else {
+            Debug.print("Reviews already exist, skipping static initialization. Current count: " # Nat.toText(reviews.size()));
         };
+        */
     };
 
     // Pre-upgrade hook
@@ -254,7 +264,7 @@ actor ReviewCanister {
     };
 
     // Get reviews for a booking
-    public query func getBookingReviews(bookingId : Text) : async Result<[Review]> {
+    public query func getBookingReviews(bookingId : Text) : async [Review] {
         let bookingReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
@@ -262,7 +272,7 @@ actor ReviewCanister {
             }
         );
         
-        return #ok(bookingReviews);
+        return bookingReviews;
     };
 
     // Get reviews by a user
@@ -491,7 +501,7 @@ actor ReviewCanister {
         var active : Nat = 0;
         var hidden : Nat = 0;
         var flagged : Nat = 0;
-        var deleted : Nat = 0;
+        var _deleted : Nat = 0;
         
         for (review in reviews.vals()) {
             total += 1;
@@ -512,7 +522,7 @@ actor ReviewCanister {
     };
 
     // Set canister references (admin function)
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         booking : Principal,
         service : Principal,
         reputation : Principal,
@@ -525,5 +535,27 @@ actor ReviewCanister {
         authCanisterId := ?auth;
         
         return #ok("Canister references set successfully");
+    };
+    
+    // Manual initialization function for static reviews (admin function)
+    public shared(_msg) func initializeStaticReviewsManually() : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        let staticReviews = StaticData.getSTATIC_REVIEWS();
+        var addedCount : Nat = 0;
+        
+        for ((id, review) in staticReviews.vals()) {
+            // Only add if review doesn't already exist
+            switch (reviews.get(id)) {
+                case (null) {
+                    reviews.put(id, review);
+                    addedCount += 1;
+                };
+                case (?_) {
+                    // Review already exists, skip
+                };
+            };
+        };
+        
+        return #ok("Successfully initialized " # Nat.toText(addedCount) # " static reviews. Total reviews: " # Nat.toText(reviews.size()));
     };
 }

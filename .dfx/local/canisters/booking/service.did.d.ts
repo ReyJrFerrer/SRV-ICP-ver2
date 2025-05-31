@@ -46,7 +46,9 @@ export type Result = { 'ok' : Evidence } |
   { 'err' : string };
 export type Result_1 = { 'ok' : Booking } |
   { 'err' : string };
-export type Result_2 = { 'ok' : boolean } |
+export type Result_2 = { 'ok' : string } |
+  { 'err' : string };
+export type Result_3 = { 'ok' : boolean } |
   { 'err' : string };
 export type Time = bigint;
 export interface _SERVICE {
@@ -69,7 +71,11 @@ export interface _SERVICE {
   'getProviderActiveBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getProviderBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getProviderCompletedBookings' : ActorMethod<[Principal], Array<Booking>>,
-  'isEligibleForReview' : ActorMethod<[string, Principal], Result_2>,
+  'isEligibleForReview' : ActorMethod<[string, Principal], Result_3>,
+  'setCanisterReferences' : ActorMethod<
+    [[] | [Principal], [] | [Principal], [] | [Principal], [] | [Principal]],
+    Result_2
+  >,
   'startBooking' : ActorMethod<[string], Result_1>,
   'submitEvidence' : ActorMethod<[string, string, Array<string>], Result>,
 }

@@ -128,10 +128,14 @@ actor ServiceCanister {
             categories.put(id, category);
         };
 
+        // Services initialization temporarily disabled to avoid Principal issues
+        // TODO: Re-enable after fixing Principal ID issues
+        /*
         // Initialize services from shared static data
         for ((id, service) in StaticData.getSTATIC_SERVICES().vals()) {
             services.put(id, service);
         };
+        */
     };
 
     // Initialization

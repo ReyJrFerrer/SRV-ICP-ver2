@@ -43,7 +43,8 @@ export const idlFactory = ({ IDL }) => {
     'location' : Location,
   });
   const Result_1 = IDL.Variant({ 'ok' : Booking, 'err' : IDL.Text });
-  const Result_2 = IDL.Variant({ 'ok' : IDL.Bool, 'err' : IDL.Text });
+  const Result_3 = IDL.Variant({ 'ok' : IDL.Bool, 'err' : IDL.Text });
+  const Result_2 = IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text });
   const Result = IDL.Variant({ 'ok' : Evidence, 'err' : IDL.Text });
   return IDL.Service({
     'acceptBooking' : IDL.Func([IDL.Text, Time], [Result_1], []),
@@ -100,8 +101,18 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isEligibleForReview' : IDL.Func(
         [IDL.Text, IDL.Principal],
-        [Result_2],
+        [Result_3],
         ['query'],
+      ),
+    'setCanisterReferences' : IDL.Func(
+        [
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+          IDL.Opt(IDL.Principal),
+        ],
+        [Result_2],
+        [],
       ),
     'startBooking' : IDL.Func([IDL.Text], [Result_1], []),
     'submitEvidence' : IDL.Func(

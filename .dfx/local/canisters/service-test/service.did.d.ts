@@ -34,6 +34,7 @@ export interface ServiceCategory {
   'name' : string,
   'slug' : string,
   'description' : string,
+  'imageUrl' : string,
   'parentId' : [] | [string],
 }
 export type ServiceStatus = { 'Available' : null } |

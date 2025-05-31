@@ -6,11 +6,9 @@ export type Result = { 'ok' : Review } |
   { 'err' : string };
 export type Result_1 = { 'ok' : string } |
   { 'err' : string };
-export type Result_2 = { 'ok' : Array<Review> } |
+export type Result_2 = { 'ok' : null } |
   { 'err' : string };
-export type Result_3 = { 'ok' : null } |
-  { 'err' : string };
-export type Result_4 = { 'ok' : number } |
+export type Result_3 = { 'ok' : number } |
   { 'err' : string };
 export interface Review {
   'id' : string,
@@ -30,11 +28,11 @@ export type ReviewStatus = { 'Visible' : null } |
   { 'Flagged' : null };
 export type Time = bigint;
 export interface _SERVICE {
-  'calculateProviderRating' : ActorMethod<[Principal], Result_4>,
-  'calculateServiceRating' : ActorMethod<[string], Result_4>,
-  'calculateUserAverageRating' : ActorMethod<[Principal], Result_4>,
-  'deleteReview' : ActorMethod<[string], Result_3>,
-  'getBookingReviews' : ActorMethod<[string], Result_2>,
+  'calculateProviderRating' : ActorMethod<[Principal], Result_3>,
+  'calculateServiceRating' : ActorMethod<[string], Result_3>,
+  'calculateUserAverageRating' : ActorMethod<[Principal], Result_3>,
+  'deleteReview' : ActorMethod<[string], Result_2>,
+  'getBookingReviews' : ActorMethod<[string], Array<Review>>,
   'getReview' : ActorMethod<[string], Result>,
   'getReviewStatistics' : ActorMethod<
     [],
@@ -47,8 +45,9 @@ export interface _SERVICE {
     }
   >,
   'getUserReviews' : ActorMethod<[Principal], Array<Review>>,
+  'initializeStaticReviewsManually' : ActorMethod<[], Result_1>,
   'setCanisterReferences' : ActorMethod<
-    [Principal, Principal, Principal],
+    [Principal, Principal, Principal, Principal],
     Result_1
   >,
   'submitReview' : ActorMethod<[string, bigint, string], Result>,

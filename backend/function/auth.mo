@@ -146,8 +146,8 @@ actor AuthCanister {
             phoneToPrincipal.put(profile.phone, principal);
         };
         
-        // Initialize static data if profiles are empty
-        if (profiles.size() == 0) {
+        // Initialize static data if profiles are less than 5
+        if (profiles.size() < 5) {
             initializeStaticProfiles();
         };
     };

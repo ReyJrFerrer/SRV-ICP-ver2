@@ -15,7 +15,7 @@ export function resolveAssetPath(imagePath: string): any {
   // Map common image paths to their require() equivalents
   const assetMap: { [key: string]: any } = {
     'images/Maid1.jpg': require('../../assets/images/Maid1.jpg'),
-    'images/Maid2.jpg': require('../../assets/images/Maid2.jpg'),
+    'images/Maid2.jpg': require('../../assets/images/maid2.jpg'),
     'images/Plumber1.jpg': require('../../assets/images/Plumber1.jpg'),
     'images/Plumber2.jpg': require('../../assets/images/Plumber2.jpg'),
     'images/Technician1.jpg': require('../../assets/images/Technician1.jpg'),
@@ -23,11 +23,11 @@ export function resolveAssetPath(imagePath: string): any {
     'images/BeautyServices-Hairstylist1.jpg': require('../../assets/images/BeautyServices-Hairstylist1.jpg'),
     'images/BeautyServices-Hairstylist2.jpg': require('../../assets/images/BeautyServices-Hairstylist2.jpg'),
     'images/BeautyServices-Hairstylist3.jpg': require('../../assets/images/BeautyServices-Hairstylist3.jpg'),
-    'images/Photographer-ProPhotographer1.jpg': require('../../assets/images/Photographer-ProPhotographer1.jpg'),
+    'images/Photographer-ProPhotographer1.jpg': require('../../assets/images/Photographer-ProPhotographer.jpg'),
     'images/Photographer-ProPhotographer2.jpg': require('../../assets/images/Photographer-ProPhotographer2.jpg'),
     'images/Photographer-ProPhotographer3.jpg': require('../../assets/images/Photographer-ProPhotographer3.jpg'),
-    'images/DeliveryService-Courier1.jpg': require('../../assets/images/DeliveryService-Courier1.jpg'),
-    'images/DeliveryService-Courier2.jpg': require('../../assets/images/DeliveryService-Courier2.jpg'),
+    'images/DeliveryService-Courier1.jpg': require('../../assets/images/Delivery-Courier1.jpg'),
+    'images/DeliveryService-Courier2.jpg': require('../../assets/images/Delivery-Courier2.jpg'),
     // Add more mappings as needed
   };
   
@@ -42,14 +42,41 @@ export function resolveAssetPath(imagePath: string): any {
 export function adaptBackendProfile(backendProfile: any): any {
   if (!backendProfile) return null;
   
-  const adapted = { ...backendProfile };
+  // Convert timestamps from nanoseconds to milliseconds
+  const convertTime = (nanoseconds: bigint | number): Date => {
+    const milliseconds = typeof nanoseconds === 'bigint' 
+      ? Number(nanoseconds / BigInt(1_000_000))
+      : Number(nanoseconds) / 1_000_000;
+    return new Date(milliseconds);
+  };
+
+  // Extract role type from backend variant
+  const extractRole = (roleVariant: any): 'Client' | 'ServiceProvider' => {
+    if (roleVariant && typeof roleVariant === 'object') {
+      if ('Client' in roleVariant) return 'Client';
+      if ('ServiceProvider' in roleVariant) return 'ServiceProvider';
+    }
+    return 'Client'; // default fallback
+  };
+  
+  const adapted: any = {
+    id: backendProfile.id.toString(),
+    name: backendProfile.name,
+    email: backendProfile.email,
+    phone: backendProfile.phone,
+    role: extractRole(backendProfile.role),
+    isVerified: backendProfile.isVerified,
+    biography: backendProfile.biography?.[0] || undefined, // Optional fields come as arrays
+    createdAt: convertTime(backendProfile.createdAt),
+    updatedAt: convertTime(backendProfile.updatedAt),
+  };
   
   // Resolve profile picture paths
-  if (backendProfile.profilePicture) {
+  if (backendProfile.profilePicture && backendProfile.profilePicture[0]) {
+    const profilePic = backendProfile.profilePicture[0];
     adapted.profilePicture = {
-      type: "IMAGE",
-      url: resolveAssetPath(backendProfile.profilePicture.imageUrl),
-      thumbnail: resolveAssetPath(backendProfile.profilePicture.thumbnailUrl)
+      imageUrl: resolveAssetPath(profilePic.imageUrl),
+      thumbnailUrl: resolveAssetPath(profilePic.thumbnailUrl)
     };
   }
   

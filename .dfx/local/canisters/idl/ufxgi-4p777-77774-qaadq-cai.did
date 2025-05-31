@@ -1,0 +1,76 @@
+type Time = int;
+type ServiceStatus = 
+ variant {
+   Available;
+   Suspended;
+   Unavailable;
+ };
+type ServiceCategory = 
+ record {
+   description: text;
+   id: text;
+   imageUrl: text;
+   name: text;
+   parentId: opt text;
+   slug: text;
+ };
+type Service = 
+ record {
+   category: ServiceCategory;
+   createdAt: Time;
+   description: text;
+   id: text;
+   location: Location;
+   price: nat;
+   providerId: principal;
+   rating: opt float64;
+   reviewCount: nat;
+   status: ServiceStatus;
+   title: text;
+   updatedAt: Time;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: ServiceCategory;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: Service;
+ };
+type Location = 
+ record {
+   address: text;
+   city: text;
+   country: text;
+   latitude: float64;
+   longitude: float64;
+   postalCode: text;
+   state: text;
+ };
+service : {
+  addCategory: (name: text, description: text, parentId: opt text, slug:
+   text, imageUrl: text) -> (Result_2);
+  createService: (title: text, description: text, categoryId: text, price:
+   nat, location: Location) -> (Result);
+  getAllCategories: () -> (vec ServiceCategory) query;
+  getService: (serviceId: text) -> (Result) query;
+  getServicesByCategory: (categoryId: text) -> (vec Service) query;
+  getServicesByProvider: (providerId: principal) -> (vec Service) query;
+  searchServicesByLocation: (userLocation: Location, maxDistance: float64,
+   categoryId: opt text) -> (vec Service) query;
+  searchServicesWithReputationFilter: (userLocation: Location, maxDistance:
+   float64, categoryId: opt text, minTrustScore: opt float64) ->
+   (vec Service);
+  setCanisterReferences: (auth: opt principal, booking: opt principal,
+   review: opt principal, reputation: opt principal) -> (Result_1);
+  updateServiceRating: (serviceId: text, newRating: float64, newReviewCount:
+   nat) -> (Result);
+  updateServiceStatus: (serviceId: text, status: ServiceStatus) -> (Result);
+}

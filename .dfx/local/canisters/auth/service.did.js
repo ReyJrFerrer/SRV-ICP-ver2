@@ -4,15 +4,21 @@ export const idlFactory = ({ IDL }) => {
     'ServiceProvider' : IDL.Null,
   });
   const Time = IDL.Int;
+  const ProfileImage = IDL.Record({
+    'thumbnailUrl' : IDL.Text,
+    'imageUrl' : IDL.Text,
+  });
   const Profile = IDL.Record({
     'id' : IDL.Principal,
     'name' : IDL.Text,
     'createdAt' : Time,
     'role' : UserRole,
+    'biography' : IDL.Opt(IDL.Text),
     'email' : IDL.Text,
     'updatedAt' : Time,
     'isVerified' : IDL.Bool,
     'phone' : IDL.Text,
+    'profilePicture' : IDL.Opt(ProfileImage),
   });
   const Result_1 = IDL.Variant({ 'ok' : Profile, 'err' : IDL.Text });
   const Result_2 = IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text });

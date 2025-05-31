@@ -1,0 +1,95 @@
+type Time = int;
+type Result_3 = 
+ variant {
+   err: text;
+   ok: bool;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: Booking;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: Evidence;
+ };
+type Location = 
+ record {
+   address: text;
+   city: text;
+   country: text;
+   latitude: float64;
+   longitude: float64;
+   postalCode: text;
+   state: text;
+ };
+type Evidence = 
+ record {
+   bookingId: text;
+   createdAt: Time;
+   description: text;
+   fileUrls: vec text;
+   id: text;
+   qualityScore: opt float64;
+   submitterId: principal;
+ };
+type BookingStatus = 
+ variant {
+   Accepted;
+   Cancelled;
+   Completed;
+   Declined;
+   Disputed;
+   InProgress;
+   Requested;
+ };
+type Booking = 
+ record {
+   clientId: principal;
+   completedDate: opt Time;
+   createdAt: Time;
+   evidence: opt Evidence;
+   id: text;
+   location: Location;
+   price: nat;
+   providerId: principal;
+   requestedDate: Time;
+   scheduledDate: opt Time;
+   serviceId: text;
+   status: BookingStatus;
+   updatedAt: Time;
+ };
+service : {
+  acceptBooking: (bookingId: text, scheduledDate: Time) -> (Result_1);
+  cancelBooking: (bookingId: text) -> (Result_1);
+  completeBooking: (bookingId: text) -> (Result_1);
+  createBooking: (serviceId: text, providerId: principal, price: nat,
+   location: Location, requestedDate: Time) -> (Result_1);
+  declineBooking: (bookingId: text) -> (Result_1);
+  disputeBooking: (bookingId: text) -> (Result_1);
+  getBooking: (bookingId: text) -> (Result_1) query;
+  getBookingsByDateRange: (startDate: Time, endDate: Time) ->
+   (vec Booking) query;
+  getBookingsByStatus: (status: BookingStatus) -> (vec Booking) query;
+  getClientActiveBookings: (clientId: principal) -> (vec Booking) query;
+  getClientBookings: (clientId: principal) -> (vec Booking) query;
+  getClientCompletedBookings: (clientId: principal) -> (vec Booking) query;
+  getDisputedBookings: () -> (vec Booking) query;
+  getProviderActiveBookings: (providerId: principal) -> (vec Booking) query;
+  getProviderBookings: (providerId: principal) -> (vec Booking) query;
+  getProviderCompletedBookings: (providerId: principal) ->
+   (vec Booking) query;
+  isEligibleForReview: (bookingId: text, reviewerId: principal) ->
+   (Result_3) query;
+  setCanisterReferences: (auth: opt principal, "service": opt principal,
+   review: opt principal, reputation: opt principal) -> (Result_2);
+  startBooking: (bookingId: text) -> (Result_1);
+  submitEvidence: (bookingId: text, description: text, fileUrls: vec text) ->
+   (Result);
+}

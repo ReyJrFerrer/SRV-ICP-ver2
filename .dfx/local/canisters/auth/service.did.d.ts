@@ -7,11 +7,14 @@ export interface Profile {
   'name' : string,
   'createdAt' : Time,
   'role' : UserRole,
+  'biography' : [] | [string],
   'email' : string,
   'updatedAt' : Time,
   'isVerified' : boolean,
   'phone' : string,
+  'profilePicture' : [] | [ProfileImage],
 }
+export interface ProfileImage { 'thumbnailUrl' : string, 'imageUrl' : string }
 export type Result = { 'ok' : boolean } |
   { 'err' : string };
 export type Result_1 = { 'ok' : Profile } |

@@ -12,6 +12,12 @@ import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 // Types
 import { Service } from '../../../assets/types/service/service';
 import { Category as BaseCategory } from '../../../assets/types/category/category';
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+
+// Services
+import authCanisterService from '@app/services/authCanisterService';
+import { convertProfilesToServiceProviders } from '@app/utils/serviceProviderAdapter';
+import { generateServicesFromProviders } from '@app/utils/serviceGenerator';
 
 // Utils for data adaptation
 import { adaptServiceData, adaptCategoryData } from '@app/utils/serviceDataAdapter';
@@ -30,26 +36,59 @@ const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<AdaptedCategory[]>([]);
+  const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Dynamically import data to avoid SSR issues with React Native require()
     const loadData = async () => {
       try {
-        // In production, you'd fetch this from an API
-        const servicesModule = await import('../../../assets/services');
+        setError(null);
+        
+        // Load categories (always from local assets for now)
         const categoriesModule = await import('../../../assets/categories');
-        
-        // Adapt data for Next.js
-        const adaptedServices = adaptServiceData(servicesModule.SERVICES);
         const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
-        
-        setServices(adaptedServices);
         setCategories(adaptedCategories);
+
+        // Try to load service providers from auth canister first
+        try {
+          console.log('Fetching service providers from auth canister...');
+          const profiles = await authCanisterService.getAllServiceProviders();
+          console.log('Fetched profiles:', profiles);
+          
+          if (profiles && profiles.length > 0) {
+            // Convert backend profiles to frontend ServiceProvider format
+            const serviceProviders = convertProfilesToServiceProviders(profiles);
+            setServiceProviders(serviceProviders);
+            
+            // Generate services from provider data for TopPicks component
+            const generatedServices = generateServicesFromProviders(serviceProviders);
+            setServices(generatedServices);
+            
+            console.log('Successfully loaded data from auth canister');
+          } else {
+            throw new Error('No service providers found in canister');
+          }
+        } catch (canisterError) {
+          console.warn('Failed to load from auth canister, falling back to local data:', canisterError);
+          
+          // Fallback to local assets
+          const servicesModule = await import('../../../assets/services');
+          const serviceProvidersModule = await import('../../../assets/serviceProviders');
+          
+          const adaptedServices = adaptServiceData(servicesModule.SERVICES);
+          setServices(adaptedServices);
+          setServiceProviders(serviceProvidersModule.SERVICE_PROVIDERS);
+          
+          setError('Using local data - Auth canister unavailable');
+        }
+        
       } catch (error) {
-        console.error('Failed to load service data:', error);
-        // Set default empty arrays in case of error
+        console.error('Failed to load any data:', error);
+        setError('Failed to load service data');
+        // Set empty arrays as last resort
         setServices([]);
+        setServiceProviders([]);
         setCategories([]);
       } finally {
         setLoading(false);

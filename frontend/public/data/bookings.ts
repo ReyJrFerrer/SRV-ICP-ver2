@@ -105,7 +105,7 @@ export const MOCK_BOOKINGS: Booking[] = [
     duration: 'approx. 1 hour',
     location: 'My Office, Makati',
     priceDisplay: '₱800.00',
-    status: 'Pending',
+    status: 'Cancelled',
     selectedPackages: [{ id: 'pkg4-1', name: 'Haircut & Blowdry' }],
     bookingType: 'sameday',
     createdAt: new Date().toISOString(),

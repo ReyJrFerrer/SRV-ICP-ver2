@@ -1,8 +1,7 @@
-// SRV-ICP-1/ui/components/client/bookings/BookingItemCard.tsx
 import React from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import { Booking } from '../../../../public/data/bookings'; // Adjust path
+import { Booking } from '../../../../public/data/bookings'; 
 import styles from 'frontend/ui/components/client/bookings/BookingItemCard.module.css'; 
 
 interface BookingItemCardProps {
@@ -14,13 +13,23 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
 
   const handleViewBooking = () => {
     router.push({
-      pathname: `/client/bookings/${booking.id}`, // Navigate to the dynamic page
-      query: { data: JSON.stringify(booking) }, // Pass the whole booking object
+      pathname: `/client/bookings/${booking.id}`, 
+      query: { data: JSON.stringify(booking) }, 
     });
   };
 
   const handleBookAgain = () => {
     router.push(`/client/book/${booking.serviceSlug}`);
+  };
+
+   const handleCancelBooking = () => {
+    alert(`Cancel booking ID: ${booking.id}? (Implement cancellation logic)`);
+    console.log("Attempting to cancel booking:", booking.id);
+  };
+
+   const handleContactProvider = () => {
+    alert(`Contact provider: ${booking.providerName}. (Implement contact logic)`);
+    console.log("Contacting provider for booking:", booking.id);
   };
 
   return (
@@ -68,15 +77,40 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking }) => {
         )}
       </div>
       
-      <div className={styles.actions}>
+       <div className={styles.actions}>
         <button onClick={handleViewBooking} className={styles.viewButton}>
-          View Details {/* Changed from View Booking for clarity */}
+          View Details
         </button>
-        {(booking.status === 'Completed' || booking.status === 'Cancelled') && // Only show for completed/cancelled
+
+        {(booking.status === 'Pending') && (
+          <>
+            <button onClick={handleContactProvider} className={styles.contactButton}>
+              Contact Provider
+            </button>
+            <button onClick={handleCancelBooking} className={styles.cancelButton}>
+              Cancel Booking
+            </button>
+          </>
+        )}
+
+        {(booking.status === 'Confirmed') && (
+          <>
+            <button onClick={handleContactProvider} className={styles.contactButton}>
+              Contact Provider
+            </button>
+          </>
+        )}
+
+        {(booking.status === 'Completed' || booking.status === 'Cancelled') && (
+            <>
+             <button onClick={handleContactProvider} className={styles.contactButton}>
+              Contact Provider
+            </button>
             <button onClick={handleBookAgain} className={styles.bookAgainButton}>
              Book Again
             </button>
-        }
+            </>
+        )}
       </div>
     </div>
   );

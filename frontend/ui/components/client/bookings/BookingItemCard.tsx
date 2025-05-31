@@ -6,7 +6,7 @@ import styles from 'frontend/ui/components/client/bookings/BookingItemCard.modul
 
 interface BookingItemCardProps {
   booking: Booking;
-   onUpdateBookingStatus: (bookingId: string, newStatus: BookingStatus) => void; // <<<< NEW PROP
+   onUpdateBookingStatus: (bookingId: string, newStatus: BookingStatus) => void; 
 }
 
 const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBookingStatus }) => {
@@ -24,9 +24,9 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBooki
   };
 
     const handleCancelBooking = () => {
-    // Confirm with the user before cancelling
+
     if (window.confirm(`Are you sure you want to cancel this booking for "${booking.serviceName}"?`)) {
-      onUpdateBookingStatus(booking.id, 'Cancelled'); // <<<< CALL THE PROP FUNCTION
+      onUpdateBookingStatus(booking.id, 'Cancelled'); 
     }
   };
 

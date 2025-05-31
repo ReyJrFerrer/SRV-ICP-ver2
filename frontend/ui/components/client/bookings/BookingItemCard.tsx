@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Booking, BookingStatus } from '../../../../public/data/bookings'; 
+import { SERVICES } from '../../../../public/data/services';
 import styles from 'frontend/ui/components/client/bookings/BookingItemCard.module.css'; 
 
 interface BookingItemCardProps {
@@ -24,15 +25,35 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBooki
   };
 
     const handleCancelBooking = () => {
-
     if (window.confirm(`Are you sure you want to cancel this booking for "${booking.serviceName}"?`)) {
       onUpdateBookingStatus(booking.id, 'Cancelled'); 
     }
   };
 
-   const handleContactProvider = () => {
-    alert(`Contact provider: ${booking.providerName}. (Implement contact logic)`);
-    console.log("Contacting provider for booking:", booking.id);
+  const handleContactProvider = () => {
+    // Find the service details to get contact info
+    const service = SERVICES.find(s => s.id === booking.serviceId);
+
+    if (service) {
+      let contactMessage = `Contact details for ${booking.providerName}:\n`;
+      let hasContactInfo = false;
+
+      if (service.contactEmail) {
+        contactMessage += `Email: ${service.contactEmail}\n`;
+        hasContactInfo = true;
+      }
+      if (service.contactPhone) {
+        contactMessage += `Phone: ${service.contactPhone}\n`;
+        hasContactInfo = true;
+      }
+
+      if (!hasContactInfo) {
+        contactMessage = `No direct contact information available for ${booking.providerName}. You may try reaching out through general support.`;
+      }
+      alert(contactMessage); // For a better UX, consider using a modal dialog here.
+    } else {
+      alert("Could not find service provider details.");
+    }
   };
 
   return (
@@ -88,7 +109,7 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBooki
         {(booking.status === 'Completed' || booking.status === 'Cancelled') && (
           <>
             <button onClick={handleContactProvider} className={styles.contactButton}>
-              Contact Provider
+              Contact Details
             </button>
             <button onClick={handleBookAgain} className={styles.bookAgainButton}>
              Book Again
@@ -99,7 +120,7 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBooki
         {(booking.status === 'Pending') && (
           <>
             <button onClick={handleContactProvider} className={styles.contactButton}>
-              Contact Provider
+              Contact Details
             </button>
             <button onClick={handleCancelBooking} className={styles.cancelButton}>
              Cancel Booking
@@ -110,7 +131,7 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking,onUpdateBooki
         {(booking.status === 'Confirmed') && (
           <>
             <button onClick={handleContactProvider} className={styles.contactButton}>
-              Contact Provider
+              Contact Details
             </button>
           </>
         )}

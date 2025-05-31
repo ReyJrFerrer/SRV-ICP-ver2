@@ -1,10 +1,8 @@
 export const idlFactory = ({ IDL }) => {
-  const DetectionFlag = IDL.Variant({
-    'ReviewBomb' : IDL.Null,
-    'Other' : IDL.Null,
-    'FakeEvidence' : IDL.Null,
-    'CompetitiveManipulation' : IDL.Null,
-    'IdentityFraud' : IDL.Null,
+  const Time = IDL.Int;
+  const Result_3 = IDL.Variant({
+    'ok' : IDL.Vec(IDL.Tuple(Time, IDL.Float64)),
+    'err' : IDL.Text,
   });
   const TrustLevel = IDL.Variant({
     'Low' : IDL.Null,
@@ -13,7 +11,13 @@ export const idlFactory = ({ IDL }) => {
     'High' : IDL.Null,
     'Medium' : IDL.Null,
   });
-  const Time = IDL.Int;
+  const DetectionFlag = IDL.Variant({
+    'ReviewBomb' : IDL.Null,
+    'Other' : IDL.Null,
+    'FakeEvidence' : IDL.Null,
+    'CompetitiveManipulation' : IDL.Null,
+    'IdentityFraud' : IDL.Null,
+  });
   const ReputationScore = IDL.Record({
     'detectionFlags' : IDL.Vec(DetectionFlag),
     'userId' : IDL.Principal,
@@ -33,7 +37,7 @@ export const idlFactory = ({ IDL }) => {
     'fileUrls' : IDL.Vec(IDL.Text),
     'qualityScore' : IDL.Opt(IDL.Float64),
   });
-  const Result_3 = IDL.Variant({ 'ok' : Evidence, 'err' : IDL.Text });
+  const Result_2 = IDL.Variant({ 'ok' : Evidence, 'err' : IDL.Text });
   const ReviewStatus = IDL.Variant({
     'Visible' : IDL.Null,
     'Hidden' : IDL.Null,
@@ -52,10 +56,9 @@ export const idlFactory = ({ IDL }) => {
     'serviceId' : IDL.Text,
     'providerId' : IDL.Principal,
   });
-  const Result_2 = IDL.Variant({ 'ok' : Review, 'err' : IDL.Text });
-  const Result_1 = IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text });
+  const Result_1 = IDL.Variant({ 'ok' : Review, 'err' : IDL.Text });
   return IDL.Service({
-    'getReputationScore' : IDL.Func([IDL.Principal], [Result], ['query']),
+    'getReputationHistory' : IDL.Func([IDL.Principal], [Result_3], ['query']),
     'getReputationStatistics' : IDL.Func(
         [],
         [
@@ -67,15 +70,11 @@ export const idlFactory = ({ IDL }) => {
         ],
         ['query'],
       ),
-    'initializeReputation' : IDL.Func([IDL.Principal, Time], [Result], []),
-    'processEvidence' : IDL.Func([Evidence], [Result_3], []),
-    'processReview' : IDL.Func([Review], [Result_2], []),
-    'setCanisterReferences' : IDL.Func(
-        [IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal],
-        [Result_1],
-        [],
-      ),
-    'updateUserReputation' : IDL.Func([IDL.Principal], [Result], []),
+    'testAddDetectionFlag' : IDL.Func([], [Result], []),
+    'testInitializeReputation' : IDL.Func([], [Result], []),
+    'testProcessEvidence' : IDL.Func([], [Result_2], []),
+    'testProcessReview' : IDL.Func([], [Result_1], []),
+    'testUpdateTrustScore' : IDL.Func([], [Result], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

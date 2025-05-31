@@ -1,32 +1,38 @@
 type Time = int;
 type ReviewStatus = 
  variant {
-   active;
-   deleted;
-   flagged;
-   hidden;
+   Flagged;
+   Hidden;
+   Visible;
  };
 type Review = 
  record {
    bookingId: text;
+   clientId: principal;
    comment: text;
    createdAt: Time;
    id: text;
-   qualityScore: float64;
+   providerId: principal;
+   qualityScore: opt float64;
    rating: nat;
-   reviewerId: principal;
+   serviceId: text;
    status: ReviewStatus;
    updatedAt: Time;
  };
-type Result_3 = 
+type Result_4 = 
  variant {
    err: text;
    ok: float64;
  };
-type Result_2 = 
+type Result_3 = 
  variant {
    err: text;
    ok;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: vec Review;
  };
 type Result_1 = 
  variant {
@@ -39,11 +45,11 @@ type Result =
    ok: Review;
  };
 service : {
-  calculateProviderRating: (providerId: principal) -> (Result_3) query;
-  calculateServiceRating: (serviceId: text) -> (Result_3) query;
-  calculateUserAverageRating: (userId: principal) -> (Result_3) query;
-  deleteReview: (reviewId: text) -> (Result_2);
-  getBookingReviews: (bookingId: text) -> (vec Review) query;
+  calculateProviderRating: (providerId: principal) -> (Result_4) query;
+  calculateServiceRating: (serviceId: text) -> (Result_4) query;
+  calculateUserAverageRating: (userId: principal) -> (Result_4) query;
+  deleteReview: (reviewId: text) -> (Result_3);
+  getBookingReviews: (bookingId: text) -> (Result_2) query;
   getReview: (reviewId: text) -> (Result) query;
   getReviewStatistics: () ->
    (record {

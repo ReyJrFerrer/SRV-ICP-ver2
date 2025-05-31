@@ -27,11 +27,11 @@ export interface ReputationScore {
 }
 export type Result = { 'ok' : ReputationScore } |
   { 'err' : string };
-export type Result_1 = { 'ok' : string } |
+export type Result_1 = { 'ok' : Review } |
   { 'err' : string };
-export type Result_2 = { 'ok' : Review } |
+export type Result_2 = { 'ok' : Evidence } |
   { 'err' : string };
-export type Result_3 = { 'ok' : Evidence } |
+export type Result_3 = { 'ok' : Array<[Time, number]> } |
   { 'err' : string };
 export interface Review {
   'id' : string,
@@ -56,7 +56,7 @@ export type TrustLevel = { 'Low' : null } |
   { 'High' : null } |
   { 'Medium' : null };
 export interface _SERVICE {
-  'getReputationScore' : ActorMethod<[Principal], Result>,
+  'getReputationHistory' : ActorMethod<[Principal], Result_3>,
   'getReputationStatistics' : ActorMethod<
     [],
     {
@@ -65,14 +65,11 @@ export interface _SERVICE {
       'averageTrustScore' : number,
     }
   >,
-  'initializeReputation' : ActorMethod<[Principal, Time], Result>,
-  'processEvidence' : ActorMethod<[Evidence], Result_3>,
-  'processReview' : ActorMethod<[Review], Result_2>,
-  'setCanisterReferences' : ActorMethod<
-    [Principal, Principal, Principal, Principal],
-    Result_1
-  >,
-  'updateUserReputation' : ActorMethod<[Principal], Result>,
+  'testAddDetectionFlag' : ActorMethod<[], Result>,
+  'testInitializeReputation' : ActorMethod<[], Result>,
+  'testProcessEvidence' : ActorMethod<[], Result_2>,
+  'testProcessReview' : ActorMethod<[], Result_1>,
+  'testUpdateTrustScore' : ActorMethod<[], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

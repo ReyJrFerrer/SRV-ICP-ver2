@@ -26,6 +26,26 @@ actor ServiceCanister {
     private stable var categoryEntries : [(Text, ServiceCategory)] = [];
     private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
 
+    // Canister references
+    private var authCanisterId : ?Principal = null;
+
+    // Constants
+    private let MIN_TITLE_LENGTH : Nat = 5;
+    private let MAX_TITLE_LENGTH : Nat = 100;
+    private let MIN_DESCRIPTION_LENGTH : Nat = 20;
+    private let MAX_DESCRIPTION_LENGTH : Nat = 1000;
+    private let MIN_PRICE : Nat = 100;
+    private let MAX_PRICE : Nat = 1_000_000;
+
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        auth : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := auth;
+        return #ok("Canister references set successfully");
+    };
+
     // Helper functions
     func generateId() : Text {
         let now = Int.abs(Time.now());
@@ -45,36 +65,82 @@ actor ServiceCanister {
         return R * c;
     };
 
+    private func validateTitle(title : Text) : Bool {
+        title.size() >= MIN_TITLE_LENGTH and title.size() <= MAX_TITLE_LENGTH
+    };
+
+    private func validateDescription(description : Text) : Bool {
+        description.size() >= MIN_DESCRIPTION_LENGTH and description.size() <= MAX_DESCRIPTION_LENGTH
+    };
+
+    private func validatePrice(price : Nat) : Bool {
+        price >= MIN_PRICE and price <= MAX_PRICE
+    };
+
+    private func validateLocation(location : Location) : Bool {
+        location.latitude >= -90.0 and location.latitude <= 90.0 and
+        location.longitude >= -180.0 and location.longitude <= 180.0 and
+        location.address.size() > 0 and
+        location.city.size() > 0 and
+        location.country.size() > 0
+    };
+
+    private func validateProvider(providerId : Principal) : async Result<Bool> {
+        switch (authCanisterId) {
+            case (?authId) {
+                let authCanister = actor(Principal.toText(authId)) : actor {
+                    getProfile : (Principal) -> async Types.Result<Types.Profile>;
+                };
+                
+                switch (await authCanister.getProfile(providerId)) {
+                    case (#ok(profile)) {
+                        if (profile.role == #ServiceProvider) {
+                            return #ok(true);
+                        } else {
+                            return #err("User is not a service provider");
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Provider not found: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Auth canister reference not set");
+            };
+        };
+    };
+
     // Static data initialization
     private func initializeStaticData() {
         // Initialize categories
         let staticCategories : [(Text, ServiceCategory)] = [
-            ("cat-001", {
-                id = "cat-001";
+            (generateId(), {
+                id = generateId();
                 name = "Home Services";
                 description = "Professional home maintenance and improvement services";
                 parentId = null;
                 slug = "home-services";
                 imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/home-services-cover"
             }),
-            ("cat-001-01", {
-                id = "cat-001-01";
+            (generateId(), {
+                id = generateId();
                 name = "Cleaning Services";
                 description = "Professional cleaning and housekeeping services";
-                parentId = ?"cat-001";
+                parentId = null;
                 slug = "home-cleaning";
                 imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/cleaning-services-cover"
             }),
-            ("cat-002", {
-                id = "cat-002";
+            (generateId(), {
+                id = generateId();
                 name = "Automobile Repairs";
                 description = "Professional automobile maintenance and repair services";
                 parentId = null;
                 slug = "auto-repairs";
                 imageUrl = "https://res.cloudinary.com/your-cloud-name/image/upload/v1/auto-repairs-cover"
             }),
-            ("cat-003", {
-                id = "cat-003";
+            (generateId(), {
+                id = generateId();
                 name = "Gadget Technicians";
                 description = "Professional repair and support for electronic devices";
                 parentId = null;
@@ -94,26 +160,32 @@ actor ServiceCanister {
             postalCode = "2600"
         };
 
+        // Add categories to HashMap first
+        for ((id, category) in staticCategories.vals()) {
+            categories.put(id, category);
+        };
+
+        // Initialize sample services with dynamic IDs
         let staticServices : [(Text, Service)] = [
-            ("svc-001", {
-                id = "svc-001";
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+            (generateId(), {
+                id = generateId();
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
                 title = "Professional Home Cleaning";
                 description = "Experienced house maid for cleaning, organizing, and maintaining your home";
-                category = switch(categories.get("cat-001-01")) { 
+                category = switch(categories.get(staticCategories[1].0)) { 
                     case(?c) c; 
                     case(null) {
                         {
-                            id = "cat-001-01";
+                            id = generateId();
                             name = "Cleaning Services";
                             description = "Professional cleaning and housekeeping services";
-                            parentId = ?"cat-001";
+                            parentId = null;
                             slug = "home-cleaning";
                             imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/clean-house.jpg"
                         }
                     } 
                 };
-                price = 5000; // Basic Cleaning Package - 5,000 PHP
+                price = 5000;
                 location = sampleLocation;
                 status = #Available;
                 createdAt = Time.now();
@@ -121,16 +193,16 @@ actor ServiceCanister {
                 rating = ?4.8;
                 reviewCount = 156
             }),
-            ("svc-002", {
-                id = "svc-002";
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+            (generateId(), {
+                id = generateId();
+                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
                 title = "Car Maintenance Service";
                 description = "Complete car maintenance and repair services. We handle everything from oil changes to major repairs.";
-                category = switch(categories.get("cat-002")) { 
+                category = switch(categories.get(staticCategories[2].0)) { 
                     case(?c) c; 
                     case(null) {
                         {
-                            id = "cat-002";
+                            id = generateId();
                             name = "Automobile Repairs";
                             description = "Professional automobile maintenance and repair services";
                             parentId = null;
@@ -139,7 +211,7 @@ actor ServiceCanister {
                         }
                     } 
                 };
-                price = 6000; // Basic Vehicle Service Package - 6,000 PHP
+                price = 6000;
                 location = sampleLocation;
                 status = #Available;
                 createdAt = Time.now();
@@ -148,11 +220,6 @@ actor ServiceCanister {
                 reviewCount = 213
             })
         ];
-
-        // Add categories to HashMap
-        for ((id, category) in staticCategories.vals()) {
-            categories.put(id, category);
-        };
 
         // Add services to HashMap
         for ((id, service) in staticServices.vals()) {
@@ -193,6 +260,31 @@ actor ServiceCanister {
         
         if (Principal.isAnonymous(caller)) {
             return #err("Anonymous principal not allowed");
+        };
+
+        // Validate provider
+        switch (await validateProvider(caller)) {
+            case (#err(msg)) {
+                return #err(msg);
+            };
+            case (#ok(_)) {};
+        };
+        
+        // Validate input
+        if (not validateTitle(title)) {
+            return #err("Title must be between " # Nat.toText(MIN_TITLE_LENGTH) # " and " # Nat.toText(MAX_TITLE_LENGTH) # " characters");
+        };
+
+        if (not validateDescription(description)) {
+            return #err("Description must be between " # Nat.toText(MIN_DESCRIPTION_LENGTH) # " and " # Nat.toText(MAX_DESCRIPTION_LENGTH) # " characters");
+        };
+
+        if (not validatePrice(price)) {
+            return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+        };
+
+        if (not validateLocation(location)) {
+            return #err("Invalid location data");
         };
         
         // Validate category exists

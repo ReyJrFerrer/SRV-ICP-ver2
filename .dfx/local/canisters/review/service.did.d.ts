@@ -6,32 +6,35 @@ export type Result = { 'ok' : Review } |
   { 'err' : string };
 export type Result_1 = { 'ok' : string } |
   { 'err' : string };
-export type Result_2 = { 'ok' : null } |
+export type Result_2 = { 'ok' : Array<Review> } |
   { 'err' : string };
-export type Result_3 = { 'ok' : number } |
+export type Result_3 = { 'ok' : null } |
+  { 'err' : string };
+export type Result_4 = { 'ok' : number } |
   { 'err' : string };
 export interface Review {
   'id' : string,
   'status' : ReviewStatus,
+  'clientId' : Principal,
   'bookingId' : string,
   'createdAt' : Time,
-  'reviewerId' : Principal,
-  'qualityScore' : number,
+  'qualityScore' : [] | [number],
   'comment' : string,
   'updatedAt' : Time,
   'rating' : bigint,
+  'serviceId' : string,
+  'providerId' : Principal,
 }
-export type ReviewStatus = { 'deleted' : null } |
-  { 'active' : null } |
-  { 'hidden' : null } |
-  { 'flagged' : null };
+export type ReviewStatus = { 'Visible' : null } |
+  { 'Hidden' : null } |
+  { 'Flagged' : null };
 export type Time = bigint;
 export interface _SERVICE {
-  'calculateProviderRating' : ActorMethod<[Principal], Result_3>,
-  'calculateServiceRating' : ActorMethod<[string], Result_3>,
-  'calculateUserAverageRating' : ActorMethod<[Principal], Result_3>,
-  'deleteReview' : ActorMethod<[string], Result_2>,
-  'getBookingReviews' : ActorMethod<[string], Array<Review>>,
+  'calculateProviderRating' : ActorMethod<[Principal], Result_4>,
+  'calculateServiceRating' : ActorMethod<[string], Result_4>,
+  'calculateUserAverageRating' : ActorMethod<[Principal], Result_4>,
+  'deleteReview' : ActorMethod<[string], Result_3>,
+  'getBookingReviews' : ActorMethod<[string], Result_2>,
   'getReview' : ActorMethod<[string], Result>,
   'getReviewStatistics' : ActorMethod<
     [],

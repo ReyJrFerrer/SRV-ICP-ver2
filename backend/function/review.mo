@@ -158,93 +158,109 @@ actor ReviewCanister {
                 let bookingCanister = actor(Principal.toText(canisterId)) : actor {
                     isEligibleForReview : (Text, Principal) -> async Result<Bool>;
                     getBookingCompletionTime : (Text) -> async Result<Time.Time>;
+                    getBooking : (Text) -> async Result<Types.Booking>;
                 };
                 
                 switch (await bookingCanister.isEligibleForReview(bookingId, caller)) {
                     case (#ok(true)) {
-                        // Get booking completion time to check review window
-                        switch (await bookingCanister.getBookingCompletionTime(bookingId)) {
-                            case (#ok(completionTime)) {
-                                if (not isWithinReviewWindow(completionTime)) {
-                                    return #err("Review window has expired. Reviews must be submitted within " # Nat.toText(REVIEW_WINDOW_DAYS) # " days of service completion");
-                                };
-                                
-                                // Check if review already exists
-                                let existingReviews = Array.filter<Review>(
-                                    Iter.toArray(reviews.vals()),
-                                    func (review : Review) : Bool {
-                                        return review.bookingId == bookingId and review.clientId == caller;
-                                    }
-                                );
-                                
-                                if (existingReviews.size() > 0) {
-                                    return #err("Review already exists for this booking");
-                                };
-                                
-                                let reviewId = generateId();
-                                let now = Time.now();
-                                
-                                let newReview : Review = {
-                                    id = reviewId;
-                                    bookingId = bookingId;
-                                    clientId = caller;
-                                    providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should come from booking
-                                    serviceId = "svc-001"; // This should come from booking
-                                    rating = rating;
-                                    comment = comment;
-                                    createdAt = now;
-                                    updatedAt = now;
-                                    status = #Visible;
-                                    qualityScore = ?calculateQualityScore({
-                                        id = reviewId;
-                                        bookingId = bookingId;
-                                        clientId = caller;
-                                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                                        serviceId = "svc-001";
-                                        rating = rating;
-                                        comment = comment;
-                                        createdAt = now;
-                                        updatedAt = now;
-                                        status = #Visible;
-                                        qualityScore = null;
-                                    });
-                                };
-                                
-                                reviews.put(reviewId, newReview);
-                                
-                                // Update service rating
-                                switch (serviceCanisterId) {
-                                    case (?serviceId) {
-                                        let serviceCanister = actor(Principal.toText(serviceId)) : actor {
-                                            updateServiceRating : (Text, Nat) -> async ();
+                        // Get booking details
+                        switch (await bookingCanister.getBooking(bookingId)) {
+                            case (#ok(booking)) {
+                                // Get booking completion time to check review window
+                                switch (await bookingCanister.getBookingCompletionTime(bookingId)) {
+                                    case (#ok(completionTime)) {
+                                        if (not isWithinReviewWindow(completionTime)) {
+                                            return #err("Review window has expired. Reviews must be submitted within " # Nat.toText(REVIEW_WINDOW_DAYS) # " days of service completion");
                                         };
-                                        await serviceCanister.updateServiceRating(bookingId, rating);
-                                    };
-                                    case (null) {};
-                                };
-                                
-                                // Notify reputation canister
-                                switch (reputationCanisterId) {
-                                    case (?reputationId) {
-                                        let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                                            analyzeReview : (Review) -> async Result<Text>;
+                                        
+                                        // Check if review already exists
+                                        let existingReviews = Array.filter<Review>(
+                                            Iter.toArray(reviews.vals()),
+                                            func (review : Review) : Bool {
+                                                return review.bookingId == bookingId and review.clientId == caller;
+                                            }
+                                        );
+                                        
+                                        if (existingReviews.size() > 0) {
+                                            return #err("Review already exists for this booking");
                                         };
-                                        switch (await reputationCanister.analyzeReview(newReview)) {
-                                            case (#ok(_)) {
-                                                Debug.print("Review analysis completed successfully");
+                                        
+                                        let reviewId = generateId();
+                                        let now = Time.now();
+                                        
+                                        let newReview : Review = {
+                                            id = reviewId;
+                                            bookingId = bookingId;
+                                            clientId = caller;
+                                            providerId = booking.providerId;
+                                            serviceId = booking.serviceId;
+                                            rating = rating;
+                                            comment = comment;
+                                            createdAt = now;
+                                            updatedAt = now;
+                                            status = #Visible;
+                                            qualityScore = ?calculateQualityScore({
+                                                id = reviewId;
+                                                bookingId = bookingId;
+                                                clientId = caller;
+                                                providerId = booking.providerId;
+                                                serviceId = booking.serviceId;
+                                                rating = rating;
+                                                comment = comment;
+                                                createdAt = now;
+                                                updatedAt = now;
+                                                status = #Visible;
+                                                qualityScore = null;
+                                            });
+                                        };
+                                        
+                                        reviews.put(reviewId, newReview);
+                                        
+                                        // Update service rating
+                                        switch (serviceCanisterId) {
+                                            case (?serviceId) {
+                                                let serviceCanister = actor(Principal.toText(serviceId)) : actor {
+                                                    updateServiceRating : (Text, Float, Nat) -> async Result<Types.Service>;
+                                                };
+                                                switch (await serviceCanister.updateServiceRating(booking.serviceId, Float.fromInt(rating), 1)) {
+                                                    case (#ok(_)) {
+                                                        Debug.print("Service rating updated successfully");
+                                                    };
+                                                    case (#err(msg)) {
+                                                        Debug.print("Failed to update service rating: " # msg);
+                                                    };
+                                                };
                                             };
-                                            case (#err(msg)) {
-                                                Debug.print("Review analysis failed: " # msg);
-                                            };
+                                            case (null) {};
                                         };
+                                        
+                                        // Notify reputation canister
+                                        switch (reputationCanisterId) {
+                                            case (?reputationId) {
+                                                let reputationCanister = actor(Principal.toText(reputationId)) : actor {
+                                                    analyzeReview : (Review) -> async Result<Text>;
+                                                };
+                                                switch (await reputationCanister.analyzeReview(newReview)) {
+                                                    case (#ok(_)) {
+                                                        Debug.print("Review analysis completed successfully");
+                                                    };
+                                                    case (#err(msg)) {
+                                                        Debug.print("Review analysis failed: " # msg);
+                                                    };
+                                                };
+                                            };
+                                            case (null) {};
+                                        };
+                                        
+                                        return #ok(newReview);
                                     };
-                                    case (null) {};
+                                    case (#err(msg)) {
+                                        return #err("Failed to get booking completion time: " # msg);
+                                    };
                                 };
-                                
-                                return #ok(newReview);
                             };
                             case (#err(msg)) {
-                                return #err("Failed to get booking completion time: " # msg);
+                                return #err("Failed to get booking details: " # msg);
                             };
                         };
                     };
@@ -278,7 +294,7 @@ actor ReviewCanister {
     };
 
     // Get reviews for a booking
-    public query func getBookingReviews(bookingId : Text) : async [Review] {
+    public query func getBookingReviews(bookingId : Text) : async Result<[Review]> {
         let bookingReviews = Array.filter<Review>(
             Iter.toArray(reviews.vals()),
             func (review : Review) : Bool {
@@ -286,7 +302,7 @@ actor ReviewCanister {
             }
         );
         
-        return bookingReviews;
+        return #ok(bookingReviews);
     };
 
     // Get reviews by a user
@@ -360,9 +376,16 @@ actor ReviewCanister {
                 switch (serviceCanisterId) {
                     case (?serviceId) {
                         let serviceCanister = actor(Principal.toText(serviceId)) : actor {
-                            updateServiceRating : (Text, Nat) -> async ();
+                            updateServiceRating : (Text, Float, Nat) -> async Result<Types.Service>;
                         };
-                        await serviceCanister.updateServiceRating(existingReview.bookingId, rating);
+                        switch (await serviceCanister.updateServiceRating(existingReview.serviceId, Float.fromInt(rating), 1)) {
+                            case (#ok(_)) {
+                                Debug.print("Service rating updated successfully");
+                            };
+                            case (#err(msg)) {
+                                Debug.print("Failed to update service rating: " # msg);
+                            };
+                        };
                     };
                     case (null) {};
                 };

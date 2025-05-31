@@ -21,5 +21,7 @@ type ReputationScore__821698390 =
 type Time__593356169 = Int;
 type TrustLevel__888722035 = {#High; #Low; #Medium; #New; #VeryHigh};
 actor {
-  stable var reputationEntries : [(Principal, ReputationScore__172225387)]
+  stable var reputationEntries : [(Principal, ReputationScore__172225387)];
+  stable var reputationHistoryEntries :
+    [(Principal, [(Time__593356169, Float)])]
 };

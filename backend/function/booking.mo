@@ -26,6 +26,10 @@ actor BookingCanister {
     private stable var evidenceEntries : [(Text, Evidence)] = [];
     private var evidences = HashMap.HashMap<Text, Evidence>(10, Text.equal, Text.hash);
 
+    // Canister references
+    private var authCanisterId : ?Principal = null;
+    private var serviceCanisterId : ?Principal = null;
+
     // Constants
     private let MIN_PRICE : Nat = 100;
     private let MAX_PRICE : Nat = 1_000_000;
@@ -119,42 +123,55 @@ actor BookingCanister {
             postalCode = "2600"
         };
 
-        let staticBookings : [(Text, Booking)] = [
-            ("bk-001", {
-                id = "bk-001";
-                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                serviceId = "svc-001";
-                status = #Completed;
-                requestedDate = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
-                scheduledDate = ?(Time.now() - (1 * 24 * 3600_000_000_000)); // 1 day ago
-                completedDate = ?(Time.now() - (12 * 3600_000_000_000)); // 12 hours ago
-                price = 5000;
-                location = sampleLocation;
-                evidence = null;
-                createdAt = Time.now() - (3 * 24 * 3600_000_000_000); // 3 days ago
-                updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
-            }),
-            ("bk-002", {
-                id = "bk-002";
-                clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-                providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-                serviceId = "svc-002";
-                status = #InProgress;
-                requestedDate = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
-                scheduledDate = ?Time.now();
-                completedDate = null;
-                price = 6000;
-                location = sampleLocation;
-                evidence = null;
-                createdAt = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
-                updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
-            })
-        ];
+        // Get service details from service canister
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                };
+                
+                // Initialize sample bookings with dynamic IDs
+                let staticBookings : [(Text, Booking)] = [
+                    (generateId(), {
+                        id = generateId();
+                        clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"); // This should be replaced with actual client ID
+                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
+                        serviceId = generateId(); // This should be replaced with actual service ID
+                        status = #Completed;
+                        requestedDate = Time.now() - (2 * 24 * 3600_000_000_000); // 2 days ago
+                        scheduledDate = ?(Time.now() - (1 * 24 * 3600_000_000_000)); // 1 day ago
+                        completedDate = ?(Time.now() - (12 * 3600_000_000_000)); // 12 hours ago
+                        price = 5000;
+                        location = sampleLocation;
+                        evidence = null;
+                        createdAt = Time.now() - (3 * 24 * 3600_000_000_000); // 3 days ago
+                        updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
+                    }),
+                    (generateId(), {
+                        id = generateId();
+                        clientId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"); // This should be replaced with actual client ID
+                        providerId = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"); // This should be replaced with actual provider ID
+                        serviceId = generateId(); // This should be replaced with actual service ID
+                        status = #InProgress;
+                        requestedDate = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
+                        scheduledDate = ?Time.now();
+                        completedDate = null;
+                        price = 6000;
+                        location = sampleLocation;
+                        evidence = null;
+                        createdAt = Time.now() - (1 * 24 * 3600_000_000_000); // 1 day ago
+                        updatedAt = Time.now() - (12 * 3600_000_000_000); // 12 hours ago
+                    })
+                ];
 
-        // Add bookings to HashMap
-        for ((id, booking) in staticBookings.vals()) {
-            bookings.put(id, booking);
+                // Add bookings to HashMap
+                for ((id, booking) in staticBookings.vals()) {
+                    bookings.put(id, booking);
+                };
+            };
+            case (null) {
+                Debug.print("Service canister reference not set, skipping static data initialization");
+            };
         };
     };
 
@@ -177,8 +194,44 @@ actor BookingCanister {
         };
     };
 
-    // Public functions
-    
+    // Set canister references
+    public shared(msg) func setCanisterReferences(
+        auth : ?Principal,
+        service : ?Principal
+    ) : async Result<Text> {
+        // In real implementation, need to check if caller has admin rights
+        authCanisterId := auth;
+        serviceCanisterId := service;
+        return #ok("Canister references set successfully");
+    };
+
+    // Helper function to validate provider
+    private func validateProvider(providerId : Principal) : async Result<Bool> {
+        switch (authCanisterId) {
+            case (?authId) {
+                let authCanister = actor(Principal.toText(authId)) : actor {
+                    getProfile : (Principal) -> async Types.Result<Types.Profile>;
+                };
+                
+                switch (await authCanister.getProfile(providerId)) {
+                    case (#ok(profile)) {
+                        if (profile.role == #ServiceProvider) {
+                            return #ok(true);
+                        } else {
+                            return #err("Provider is not a service provider");
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Provider not found: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Auth canister reference not set");
+            };
+        };
+    };
+
     // Create a new booking request
     public shared(msg) func createBooking(
         serviceId : Text,
@@ -191,6 +244,37 @@ actor BookingCanister {
         
         if (Principal.isAnonymous(caller)) {
             return #err("Anonymous principal not allowed");
+        };
+
+        // Validate provider
+        switch (await validateProvider(providerId)) {
+            case (#err(msg)) {
+                return #err(msg);
+            };
+            case (#ok(_)) {};
+        };
+
+        // Validate service ownership
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                };
+                
+                switch (await serviceCanister.getService(serviceId)) {
+                    case (#ok(service)) {
+                        if (service.providerId != providerId) {
+                            return #err("Service does not belong to the specified provider");
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Service not found: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
         };
 
         if (not validatePrice(price)) {

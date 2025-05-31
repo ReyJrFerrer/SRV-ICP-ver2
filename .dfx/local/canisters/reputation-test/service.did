@@ -30,17 +30,20 @@ type Review =
 type Result_3 = 
  variant {
    err: text;
-   ok: Evidence;
+   ok: vec record {
+             Time;
+             float64;
+           };
  };
 type Result_2 = 
  variant {
    err: text;
-   ok: Review;
+   ok: Evidence;
  };
 type Result_1 = 
  variant {
    err: text;
-   ok: text;
+   ok: Review;
  };
 type Result = 
  variant {
@@ -76,7 +79,7 @@ type DetectionFlag =
    ReviewBomb;
  };
 service : {
-  getReputationScore: (userId: principal) -> (Result) query;
+  getReputationHistory: (userId: principal) -> (Result_3) query;
   getReputationStatistics: () ->
    (record {
       averageTrustScore: float64;
@@ -86,10 +89,9 @@ service : {
                                     nat;
                                   };
     }) query;
-  initializeReputation: (userId: principal, creationTime: Time) -> (Result);
-  processEvidence: (evidence: Evidence) -> (Result_3);
-  processReview: (review: Review) -> (Result_2);
-  setCanisterReferences: (auth: principal, booking: principal, review:
-   principal, "service": principal) -> (Result_1);
-  updateUserReputation: (userId: principal) -> (Result);
+  testAddDetectionFlag: () -> (Result);
+  testInitializeReputation: () -> (Result);
+  testProcessEvidence: () -> (Result_2);
+  testProcessReview: () -> (Result_1);
+  testUpdateTrustScore: () -> (Result);
 }

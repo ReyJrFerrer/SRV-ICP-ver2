@@ -1,0 +1,42 @@
+.pageContainer {
+  max-width: 500px; /* Or your preferred mobile width */
+  margin: 0 auto;
+  background-color: #f8f9fa; /* Light background for the page */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: white; /* Or your header color */
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #333;
+  padding: 8px;
+}
+
+.serviceTitleHeader {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  flex-grow: 1;
+}
+
+.mainContent {
+  flex-grow: 1;
+  overflow-y: auto; /* Allows content to scroll if it exceeds viewport */
+}

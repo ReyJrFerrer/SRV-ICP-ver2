@@ -1,0 +1,407 @@
+.bookingFormContainer {
+  background-color: #fff; 
+}
+
+
+.pageContainer {
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #f0f2f5; 
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageHeader {
+  display: grid; 
+  grid-template-columns: auto 1fr auto; 
+  align-items: center;
+  padding: 14px 16px; 
+  background-color: white;
+  border-bottom: 1px solid #e8e8e8; 
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+  box-sizing: border-box;
+}
+
+.backButton {
+  grid-column: 1 / 2; 
+  background: none;
+  border: none;
+  font-size: 23px; 
+  font-weight: normal; 
+  cursor: pointer;
+  color: #555; 
+  padding: 0; 
+  line-height: 1; 
+  justify-self: start; 
+}
+
+.mainTitle {
+  grid-column: 2 / 3; 
+  font-size: 17px;  
+  font-weight: 500; 
+  color: #1c1e21;  
+  text-align: center; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerSpacer {
+  grid-column: 3 / 4; 
+  width: 40px; 
+ 
+}
+
+
+.mainContent {
+  flex-grow: 1;
+  overflow-y: auto;
+  /* padding: 0px 0px 80px 0px;  */
+}
+
+.formSection {
+  padding: 16px;
+  margin-bottom: 12px; /* Space between card-like sections */
+  background-color: #ffffff;
+  border-bottom: 1px solid #e8e8e8; 
+}
+.formSection:first-child {
+   border-top: 1px solid #e8e8e8; 
+}
+
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.checkboxLabel {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  margin-right: 8px;
+  accent-color: #007bff; /* Or your brand color */
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 5px 0;
+  margin-top: 5px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.optionGroup {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.optionButton {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.optionButtonSelected {
+  background-color: #007bff; /* Highlight color */
+  color: white;
+  border-color: #007bff;
+}
+
+.optionDetail {
+  display: block;
+  font-size: 12px;
+  color: #666;
+}
+
+.optionButtonSelected .optionDetail {
+  color: #e0e0ff;
+}
+
+.scheduledOptions {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+
+.calendarPlaceholder {
+  padding: 10px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+.dateButton, .dateButtonSelected {
+  padding: 8px 12px;
+  margin: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dateButtonSelected {
+  background-color: #007bff;
+  color: white;
+}
+
+.timeInput {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.actionButton {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.actionButton:hover {
+  background-color: #0056b3;
+}
+
+.secondaryButton {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.secondaryButton:hover {
+  background-color: #5a6268;
+}
+
+.paymentNote {
+  font-size: 14px;
+  color: #555;
+  background-color: #e9f5ff;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+}
+
+.confirmButtonContainer {
+  padding: 16px;
+  background-color: #fff;
+  border-top: 1px solid #e0e0e0;
+  position: sticky; /* Make it sticky */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
+.confirmButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background-color: #28a745; /* Green button */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.confirmButton:hover {
+  background-color: #218838;
+}
+
+.locationStatus {
+  font-size: 13px;
+  color: #555;
+  margin-top: 5px; /* Adjusted */
+  margin-bottom: 10px; /* Adjusted */
+  padding: 8px;
+  background-color: #f0f8ff;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.manualAddressLabel {
+  font-size: 13px;
+  color: #666;
+  margin-top: 15px; 
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.addressInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.addressInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 5px; 
+}
+
+.addressInput::placeholder {
+  color: #999;
+}
+
+.formSection .actionButton:last-of-type {
+  margin-bottom: 15px; 
+}
+
+.formErrorMessage {
+  color: red;
+  background-color: #ffe0e0;
+  border: 1px solid red;
+  padding: 10px;
+  margin: 10px 12px; /* Match horizontal margin of formSection */
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.scheduledOptions {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background-color: #fdfdfd; 
+}
+
+.inputLabel { 
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.datePickerInput { 
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: white; 
+}
+.datePickerInput::placeholder {
+  color: #999;
+}
+
+
+.timeInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.confirmButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background-color: #28a745; 
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease; 
+}
+.confirmButton:hover {
+  background-color: #218838;
+}
+
+.confirmButton:disabled {
+  background-color: #a5d6a7; 
+  color: #efefef;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.formErrorMessage { 
+  color: red;
+  background-color: #ffe0e0;
+  border: 1px solid red;
+  padding: 10px;
+  margin: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.availabilityInfo {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  padding: 5px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.optionButton:disabled .optionDetail {
+  color: #ced4da;
+}
+
+.scheduledOptions {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background-color: #fdfdfd;
+}
+
+.formErrorMessageSmall {
+    font-size: 0.8rem;
+    color: #dc3545; 
+    margin-top: 5px;
+}

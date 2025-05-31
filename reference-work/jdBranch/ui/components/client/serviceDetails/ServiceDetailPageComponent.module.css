@@ -1,0 +1,209 @@
+
+.detailContainer {
+  background-color: #fff;
+  /* padding-bottom: 80px;  */
+}
+
+.contentPadding {
+  padding: 16px;
+}
+
+.heroImageContainer {
+  width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  position: relative; 
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.infoSection,
+.availabilitySection,
+.ratingSection,
+.requirementsSection,
+.verificationSection,
+.serviceImagesSection {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.infoSection:last-child,
+.availabilitySection:last-child,
+.ratingSection:last-child,
+.requirementsSection:last-child,
+.verificationSection:last-child,
+.serviceImagesSection:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+
+.infoSection h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.description {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.detailItem strong {
+  margin-right: 6px;
+}
+
+.detailIcon {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.availabilitySection h3,
+.ratingSection h3,
+.requirementsSection h3,
+.verificationSection h3,
+.serviceImagesSection h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.availableNow {
+  color: green;
+  font-weight: 500;
+}
+
+.notAvailableNow {
+  color: #cc0000;
+  font-weight: 500;
+}
+
+.requirementsSection ul {
+  list-style: disc;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #444;
+}
+
+.requirementsSection ul li {
+  margin-bottom: 6px;
+}
+
+.verified {
+  color: green;
+}
+
+.notVerified {
+  color: #cc0000;
+}
+
+.imageGallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; 
+}
+
+.galleryImagePlaceholder {
+  width: 100px;
+  height: 100px;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #777;
+  flex-shrink: 0;
+}
+
+.bookingButtonContainer {
+  padding: 16px;
+  background-color: #fff;
+  border-top: 1px solid #e0e0e0;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50; 
+}
+
+.bookingButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background-color: #28a745; 
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.bookingButton:hover {
+  background-color: #218838;
+}
+
+/* SRV-ICP-1/ui/styles/ServiceDetailPageComponent.module.css */
+/* ... other styles ... */
+
+.serviceImagesSection {
+  /* ... your existing styles ... */
+  margin-bottom: 24px; /* Or as needed */
+}
+
+.serviceImagesSection h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.imageGallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Allows horizontal scrolling if many images */
+  padding-bottom: 10px; /* Space for scrollbar if it appears */
+}
+
+.galleryImageContainer {
+  flex-shrink: 0; /* Prevent images from shrinking */
+  width: 100px;   /* Match Image width */
+  height: 100px;  /* Match Image height */
+  position: relative; /* For Next/Image layout="fill" if you choose that */
+  border-radius: 8px;
+  overflow: hidden; /* To clip image to rounded corners */
+  border: 1px solid #eee; /* Optional border */
+}
+
+.galleryImage {
+  /* If using layout="fill" on Next/Image, object-fit would be here.
+     Since we are using width/height props, specific styling might not be needed
+     unless you want transitions or other effects. */
+  border-radius: 8px; /* Ensure image itself has rounded corners if container does */
+}
+
+.serviceImagesSection p { /* For the "No additional images" message */
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+  padding: 10px 0;
+}

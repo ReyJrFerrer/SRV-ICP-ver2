@@ -1,0 +1,64 @@
+.myBookingsContainer {
+  padding: 0 0 70px 0; 
+  background-color: #f8f9fa;
+  min-height: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.tabsContainer {
+  display: flex;
+  justify-content: space-around;
+  background-color: white;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky; /* Make tabs sticky */
+  top: 0; 
+  z-index: 90; /* Below page header if any */
+}
+
+.tabButton {
+  padding: 10px 15px;
+  border: none;
+  background-color: transparent;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+.tabButton:hover {
+  color: #007bff;
+}
+
+.activeTab {
+  color: #007bff;
+  border-bottom-color: #007bff;
+  font-weight: 600;
+}
+
+.bookingList {
+  padding: 16px;
+}
+
+.noBookingsMessage {
+  text-align: center;
+  color: #777;
+  margin-top: 30px;
+  font-size: 15px;
+}

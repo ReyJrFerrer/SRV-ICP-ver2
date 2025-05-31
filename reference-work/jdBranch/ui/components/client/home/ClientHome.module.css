@@ -1,0 +1,110 @@
+.container {
+  flex: 1;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+.servicesSection {
+  padding: 10px 0;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.viewAllButton {
+  background: none;
+  border: none;
+  color: #205781;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.viewAllButton:hover {
+  text-decoration: underline;
+}
+
+.servicesList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding-bottom: 16px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.serviceCardWrapper {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .servicesList {
+    display: grid;
+    grid-template-columns: repeat((2, 1fr));
+    gap: 20px;
+    overflow-x: visible;
+    flex-direction: initial;
+    align-items: initial;
+  }
+
+  .serviceCardWrapper{
+   width: auto;
+   max-width: none; 
+  }
+}
+
+@media (max-width: 600px) {
+  .servicesList {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 20px;
+    overflow-x: visible;
+    flex-direction: initial;
+    align-items: initial;
+  }
+
+  .serviceCardWrapper{
+   width: auto;
+   max-width: none; 
+  }
+}
+
+@media (min-width: 1024px) {
+  .servicesList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    overflow-x: visible;
+    flex-direction: initial;
+    align-items: initial;
+  }
+
+  .serviceCardWrapper{
+   width: auto;
+   max-width: none; 
+  }
+
+  .noResults {
+  text-align: center;
+  padding: 20px;
+  color: #555;
+  font-size: 16px;
+}
+}

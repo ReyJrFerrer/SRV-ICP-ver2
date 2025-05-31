@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from 'frontend/ui/components/client/home/ClientHome.module.css';
-import ListHeader from 'frontend/ui/components/shared/ListHeader';
+import ListHeader from 'frontend/ui/components/shared/listHeader/ListHeader';
 import ServiceCard from 'frontend/ui/components/client/serviceCard/ServiceCard';
 import { Service, SERVICES } from 'frontend/public/data/services'; 
 import { CATEGORIES } from 'frontend/public/data/categories'; 

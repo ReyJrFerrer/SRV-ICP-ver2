@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './UserLocationComponent.module.css';
+import styles from 'frontend/ui/components/shared/userLocation/UserLocationComponent.module.css';
 
 interface UserLocationComponentProps {
   onPress?: () => void;

@@ -1,5 +1,5 @@
 import React from 'react'; 
-import styles from 'frontend/ui/components/shared/SearchBarComponent.module.css';
+import styles from 'frontend/ui/components/shared/searchBar/SearchBarComponent.module.css';
 
 interface SearchBarComponentProps {
     placeholder?: string;

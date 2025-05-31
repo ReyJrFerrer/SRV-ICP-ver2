@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import styles from 'frontend/ui/components/shared/ListHeader.module.css'; 
-import UserLocationComponent from './UserLocationComponent';
-import SearchBarComponent from './SearchBarComponent';
-import { CATEGORIES, Category } from '../../../public/data/categories';
+import styles from 'frontend/ui/components/shared//listHeader/ListHeader.module.css'; 
+import UserLocationComponent from '../userLocation/UserLocationComponent';
+import SearchBarComponent from '../searchBar/SearchBarComponent';
+import { CATEGORIES, Category } from '../../../../public/data/categories';
 
 interface ListHeaderProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  selectedCategoryId: string | null; // <<<< NEW: ID of the selected category
-  onSelectCategory: (categoryId: string | null) => void; // <<<< NEW: Handler for category selection
+  selectedCategoryId: string | null; 
+  onSelectCategory: (categoryId: string | null) => void; 
 }
 
 export default function ListHeader({ 

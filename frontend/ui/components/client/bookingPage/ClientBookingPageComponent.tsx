@@ -130,13 +130,20 @@ const LocationInfo: FC<LocationInfoProps> = ({
     )}
     {showManualAddressForm && (
       <>
-        <p className={styles.manualAddressLabel}>Enter address manually:</p>
+        <p className={styles.manualAddressLabel}>Enter address manually (all fields required*):</p>
         <div className={styles.addressInputGroup}>
-          <input type="text" placeholder="House No. / Unit / Building" value={houseNumber} onChange={(e) => onHouseNumberChange(e.target.value)} className={styles.addressInput}/>
-          <input type="text" placeholder="Street Name" value={street} onChange={(e) => onStreetChange(e.target.value)} className={styles.addressInput} />
-          <input type="text" placeholder="Barangay" value={barangay} onChange={(e) => onBarangayChange(e.target.value)} className={styles.addressInput} />
-          <input type="text" placeholder="Municipality / City" value={municipalityCity} onChange={(e) => onMunicipalityCityChange(e.target.value)} className={styles.addressInput} />
-          <input type="text" placeholder="Province" value={province} onChange={(e) => onProvinceChange(e.target.value)} className={styles.addressInput} />
+          <input
+            type="text"
+            placeholder="House No. / Unit / Building *" // Added asterisk
+            value={houseNumber}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onHouseNumberChange(e.target.value)}
+            className={styles.addressInput}
+          />
+          {/* Add asterisks to other placeholders similarly */}
+          <input type="text" placeholder="Street Name *" value={street} onChange={(e) => onStreetChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Barangay *" value={barangay} onChange={(e) => onBarangayChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Municipality / City *" value={municipalityCity} onChange={(e) => onMunicipalityCityChange(e.target.value)} className={styles.addressInput} />
+          <input type="text" placeholder="Province *" value={province} onChange={(e) => onProvinceChange(e.target.value)} className={styles.addressInput} />
         </div>
       </>
     )}
@@ -156,7 +163,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
 
-  const [houseNumber, setHouseNumber] = useState('');
+ const [houseNumber, setHouseNumber] = useState('');
   const [street, setStreet] = useState('');
   const [barangay, setBarangay] = useState('');
   const [municipalityCity, setMunicipalityCity] = useState('');
@@ -164,6 +171,9 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   const [currentLocationStatus, setCurrentLocationStatus] = useState('');
   const [useGpsLocation, setUseGpsLocation] = useState(false);
   const [showManualAddress, setShowManualAddress] = useState(false);
+
+  const [formError, setFormError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (service && service.packages) {
@@ -214,21 +224,51 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
   };
 
   const handleConfirmBooking = () => {
-    let finalAddress = "Address not specified."; // Default
+    setFormError(null); // Clear previous errors
 
-    if (useGpsLocation && currentLocationStatus.startsWith('📍')) {
-      finalAddress = `${currentLocationStatus.replace('📍 ','').replace(' (Using this)','')}`;
-    } else {
-      const manualAddressParts = [houseNumber, street, barangay, municipalityCity, province]
-        .map(part => part.trim())
-        .filter(part => part !== '');
+    let finalAddress = "Address not specified.";
+    let manualAddressProvided = false;
+    let attemptManualAddress = showManualAddress && !useGpsLocation; // True if manual form is shown AND we are not relying on a (potentially successful) GPS attempt.
+                                                                    // Or, if useGpsLocation was true but failed, showManualAddress might become true.
 
-      if (manualAddressParts.length > 0) {
-        finalAddress = manualAddressParts.join(', ');
-      } else if (useGpsLocation) { 
-        finalAddress = `GPS location failed. Address not manually entered.`;
-      }
-    
+    if (attemptManualAddress || (showManualAddress && useGpsLocation && !currentLocationStatus.startsWith('📍'))) {
+        // This condition means:
+        // 1. User explicitly chose manual OR
+        // 2. User tried GPS, it failed, and the manual form is now the fallback.
+        const manualAddressParts = [
+            {label: "House No. / Unit / Building", value: houseNumber},
+            {label: "Street Name", value: street},
+            {label: "Barangay", value: barangay},
+            {label: "Municipality / City", value: municipalityCity},
+            {label: "Province", value: province}
+        ];
+
+        const missingFields = manualAddressParts
+            .filter(part => part.value.trim() === '')
+            .map(part => part.label);
+
+        if (missingFields.length > 0) {
+            setFormError(`Please fill in all required address fields: ${missingFields.join(', ')}.`);
+            return; // Stop processing
+        }
+        finalAddress = manualAddressParts.map(part => part.value.trim()).join(', ');
+        manualAddressProvided = true;
+    }
+
+
+    if (!manualAddressProvided && useGpsLocation && currentLocationStatus.startsWith('📍')) {
+      // Using GPS location
+      finalAddress = `Current Location (GPS): ${currentLocationStatus.replace('📍 ','').replace(' (Using this)','')}`;
+    } else if (!manualAddressProvided && !attemptManualAddress && useGpsLocation) {
+      // Tried GPS, it failed, and didn't fall back to validated manual input (e.g. user didn't fill it)
+      finalAddress = `GPS location failed. Address not manually entered.`;
+    }
+    // If neither GPS was successful nor manual address was provided and validated,
+    // `finalAddress` will retain its default "Address not specified." or the GPS error.
+    // You might want an explicit check here if an address is absolutely mandatory.
+    if (finalAddress === "Address not specified." && !currentLocationStatus.startsWith('📍')) {
+        setFormError("Please provide a service location using GPS or by entering it manually.");
+        return;
     }
 
     const bookingDetails = {
@@ -278,6 +318,7 @@ const BookingPageComponent: FC<BookingPageComponentProps> = ({ service }) => {
         showManualAddressForm={showManualAddress}
         onToggleManualAddress={toggleManualAddressForm}
       />
+       {formError && <p className={styles.formErrorMessage}>{formError}</p>}
       <PaymentInfoDisplay />
 
       <div className={styles.confirmButtonContainer}>

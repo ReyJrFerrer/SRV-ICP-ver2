@@ -291,3 +291,17 @@
 .formSection .actionButton:last-of-type {
   margin-bottom: 15px; 
 }
+
+/* SRV-ICP-1/ui/styles/BookingPageComponent.module.css */
+/* ... (keep all existing styles) ... */
+
+.formErrorMessage {
+  color: red;
+  background-color: #ffe0e0;
+  border: 1px solid red;
+  padding: 10px;
+  margin: 10px 12px; /* Match horizontal margin of formSection */
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}

@@ -1,15 +1,14 @@
-/* SRV-ICP-1/ui/styles/BookingItemCard.module.css */
 .card {
   background-color: #fff;
-  border-radius: 10px; /* Slightly more rounded */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Softer shadow */
+  border-radius: 10px; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
   padding: 16px;
   margin-bottom: 16px;
 }
 
 .cardTopRow {
   display: flex;
-  align-items: flex-start; /* Align items to the top */
+  align-items: flex-start;
   margin-bottom: 12px;
   gap: 12px;
 }
@@ -23,7 +22,7 @@
 }
 
 .serviceImage {
-  display: block; /* Remove extra space below image */
+  display: block; 
 }
 
 .serviceInfo {
@@ -31,41 +30,40 @@
 }
 
 .serviceName {
-  font-size: 16px; /* Adjusted */
+  font-size: 16px; 
   font-weight: 600;
-  color: #2c3e50; /* Darker blue/grey */
+  color: #2c3e50; 
   margin-bottom: 2px;
 }
 
 .providerName {
     font-size: 12px;
-    color: #7f8c8d; /* Grey color */
+    color: #7f8c8d; 
     margin-bottom: 4px;
 }
 
-.rating { /* Style for rating if you add it */
+.rating { 
   font-size: 12px;
-  color: #7f8c8d; /* Grey color */
+  color: #7f8c8d; 
   display: flex;
   align-items: center;
 }
 
 .statusBadge {
-  padding: 5px 12px; /* Adjusted padding */
-  border-radius: 15px; /* Pill shape */
+  padding: 5px 12px; 
+  border-radius: 15px; 
   font-size: 11px;
-  font-weight: 600; /* Bolder */
+  font-weight: 600; 
   color: white;
-  align-self: flex-start; /* Keep badge at the top */
-  margin-left: auto; /* Pushes to the right if serviceInfo takes up space */
+  align-self: flex-start; 
+  margin-left: auto; 
   white-space: nowrap;
 }
 
-/* Status badge colors - ensure these match your BookingStatus types */
-.statusBadge.pending { background-color: #f39c12; } /* Orange/Yellow */
-.statusBadge.confirmed { background-color: #2ecc71; } /* Green */
-.statusBadge.completed { background-color: #3498db; } /* Blue */
-.statusBadge.cancelled { background-color: #e74c3c; } /* Red */
+.statusBadge.pending { background-color: #f39c12; }
+.statusBadge.confirmed { background-color: #2ecc71; } 
+.statusBadge.completed { background-color: #3498db; } 
+.statusBadge.cancelled { background-color: #e74c3c; } 
 
 
 .detailsGrid {
@@ -83,8 +81,8 @@
 }
 
 .detailIcon {
-  font-size: 16px; /* Slightly larger icons */
-  color: #555; /* Consistent icon color */
+  font-size: 16px; 
+  color: #555; 
 }
 
 .actions {
@@ -98,7 +96,7 @@
   padding: 10px 12px; /* Adjusted padding */
   border-radius: 6px;
   border: 1px solid;
-  font-size: 13px; /* Slightly smaller font */
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;

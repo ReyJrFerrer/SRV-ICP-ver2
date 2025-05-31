@@ -1,12 +1,11 @@
-/* SRV-ICP-1/ui/styles/ViewBookingDetailsComponent.module.css */
 .detailsCard {
   background-color: #ffffff;
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   width: 100%;
-  max-width: 420px; /* Or adjust to fit within pageContainer */
-  text-align: left; /* Details are usually left-aligned */
+  max-width: 420px; 
+  text-align: left; 
 }
 
 .statusHeader {
@@ -33,7 +32,7 @@
   color: white;
   white-space: nowrap;
 }
-/* Badge colors from BookingItemCard.module.css */
+
 .statusBadge.pending { background-color: #f39c12; } 
 .statusBadge.confirmed { background-color: #2ecc71; } 
 .statusBadge.completed { background-color: #3498db; } 
@@ -55,7 +54,7 @@
 .summarySection {
   margin-bottom: 20px;
   padding: 15px;
-  background-color: #f9f9f9; /* Light background for summary */
+  background-color: #f9f9f9; 
   border-radius: 8px;
   border: 1px solid #efefef;
 }
@@ -101,7 +100,7 @@
     margin-top: 10px;
 }
 
-.actionButton { /* For "Book This Service Again" */
+.actionButton { 
   display: block;
   width: 100%;
   padding: 12px 20px;

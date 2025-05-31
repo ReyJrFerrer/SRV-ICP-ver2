@@ -1,8 +1,7 @@
-// SRV-ICP-1/ui/components/client/bookings/ViewBookingDetailsComponent.tsx
 import React from 'react';
 import { useRouter } from 'next/router';
-import { Booking } from '../../../../public/data/bookings'; // Adjust path
-import styles from 'frontend/ui/components/client/bookings/ViewBookingDetails.module.css'; // We'll create this
+import { Booking } from '../../../../public/data/bookings'; 
+import styles from 'frontend/ui/components/client/bookings/ViewBookingDetails.module.css'; 
 
 interface ViewBookingDetailsProps {
   booking: Booking;

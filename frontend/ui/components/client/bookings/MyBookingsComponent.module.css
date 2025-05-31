@@ -1,6 +1,5 @@
-/* SRV-ICP-1/ui/styles/MyBookingsComponent.module.css */
 .myBookingsContainer {
-  padding: 0 0 70px 0; /* Padding for bottom nav */
+  padding: 0 0 70px 0; 
   background-color: #f8f9fa;
   min-height: 100%;
 }
@@ -27,7 +26,7 @@
   padding: 8px 0;
   border-bottom: 1px solid #e0e0e0;
   position: sticky; /* Make tabs sticky */
-  top: 0; /* Adjust if you have another sticky header above this page's own header */
+  top: 0; 
   z-index: 90; /* Below page header if any */
 }
 

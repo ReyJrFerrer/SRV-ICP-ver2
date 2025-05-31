@@ -47,7 +47,7 @@ interface PackageSelectionProps {
 }
 const PackageSelection: FC<PackageSelectionProps> = ({ packages, onPackageChange }) => (
   <div className={styles.formSection}>
-    <h3 className={styles.sectionTitle}>Select Package</h3>
+    <h3 className={styles.sectionTitle}>Select Package *</h3>
     {packages.map((pkg) => (
       <label key={pkg.id} className={styles.checkboxLabel}>
         <input type="checkbox" checked={pkg.checked} onChange={() => onPackageChange(pkg.id)} />
@@ -114,7 +114,7 @@ const BookingOptionsDisplay: FC<BookingOptionsProps> = ({
 
   return (
     <div className={styles.formSection}>
-      <h3 className={styles.sectionTitle}>Booking Schedule</h3>
+      <h3 className={styles.sectionTitle}>Booking Schedule *</h3>
       {availability.timeSlots && availability.timeSlots.length > 0 && (
           <p className={styles.availabilityInfo}>
             Available: {availability.schedule.join(', ')} 
@@ -195,7 +195,7 @@ const LocationInfo: FC<LocationInfoProps> = ({
   onUseCurrentLocation, currentLocationStatus, showManualAddressForm, onToggleManualAddress
 }) => (
   <div className={styles.formSection}>
-    <h3 className={styles.sectionTitle}>Service Location</h3>
+    <h3 className={styles.sectionTitle}>Service Location *</h3>
     <button onClick={onUseCurrentLocation} className={styles.actionButton} style={{marginBottom: '10px'}}>
       📍 Use Current Location
     </button>

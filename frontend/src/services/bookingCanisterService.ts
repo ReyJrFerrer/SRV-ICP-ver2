@@ -7,7 +7,13 @@ import type {
   Booking as CanisterBooking,
   BookingStatus as CanisterBookingStatus,
   Location as CanisterLocation,
-  Evidence as CanisterEvidence
+  Evidence as CanisterEvidence,
+  AvailableSlot as CanisterAvailableSlot,
+  ProviderAvailability as CanisterProviderAvailability,
+  TimeSlot as CanisterTimeSlot,
+  VacationPeriod as CanisterVacationPeriod,
+  DayOfWeek as CanisterDayOfWeek,
+  DayAvailability as CanisterDayAvailability
 } from '../declarations/booking/booking.did';
 
 // Canister configuration
@@ -56,6 +62,52 @@ export type BookingStatus =
   | 'InProgress'
   | 'Completed'
   | 'Disputed';
+
+export type DayOfWeek = 
+  | 'Monday'
+  | 'Tuesday' 
+  | 'Wednesday'
+  | 'Thursday'
+  | 'Friday'
+  | 'Saturday'
+  | 'Sunday';
+
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
+export interface DayAvailability {
+  isAvailable: boolean;
+  slots: TimeSlot[];
+}
+
+export interface VacationPeriod {
+  id: string;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface ProviderAvailability {
+  providerId: Principal;
+  isActive: boolean;
+  instantBookingEnabled: boolean;
+  bookingNoticeHours: number;
+  maxBookingsPerDay: number;
+  weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>;
+  vacationDates: VacationPeriod[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AvailableSlot {
+  date: string;
+  timeSlot: TimeSlot;
+  isAvailable: boolean;
+  conflictingBookings: string[];
+}
 
 export interface Location {
   latitude: number;
@@ -155,6 +207,57 @@ const convertCanisterEvidence = (evidence: CanisterEvidence): Evidence => ({
   fileUrls: evidence.fileUrls,
   qualityScore: evidence.qualityScore[0],
   createdAt: new Date(Number(evidence.createdAt) / 1000000).toISOString(),
+});
+
+const convertCanisterDayOfWeek = (day: CanisterDayOfWeek): DayOfWeek => {
+  if ('Monday' in day) return 'Monday';
+  if ('Tuesday' in day) return 'Tuesday';
+  if ('Wednesday' in day) return 'Wednesday';
+  if ('Thursday' in day) return 'Thursday';
+  if ('Friday' in day) return 'Friday';
+  if ('Saturday' in day) return 'Saturday';
+  if ('Sunday' in day) return 'Sunday';
+  return 'Monday'; // fallback
+};
+
+const convertCanisterTimeSlot = (slot: CanisterTimeSlot): TimeSlot => ({
+  startTime: slot.startTime,
+  endTime: slot.endTime,
+});
+
+const convertCanisterDayAvailability = (availability: CanisterDayAvailability): DayAvailability => ({
+  isAvailable: availability.isAvailable,
+  slots: availability.slots.map(convertCanisterTimeSlot),
+});
+
+const convertCanisterVacationPeriod = (vacation: CanisterVacationPeriod): VacationPeriod => ({
+  id: vacation.id,
+  startDate: new Date(Number(vacation.startDate) / 1000000).toISOString(),
+  endDate: new Date(Number(vacation.endDate) / 1000000).toISOString(),
+  reason: vacation.reason[0],
+  createdAt: new Date(Number(vacation.createdAt) / 1000000).toISOString(),
+});
+
+const convertCanisterProviderAvailability = (availability: CanisterProviderAvailability): ProviderAvailability => ({
+  providerId: availability.providerId,
+  isActive: availability.isActive,
+  instantBookingEnabled: availability.instantBookingEnabled,
+  bookingNoticeHours: Number(availability.bookingNoticeHours),
+  maxBookingsPerDay: Number(availability.maxBookingsPerDay),
+  weeklySchedule: availability.weeklySchedule.map(([day, avail]) => ({
+    day: convertCanisterDayOfWeek(day),
+    availability: convertCanisterDayAvailability(avail),
+  })),
+  vacationDates: availability.vacationDates.map(convertCanisterVacationPeriod),
+  createdAt: new Date(Number(availability.createdAt) / 1000000).toISOString(),
+  updatedAt: new Date(Number(availability.updatedAt) / 1000000).toISOString(),
+});
+
+const convertCanisterAvailableSlot = (slot: CanisterAvailableSlot): AvailableSlot => ({
+  date: new Date(Number(slot.date) / 1000000).toISOString(),
+  timeSlot: convertCanisterTimeSlot(slot.timeSlot),
+  isAvailable: slot.isAvailable,
+  conflictingBookings: slot.conflictingBookings,
 });
 
 const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
@@ -416,6 +519,244 @@ export const bookingCanisterService = {
     } catch (error) {
       console.error('Error submitting evidence:', error);
       throw new Error(`Failed to submit evidence: ${error}`);
+    }
+  },
+
+  /**
+   * Check if a booking is eligible for review
+   */
+  async isEligibleForReview(bookingId: string, reviewerId: Principal): Promise<boolean | null> {
+    try {
+      const actor = await getBookingActor();
+      const result = await actor.isEligibleForReview(bookingId, reviewerId);
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error checking review eligibility:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error checking review eligibility:', error);
+      throw new Error(`Failed to check review eligibility: ${error}`);
+    }
+  },
+
+  /**
+   * Get active bookings for a client
+   */
+  async getClientActiveBookings(clientId: Principal): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getClientActiveBookings(clientId);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching client active bookings:', error);
+      throw new Error(`Failed to fetch client active bookings: ${error}`);
+    }
+  },
+
+  /**
+   * Get active bookings for a provider
+   */
+  async getProviderActiveBookings(providerId: Principal): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getProviderActiveBookings(providerId);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching provider active bookings:', error);
+      throw new Error(`Failed to fetch provider active bookings: ${error}`);
+    }
+  },
+
+  /**
+   * Get completed bookings for a client
+   */
+  async getClientCompletedBookings(clientId: Principal): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getClientCompletedBookings(clientId);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching client completed bookings:', error);
+      throw new Error(`Failed to fetch client completed bookings: ${error}`);
+    }
+  },
+
+  /**
+   * Get completed bookings for a provider
+   */
+  async getProviderCompletedBookings(providerId: Principal): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getProviderCompletedBookings(providerId);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching provider completed bookings:', error);
+      throw new Error(`Failed to fetch provider completed bookings: ${error}`);
+    }
+  },
+
+  /**
+   * Get disputed bookings
+   */
+  async getDisputedBookings(): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getDisputedBookings();
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching disputed bookings:', error);
+      throw new Error(`Failed to fetch disputed bookings: ${error}`);
+    }
+  },
+
+  /**
+   * Get bookings by date range
+   */
+  async getBookingsByDateRange(startDate: Date, endDate: Date): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = BigInt(startDate.getTime() * 1000000);
+      const endTimestamp = BigInt(endDate.getTime() * 1000000);
+      
+      const bookings = await actor.getBookingsByDateRange(startTimestamp, endTimestamp);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching bookings by date range:', error);
+      throw new Error(`Failed to fetch bookings by date range: ${error}`);
+    }
+  },
+
+  /**
+   * Get provider's available time slots for a specific date
+   */
+  async getProviderAvailableSlots(providerId: Principal, date: Date): Promise<AvailableSlot[] | null> {
+    try {
+      const actor = await getBookingActor();
+      const dateTimestamp = BigInt(date.getTime() * 1000000);
+      
+      const result = await actor.getProviderAvailableSlots(providerId, dateTimestamp);
+      
+      if ('ok' in result) {
+        return result.ok.map(convertCanisterAvailableSlot);
+      } else {
+        console.error('Error fetching available slots:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching available slots:', error);
+      throw new Error(`Failed to fetch available slots: ${error}`);
+    }
+  },
+
+  /**
+   * Get provider's availability settings
+   */
+  async getProviderAvailabilitySettings(providerId: Principal): Promise<ProviderAvailability | null> {
+    try {
+      const actor = await getBookingActor();
+      const result = await actor.getProviderAvailabilitySettings(providerId);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAvailability(result.ok);
+      } else {
+        console.error('Error fetching availability settings:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching availability settings:', error);
+      throw new Error(`Failed to fetch availability settings: ${error}`);
+    }
+  },
+
+  /**
+   * Check if provider is available for booking at specific date/time
+   */
+  async checkProviderAvailability(providerId: Principal, requestedDateTime: Date): Promise<boolean | null> {
+    try {
+      const actor = await getBookingActor();
+      const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
+      
+      const result = await actor.checkProviderAvailability(providerId, timestamp);
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error checking provider availability:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error checking provider availability:', error);
+      throw new Error(`Failed to check provider availability: ${error}`);
+    }
+  },
+
+  /**
+   * Get provider's booking conflicts for a date range
+   */
+  async getProviderBookingConflicts(
+    providerId: Principal, 
+    startDate: Date, 
+    endDate: Date
+  ): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = BigInt(startDate.getTime() * 1000000);
+      const endTimestamp = BigInt(endDate.getTime() * 1000000);
+      
+      const bookings = await actor.getProviderBookingConflicts(providerId, startTimestamp, endTimestamp);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching provider booking conflicts:', error);
+      throw new Error(`Failed to fetch provider booking conflicts: ${error}`);
+    }
+  },
+
+  /**
+   * Get daily booking count for a provider on a specific date
+   */
+  async getDailyBookingCount(providerId: Principal, date: Date): Promise<number> {
+    try {
+      const actor = await getBookingActor();
+      const dateTimestamp = BigInt(date.getTime() * 1000000);
+      
+      const count = await actor.getDailyBookingCount(providerId, dateTimestamp);
+      return Number(count);
+    } catch (error) {
+      console.error('Error fetching daily booking count:', error);
+      throw new Error(`Failed to fetch daily booking count: ${error}`);
+    }
+  },
+
+  /**
+   * Set canister references (admin function)
+   */
+  async setCanisterReferences(
+    auth?: Principal,
+    service?: Principal,
+    review?: Principal,
+    reputation?: Principal
+  ): Promise<string | null> {
+    try {
+      const actor = await getBookingActor();
+      const result = await actor.setCanisterReferences(
+        auth ? [auth] : [],
+        service ? [service] : [],
+        review ? [review] : [],
+        reputation ? [reputation] : []
+      );
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error setting canister references:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error setting canister references:', error);
+      throw new Error(`Failed to set canister references: ${error}`);
     }
   }
 };

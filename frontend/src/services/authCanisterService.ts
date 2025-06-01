@@ -1,5 +1,6 @@
 // Auth Canister Service
 import { Actor, HttpAgent } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { idlFactory } from '../declarations/auth/auth.did.js';
 import type { _SERVICE as AuthService, Profile, UserRole } from '../declarations/auth/auth.did';
 import { adaptBackendProfile } from '../utils/assetResolver';
@@ -187,6 +188,28 @@ export const authCanisterService = {
     } catch (error) {
       console.error('Error verifying user:', error);
       throw new Error(`Failed to verify user: ${error}`);
+    }
+  },
+
+  /**
+   * Set canister references for auth canister
+   */
+  async setCanisterReferences(reputationCanisterId?: string): Promise<string | null> {
+    try {
+      const actor = await getAuthActor();
+      const result = await actor.setCanisterReferences(
+        reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : []
+      );
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error setting canister references:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error setting canister references:', error);
+      throw new Error(`Failed to set canister references: ${error}`);
     }
   }
 };

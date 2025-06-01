@@ -21,8 +21,8 @@ export function adaptProviderData(provider: any) {
   if (provider.profilePicture && provider.profilePicture.url) {
     adaptedProvider.profilePicture = {
       ...provider.profilePicture,
-      url: convertImageToPath(provider.profilePicture.url),
-      thumbnail: convertImageToPath(provider.profilePicture.thumbnail)
+      url: convertImageToObjectOrPath(provider.profilePicture.url),
+      thumbnail: convertImageToObjectOrPath(provider.profilePicture.thumbnail)
     };
   }
   
@@ -55,7 +55,7 @@ export function adaptProviderData(provider: any) {
       
       // Add service images from provider profile picture as fallback
       if (!adaptedService.heroImage && provider.profilePicture) {
-        adaptedService.heroImage = convertImageToPath(provider.profilePicture.url);
+        adaptedService.heroImage = convertImageToObjectOrPath(provider.profilePicture.url);
       }
       
       return adaptedService;
@@ -65,22 +65,25 @@ export function adaptProviderData(provider: any) {
   return adaptedProvider;
 }
 
-// Helper function to convert React Native image objects to path strings
-function convertImageToPath(image: string | RNImageObject): string {
+// In serviceDataAdapter.ts and providerDataAdapter.ts
+function convertImageToObjectOrPath(image: any): any { // Change return type
   if (typeof image === 'string') {
-    return image;
+    return image; // It's already a path string
   }
-  
-  if (typeof image === 'object' && image && 'uri' in image) {
-    return image.uri;
-  }
-  
-  // If a require() function result that's not a string or object with uri
-  // Try to get a URL that Next.js can understand
+  // If it's a Webpack module (common structure: { default: { src: ... }} or { src: ... })
   if (typeof image === 'object' && image !== null) {
-    // For webpack/Next.js assets, use default path
-    return '/images/default-profile.jpg';
+    if (image.default && typeof image.default.src === 'string') {
+      return image.default; // Or just image.default.src if you only need the path
+    }
+    if (typeof image.src === 'string') {
+      return image; // Or just image.src
+    }
+    // If it's React Native style { uri: ... } (though less likely in Next.js adapters)
+    if ('uri' in image && typeof image.uri === 'string') {
+      return image.uri;
+    }
   }
-  
-  return '/images/default-profile.jpg';
+  // Fallback if the structure is not recognized or it's not what <Image> expects
+  // Ensure this path points to an image in your `public` directory
+  return '/images/default-service.jpg';
 }

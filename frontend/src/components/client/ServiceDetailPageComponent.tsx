@@ -297,7 +297,7 @@ const createPlaceholderService = (): Service => ({
   requirements: ['Basic information'],
   isVerified: false,
   slug: 'placeholder-service',
-  heroImage: '/images/default-service.png', // Ensure this image exists in public/images
+  heroImage: '/images/default-service.png', 
   category: { id: 'cat-placeholder', name: 'Placeholder Category', description: '', slug: 'placeholder', icon: 'cog', imageUrl: '', isActive: true, createdAt: new Date(), updatedAt: new Date() }
 });
 

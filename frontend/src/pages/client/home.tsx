@@ -122,6 +122,7 @@ const ClientHomePage: React.FC = () => {
           <Categories 
             categories={categories} 
             className="mb-8" 
+            
           />
 
           <TopPicks 

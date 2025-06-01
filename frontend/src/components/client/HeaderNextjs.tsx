@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { MapPinIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/router';
+import Image from 'next/image'; 
+import Link from 'next/link';  
+
 import SearchBar from './SearchBarNextjs';
 import BottomSheet from './BottomSheetNextjs';
 import ServiceLocationMap from './ServiceLocationMapNextjs';
@@ -19,31 +22,49 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
 
   const handleAddressMapClick = () => {
     setLocationSheetOpen(false);
-    router.push('/client/service-maps');
+    router.push('/client/service-maps'); 
   };
 
   return (
     <header className={`space-y-4 ${className}`}>
-      {/* Location & User Info */}
+      {/* Top Row: Logo, Location */}
       <div className="flex justify-between items-center">
+        {/* Logo on the left */}
+        <div className="flex-shrink-0">
+          <Link href="/client/home" legacyBehavior>
+            <a aria-label="Home"> {/* Good for accessibility */}
+              <Image 
+                src="/logo.svg" // Path from the 'public' directory
+                alt="SRV Logo" 
+                width={120}    // Adjust width as needed
+                height={35}   // Adjust height to maintain aspect ratio
+                priority      // If logo is critical LCP element
+              />
+            </a>
+          </Link>
+        </div>
+        
         <button 
           onClick={handleLocationClick}
-          className="location-badge flex items-center"
+          className="location-badge flex items-center text-xs sm:text-sm py-1 px-2 rounded-full hover:bg-gray-100 transition-colors" // Added some padding and hover
         >
-          <MapPinIcon className="h-5 w-5 text-green-600 mr-1" />
-          <div className="flex items-center">
-            <span className="text-sm font-medium mr-1 truncate max-w-[200px]">
+          <MapPinIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-1 sm:mr-1.5 flex-shrink-0" />
+          <div className="flex items-center overflow-hidden"> 
+            <span className="font-medium mr-1 truncate max-w-[120px] xs:max-w-[150px] sm:max-w-[200px]">
               San Vicente, Baguio, Cordillera Administrative Region
             </span>
-            <CheckCircleIcon className="h-4 w-4 text-green-500" />
+            <CheckCircleIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
           </div>
         </button>
       </div>
 
       {/* Search Bar */}
-     <SearchBar 
-        placeholder="Search for any service..."
-      />
+      <div className="w-full">
+        <SearchBar 
+          placeholder="Search for service"
+          redirectToSearchResultsPage={true} 
+        />
+      </div>
 
       {/* Location Bottom Sheet */}
       <BottomSheet 
@@ -52,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
         title="Where do you like to meet your service provider?"
         height="large"
       >
-        <div className="h-96 mb-4">
+        <div className="h-96 mb-4"> {/* Ensure map has enough space */}
           <ServiceLocationMap onClick={handleAddressMapClick} />
         </div>
         

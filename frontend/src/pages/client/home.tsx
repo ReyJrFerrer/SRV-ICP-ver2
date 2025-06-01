@@ -21,6 +21,7 @@ import { generateServicesFromProviders } from '@app/utils/serviceGenerator';
 
 // Utils for data adaptation
 import { adaptServiceData, adaptCategoryData } from '@app/utils/serviceDataAdapter';
+import router from 'next/router';
 
 // Define the adapted category type that matches the Categories component requirements
 interface AdaptedCategory {
@@ -30,8 +31,6 @@ interface AdaptedCategory {
   slug: string;
 }
 
-// Mock data - in production, this would be imported from your data sources
-// We're using dynamic import to avoid issues with server-side rendering of React Native components
 const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
@@ -39,29 +38,32 @@ const ClientHomePage: React.FC = () => {
   const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const handleSearch = (query: string) => {
+    router.push(`/client/search-results?q=${encodeURIComponent(query)}`);
+  };
+
+  const handleLocationBarClick = () => {
+    console.log('Location bar clicked - implement navigation or modal');
+    // Example: router.push('/client/select-location');
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setError(null);
-        
-        // Load categories (always from local assets for now)
         const categoriesModule = await import('../../../assets/categories');
         const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
         setCategories(adaptedCategories);
 
-        // Try to load service providers from auth canister first
         try {
           console.log('Fetching service providers from auth canister...');
           const profiles = await authCanisterService.getAllServiceProviders();
           console.log('Fetched profiles:', profiles);
           
           if (profiles && profiles.length > 0) {
-            // Convert backend profiles to frontend ServiceProvider format
             const serviceProviders = convertProfilesToServiceProviders(profiles);
             setServiceProviders(serviceProviders);
             
-            // Generate services from provider data for TopPicks component
             const generatedServices = generateServicesFromProviders(serviceProviders);
             setServices(generatedServices);
             

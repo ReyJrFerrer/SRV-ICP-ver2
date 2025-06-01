@@ -41,12 +41,9 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
       </div>
 
       {/* Search Bar */}
-      <div className="w-full">
-        <SearchBar 
-          placeholder="Search for service"
-          redirectToSearch={true}
-        />
-      </div>
+     <SearchBar 
+        placeholder="Search for any service..."
+      />
 
       {/* Location Bottom Sheet */}
       <BottomSheet 

@@ -1,204 +1,202 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { ArrowLeftIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, AdjustmentsHorizontalIcon, MapPinIcon } from '@heroicons/react/24/solid'; 
 
 // Components
 import ServiceLocationMap from '@app/components/client/ServiceLocationMapNextjs';
-import SearchBar from '@app/components/client/SearchBarNextjs';
+import SearchBar from '@app/components/client/SearchBarNextjs'; 
 import ServiceListItem from '@app/components/client/ServiceListItemNextjs';
 import BottomSheet from '@app/components/client/BottomSheetNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
-// Types
+// Types & Data
 import { Service } from '../../../assets/types/service/service';
-
-// Utils
+import { SERVICES as mockServices } from '../../../assets/services';
 import { adaptServiceData } from '@app/utils/serviceDataAdapter';
 
 const ServiceMapPage: React.FC = () => {
   const router = useRouter();
-  const { q: searchQuery, category } = router.query;
+  const { q: queryParam, category: categoryParam } = router.query;
   
   const [services, setServices] = useState<Service[]>([]);
+  const [currentSearchQuery, setCurrentSearchQuery] = useState<string>('');
+  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [resultsOpen, setResultsOpen] = useState(true);
+  const [resultsOpen, setResultsOpen] = useState(true); 
+
+  const fetchAndFilterServices = useCallback(() => {
+    setLoading(true);
+    const allServices = adaptServiceData(mockServices); 
+    let filtered = allServices;
+
+    // Filter by category if categoryParam exists
+    if (currentCategory) {
+      filtered = filtered.filter(service => 
+        service.category.slug === currentCategory
+      );
+    }
+    
+    // Filter by search query if currentSearchQuery exists
+    if (currentSearchQuery) {
+      const lowerCaseQuery = currentSearchQuery.toLowerCase();
+      filtered = filtered.filter(service => 
+        service.name.toLowerCase().includes(lowerCaseQuery) || 
+        (service.title && service.title.toLowerCase().includes(lowerCaseQuery)) ||
+        service.description.toLowerCase().includes(lowerCaseQuery) ||
+        service.category.name.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+    
+    setServices(filtered);
+    setLoading(false);
+  }, [currentSearchQuery, currentCategory]);
+
 
   useEffect(() => {
-    // Load services data
-    const loadData = async () => {
-      try {
-        const servicesModule = await import('../../../assets/services');
-        let adaptedServices = adaptServiceData(servicesModule.SERVICES);
-        
-        // Filter by search query if provided
-        if (searchQuery && typeof searchQuery === 'string') {
-          adaptedServices = adaptedServices.filter(service => 
-            service.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-            (service.title && service.title.toLowerCase().includes(searchQuery.toLowerCase()))
-          );
-        }
-        
-        // Filter by category if provided
-        if (category && typeof category === 'string') {
-          adaptedServices = adaptedServices.filter(service => 
-            service.category.slug === category
-          );
-        }
-        
-        setServices(adaptedServices);
-      } catch (error) {
-        console.error('Failed to load service data:', error);
-        setServices([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    let q = '';
+    if (Array.isArray(queryParam)) q = queryParam[0] || '';
+    else if (typeof queryParam === 'string') q = queryParam;
+    setCurrentSearchQuery(q);
 
-    loadData();
-  }, [searchQuery, category]);
+    let cat = null;
+    if (Array.isArray(categoryParam)) cat = categoryParam[0] || null;
+    else if (typeof categoryParam === 'string') cat = categoryParam;
+    setCurrentCategory(cat);
+    
+  }, [queryParam, categoryParam]);
+
+  useEffect(() => {
+    fetchAndFilterServices();
+  }, [currentSearchQuery, currentCategory, fetchAndFilterServices]);
+
 
   const handleBackClick = () => {
-    router.back();
+    router.back(); // Or router.push for a consistent back target
+  };
+
+  // Called when search is submitted from SearchBar on this page
+  const handleMapPageSearch = (newQuery: string) => {
+    const newRouteParams: { q?: string; category?: string } = {};
+    if (newQuery.trim()) newRouteParams.q = newQuery.trim();
+    if (currentCategory) newRouteParams.category = currentCategory;
+    
+    router.push({
+      pathname: '/client/service-maps',
+      query: newRouteParams,
+    }, undefined, { shallow: true }); 
   };
 
   return (
     <>
       <Head>
-        <title>Find Services | Service Provider App</title>
-        <meta name="description" content="Find services near your location" />
+        <title>Find Services on Map | SRV Client</title>
+        <meta name="description" content="Find and explore services near your location on a map" />
       </Head>
       
-      <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Map View */}
-        <div className="relative h-[40vh] w-full">
-          <ServiceLocationMap fullScreen={true} />
-          
-          {/* Top controls overlay */}
-          <div className="absolute top-0 left-0 right-0 p-4 flex items-center gap-3">
+      <div className="min-h-screen bg-gray-50 flex flex-col"> {/* Full height layout */}
+        {/* Top controls overlay (Header part of the map page) */}
+        <div className="bg-white shadow-sm p-3 sm:p-4 sticky top-0 z-30">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button 
               onClick={handleBackClick}
-              className="p-2 bg-white rounded-full shadow-md"
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Go back"
             >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+              <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
             </button>
             
             <div className="flex-1">
               <SearchBar 
-                placeholder={searchQuery ? String(searchQuery) : "Search for service"}
-                className="bg-white shadow-md"
-                redirectToSearch={false}
+                placeholder={currentSearchQuery || "Search services on map..."}
+                onSearch={handleMapPageSearch} 
+                redirectToSearchResultsPage={false} 
+                initialQuery={currentSearchQuery}
+                className="bg-white" 
               />
             </div>
             
             <button 
               onClick={() => setFiltersOpen(true)}
-              className="p-2 bg-white rounded-full shadow-md"
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Open filters"
             >
-              <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-600" />
+              <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-700" />
             </button>
           </div>
         </div>
         
-        {/* Results Bottom Sheet */}
-        <BottomSheet
-          isOpen={resultsOpen}
-          onClose={() => setResultsOpen(false)}
-          title={`${services.length} Services Found`}
-          height="medium"
-        >
-          <div className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500"></div>
-              </div>
-            ) : services.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No services found</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {services.map((service) => (
-                  <ServiceListItem 
-                    key={service.id} 
-                    service={service} 
-                    inCategories={true} 
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </BottomSheet>
+        {/* Map View - takes remaining height */}
+        <div className="relative flex-grow"> 
+          <ServiceLocationMap 
+            fullScreen={true}  
+          />
+        </div>
         
-        {/* Filters Bottom Sheet */}
+        {/* Results Bottom Sheet */}
+        {(services.length > 0 || loading) && (
+             <BottomSheet
+                isOpen={resultsOpen} 
+                onClose={() => setResultsOpen(false)}
+                title={loading ? "Loading..." : `${services.length} Service${services.length === 1 ? '' : 's'} Found`}
+                height="medium" 
+             >
+                <div className="space-y-3 sm:space-y-4 max-h-[45vh] overflow-y-auto"> {/* Max height for scroll */}
+                {loading ? (
+                    <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500"></div>
+                    </div>
+                ) : services.length === 0 ? (
+                    <div className="text-center py-8 px-4">
+                        <MapPinIcon className="h-10 w-10 text-gray-400 mx-auto mb-3"/>
+                        <p className="text-gray-500">No services found matching your criteria in this area.</p>
+                        <p className="text-xs text-gray-400 mt-1">Try adjusting your search or filters.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    {services.map((service) => (
+                        <ServiceListItem 
+                        key={service.id} 
+                        service={service} 
+                        isGridItem={true} 
+                        retainMobileLayout={true} 
+                        />
+                    ))}
+                    </div>
+                )}
+                </div>
+          </BottomSheet>
+        )}
+        
+        {/* Filters Bottom Sheet (Placeholder Content) */}
         <BottomSheet
           isOpen={filtersOpen}
           onClose={() => setFiltersOpen(false)}
           title="Filter Services"
+          height="large"
         >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="font-medium">Categories</h3>
-              <div className="flex flex-wrap gap-2">
-                <button className="px-3 py-1 bg-green-100 text-green-700 rounded-full">
-                  All
-                </button>
-                <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  Home Services
-                </button>
-                <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  Cleaning
-                </button>
-                <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-                  Auto Repair
-                </button>
-              </div>
+          <div className="space-y-4 p-1">
+            {/* Placeholder for filter options */}
+            <div className="text-center text-gray-500 py-10">
+                <AdjustmentsHorizontalIcon className="h-12 w-12 mx-auto mb-3 text-gray-400"/>
+                <p>Filter options will appear here.</p>
+                <p className="text-xs text-gray-400"> (e.g., by category, price, distance, rating)</p>
             </div>
-            
-            <div className="space-y-2">
-              <h3 className="font-medium">Distance</h3>
-              <input 
-                type="range" 
-                min="1" 
-                max="50" 
-                className="w-full accent-green-600" 
-                defaultValue="10" 
-              />
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>1 km</span>
-                <span>50 km</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="font-medium">Price Range</h3>
-              <div className="flex gap-4">
-                <input 
-                  type="text" 
-                  placeholder="Min" 
-                  className="border rounded-lg px-3 py-2 w-1/2" 
-                />
-                <input 
-                  type="text" 
-                  placeholder="Max" 
-                  className="border rounded-lg px-3 py-2 w-1/2" 
-                />
-              </div>
-            </div>
-            
-            <div className="pt-4 flex gap-3">
-              <button className="w-1/2 px-4 py-2 border border-gray-300 rounded-lg">
+             <div className="pt-4 flex gap-3">
+              <button onClick={() => setFiltersOpen(false)} className="w-1/2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Reset
               </button>
-              <button className="w-1/2 px-4 py-2 bg-green-600 text-white rounded-lg">
+              <button onClick={() => setFiltersOpen(false)} className="w-1/2 px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
                 Apply Filters
               </button>
             </div>
           </div>
         </BottomSheet>
         
-        <BottomNavigation />
+        <div className="lg:hidden"> {/* Show BottomNavigation only on smaller screens */}
+            <BottomNavigation />
+        </div>
       </div>
     </>
   );

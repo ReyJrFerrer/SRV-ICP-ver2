@@ -110,6 +110,7 @@ export interface _SERVICE {
     Result
   >,
   'getAllCategories' : ActorMethod<[], Array<ServiceCategory>>,
+  'getAllServices' : ActorMethod<[], Array<Service>>,
   'getAvailableTimeSlots' : ActorMethod<[Principal, Time], Result_4>,
   'getProviderAvailability' : ActorMethod<[Principal], Result_1>,
   'getService' : ActorMethod<[string], Result>,

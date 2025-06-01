@@ -487,6 +487,11 @@ actor ServiceCanister {
         return Iter.toArray(categories.vals());
     };
 
+    // Get all services
+    public query func getAllServices() : async [Service] {
+        return Iter.toArray(services.vals());
+    };
+
     // AVAILABILITY MANAGEMENT FUNCTIONS
 
     // Set provider availability
@@ -505,7 +510,7 @@ actor ServiceCanister {
         // Validate provider
         switch (await validateProvider(caller)) {
             case (#err(msg)) {
-                return #err(msg);
+                return #err(msg); 
             };
             case (#ok(_)) {};
         };

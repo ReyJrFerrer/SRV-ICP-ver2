@@ -531,6 +531,21 @@ export const serviceCanisterService = {
   },
 
   /**
+   * Get all services
+   */
+  async getAllServices(): Promise<Service[]> {
+    try {
+      const actor = await getServiceActor();
+      const services = await actor.getAllServices();
+      
+      return services.map(convertCanisterService);
+    } catch (error) {
+      console.error('Error fetching all services:', error);
+      throw new Error(`Failed to fetch all services: ${error}`);
+    }
+  },
+
+  /**
    * Set provider availability
    */
   async setProviderAvailability(

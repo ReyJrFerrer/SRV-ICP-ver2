@@ -117,6 +117,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getAllCategories' : IDL.Func([], [IDL.Vec(ServiceCategory)], ['query']),
+    'getAllServices' : IDL.Func([], [IDL.Vec(Service)], ['query']),
     'getAvailableTimeSlots' : IDL.Func([IDL.Principal, Time], [Result_4], []),
     'getProviderAvailability' : IDL.Func(
         [IDL.Principal],

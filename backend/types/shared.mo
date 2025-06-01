@@ -119,6 +119,11 @@ module {
         updatedAt: Time.Time;
         rating: ?Float;
         reviewCount: Nat;
+        // Availability information
+        weeklySchedule: ?[(DayOfWeek, DayAvailability)];
+        instantBookingEnabled: ?Bool;
+        bookingNoticeHours: ?Nat; // Minimum hours in advance for booking
+        maxBookingsPerDay: ?Nat;
     };
 
     // Booking types

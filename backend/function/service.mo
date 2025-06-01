@@ -7,7 +7,6 @@ import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
-import Debug "mo:base/Debug";
 
 import Types "../types/shared";
 import StaticData "../utils/staticData";
@@ -52,7 +51,7 @@ actor ServiceCanister {
     private let MAX_PRICE : Nat = 1_000_000;
 
     // Set canister references
-    public shared(msg) func setCanisterReferences(
+    public shared(_msg) func setCanisterReferences(
         auth : ?Principal,
         booking : ?Principal,
         review : ?Principal,
@@ -138,14 +137,10 @@ actor ServiceCanister {
             categories.put(id, category);
         };
 
-        // Services initialization temporarily disabled to avoid Principal issues
-        // TODO: Re-enable after fixing Principal ID issues
-        /*
         // Initialize services from shared static data
-        for ((id, service) in StaticData.getSTATIC_SERVICES().vals()) {
+        for ((id, service) in StaticData.getStaticServices().vals()) {
             services.put(id, service);
         };
-        */
     };
 
     // Initialization
@@ -165,8 +160,8 @@ actor ServiceCanister {
         providerAvailabilities := HashMap.fromIter<Principal, ProviderAvailability>(availabilityEntries.vals(), 10, Principal.equal, Principal.hash);
         availabilityEntries := [];
         
-        // Initialize static data if categories are empty
-        if (categories.size() == 0) {
+        // Initialize static data if categories or services are empty
+        if (categories.size() == 0 or services.size() == 0) {
             initializeStaticData();
         };
     };
@@ -179,7 +174,11 @@ actor ServiceCanister {
         description : Text,
         categoryId : Text,
         price : Nat,
-        location : Location
+        location : Location,
+        weeklySchedule : ?[(DayOfWeek, DayAvailability)],
+        instantBookingEnabled : ?Bool,
+        bookingNoticeHours : ?Nat,
+        maxBookingsPerDay : ?Nat
     ) : async Result<Service> {
         let caller = msg.caller;
         
@@ -235,6 +234,11 @@ actor ServiceCanister {
             updatedAt = Time.now();
             rating = null;
             reviewCount = 0;
+            // Availability information
+            weeklySchedule = weeklySchedule;
+            instantBookingEnabled = instantBookingEnabled;
+            bookingNoticeHours = bookingNoticeHours;
+            maxBookingsPerDay = maxBookingsPerDay;
         };
         
         services.put(serviceId, newService);
@@ -311,6 +315,11 @@ actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = existingService.rating;
                     reviewCount = existingService.reviewCount;
+                    // Preserve availability information
+                    weeklySchedule = existingService.weeklySchedule;
+                    instantBookingEnabled = existingService.instantBookingEnabled;
+                    bookingNoticeHours = existingService.bookingNoticeHours;
+                    maxBookingsPerDay = existingService.maxBookingsPerDay;
                 };
                 
                 services.put(serviceId, updatedService);
@@ -370,8 +379,8 @@ actor ServiceCanister {
         
         // Filter by reputation if reputation canister is available
         switch (reputationCanisterId, minTrustScore) {
-            case (?repId, ?minScore) {
-                let reputationCanister = actor(Principal.toText(repId)) : actor {
+            case (?_repId, ?_minScore) {
+                let _reputationCanister = actor(Principal.toText(_repId)) : actor {
                     getReputationScore : (Principal) -> async Types.Result<Types.ReputationScore>;
                 };
                 
@@ -415,6 +424,11 @@ actor ServiceCanister {
                     updatedAt = Time.now();
                     rating = ?newRating;
                     reviewCount = newReviewCount;
+                    // Preserve availability information
+                    weeklySchedule = existingService.weeklySchedule;
+                    instantBookingEnabled = existingService.instantBookingEnabled;
+                    bookingNoticeHours = existingService.bookingNoticeHours;
+                    maxBookingsPerDay = existingService.maxBookingsPerDay;
                 };
                 
                 services.put(serviceId, updatedService);

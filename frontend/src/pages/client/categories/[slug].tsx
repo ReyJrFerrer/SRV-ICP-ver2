@@ -41,10 +41,8 @@ const CategoryPage: React.FC = () => {
     }
 
     setLoading(true);
-    // Simulate data loading
     const loadData = async () => {
       try {
-        // Assuming CATEGORIES is an array of CategoryType
         const allCategories: CategoryType[] = adaptCategoryData(CATEGORIES); 
         const foundCategoryData = allCategories.find(cat => cat.slug === slug);
         
@@ -59,7 +57,7 @@ const CategoryPage: React.FC = () => {
           const categoryServices = allServices.filter(service => service.category?.slug === slug);
           setServices(categoryServices);
 
-        } else if (slug === 'all-service-types') { // Handling for a potential "view all" slug
+        } else if (slug === 'all-service-types') { 
           setCategoryInfo({
             name: 'All Service Types',
             description: 'Browse all available service types',

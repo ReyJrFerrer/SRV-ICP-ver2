@@ -46,10 +46,6 @@ actor ReviewCanister {
 
     // Initialize static reviews - only on first deployment
     private func initializeStaticReviews() {
-        // Temporarily disabled to avoid Principal parsing issues
-        Debug.print("Static reviews initialization disabled temporarily");
-        // TODO: Re-enable after fixing Principal ID issues
-        /*
         // Only initialize if reviews HashMap is empty to avoid duplicates
         if (reviews.size() == 0) {
             // Add reviews to HashMap from shared static data
@@ -60,7 +56,6 @@ actor ReviewCanister {
         } else {
             Debug.print("Reviews already exist, skipping static initialization. Current count: " # Nat.toText(reviews.size()));
         };
-        */
     };
 
     // Pre-upgrade hook

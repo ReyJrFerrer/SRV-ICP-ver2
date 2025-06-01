@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { StarIcon, MapPinIcon } from '@heroicons/react/24/solid';
 import { ServiceAvailability, DayOfWeek } from '../../../assets/types/service/service-availability';
 
+// --- Helper Functions (parseTimeSlot, isWithinScheduledHours) ---
 const parseTimeSlot = (timeSlot: string): { start: { hours: number, minutes: number }, end: { hours: number, minutes: number } } | null => {
   const parts = timeSlot.split('-');
   if (parts.length !== 2) return null;
@@ -70,18 +71,35 @@ interface ServiceListItemProps {
     };
     availability: ServiceAvailability;
   };
-  inCategories?: boolean;
   isGridItem?: boolean;
+  retainMobileLayout?: boolean; 
 }
 
-const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories = false, isGridItem = false }) => {
-  const itemWidthClass = isGridItem || inCategories ? 'w-full' : 'w-80 md:w-96';
+const ServiceListItem: React.FC<ServiceListItemProps> = ({ 
+  service, 
+  isGridItem = false, 
+  retainMobileLayout = false 
+}) => {
+  const itemWidthClass = isGridItem ? 'w-full' : 'w-80 md:w-96';
 
   const now = new Date();
   const scheduledAsWorking = isWithinScheduledHours(service.availability, now);
   const displayAsAvailable = scheduledAsWorking ? service.availability.isAvailableNow : false;
   const availabilityText = displayAsAvailable ? 'Available' : (scheduledAsWorking ? 'Busy' : 'Not Available');
 
+  // Define layout classes based on retainMobileLayout
+  const nameRatingContainerClass = retainMobileLayout
+    ? "flex flex-row justify-between items-start mb-1" // Name and Rating on same line
+    : "flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1"; // Default responsive
+
+  const priceLocationContainerClass = retainMobileLayout
+    ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
+    : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100"; // Default responsive
+
+  const nameMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
+  const ratingMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0 sm:ml-2" : "sm:ml-2"; 
+  const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
+  const locationMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0" : "";
 
   return (
     <Link href={`/client/service/${service.slug}`} legacyBehavior>
@@ -106,13 +124,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories
         </div>
         
         <div className="service-content p-3 flex flex-col flex-grow">
-          <div className="flex-grow">
-            {/* Name and Rating Section: Vertical on mobile, Row on sm+ */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1">
-              <h3 className="text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors mb-0.5 sm:mb-0">
+          <div className="flex-grow"> {/* This div helps push price/location to bottom */}
+            <div className={nameRatingContainerClass}>
+              <h3 className={`text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors ${nameMarginClass}`}>
                 {service.name}
               </h3>
-              <div className="flex items-center text-blue-800 text-xs sm:ml-2">
+              <div className={`flex items-center text-blue-800 text-xs flex-shrink-0 ${ratingMarginClass}`}>
                 <StarIcon className="h-3 w-3 text-blue-800 mr-0.5" />
                 <span>{service.rating.average} ({service.rating.count})</span>
               </div>
@@ -123,13 +140,12 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories
             )}
           </div>
           
-          {/* Price and Location Section: Vertical on mobile, Row on sm+ */}
-          <div className="flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100">
-            <p className="text-lg font-bold text-blue-800 mb-0.5 sm:mb-0">
+          <div className={priceLocationContainerClass}>
+            <p className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}>
               ₱ {service.price.amount.toFixed(2)} 
               <span className="text-xs font-normal">{service.price.unit}</span>
             </p>
-            <div className="flex items-center text-blue-800 text-xs">
+            <div className={`flex items-center text-blue-800 text-xs ${locationMarginClass}`}>
               <MapPinIcon className="h-3 w-3 mr-0.5" />
               <span>{service.location.serviceRadius} {service.location.serviceRadiusUnit}</span>
             </div>

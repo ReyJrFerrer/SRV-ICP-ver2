@@ -45,6 +45,7 @@ const ClientHomePage: React.FC = () => {
       try {
         setError(null);
         
+        // TODO: To apply service categories loading
         // Load categories (always from local assets for now)
         const categoriesModule = await import('../../../assets/categories');
         const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];

@@ -17,6 +17,7 @@ const ServiceDetailPage: React.FC = () => {
   const router = useRouter();
   const { slug } = router.query;
   
+  // TODO: To Remove use of Assets
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
 

@@ -18,14 +18,6 @@
         "output": "frontend/src/declarations/auth-test"
       }
     },
-    "service-test": {
-      "type": "motoko",
-      "main": "backend/function/service-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/service-test"
-      }
-    },
     "booking": {
       "type": "motoko",
       "main": "backend/function/booking.mo",

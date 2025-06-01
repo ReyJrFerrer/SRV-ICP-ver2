@@ -29,11 +29,14 @@ type ServiceCategory =
  };
 type Service = 
  record {
+   bookingNoticeHours: opt nat;
    category: ServiceCategory;
    createdAt: Time;
    description: text;
    id: text;
+   instantBookingEnabled: opt bool;
    location: Location;
+   maxBookingsPerDay: opt nat;
    price: nat;
    providerId: principal;
    rating: opt float64;
@@ -41,6 +44,10 @@ type Service =
    status: ServiceStatus;
    title: text;
    updatedAt: Time;
+   weeklySchedule: opt vec record {
+                             DayOfWeek;
+                             DayAvailability;
+                           };
  };
 type Result_5 = 
  variant {
@@ -125,7 +132,12 @@ service : {
   addVacationDates: (startDate: Time, endDate: Time, reason: opt text) ->
    (Result_1);
   createService: (title: text, description: text, categoryId: text, price:
-   nat, location: Location) -> (Result);
+   nat, location: Location, weeklySchedule:
+   opt vec record {
+             DayOfWeek;
+             DayAvailability;
+           }, instantBookingEnabled: opt bool, bookingNoticeHours: opt nat,
+   maxBookingsPerDay: opt nat) -> (Result);
   getAllCategories: () -> (vec ServiceCategory) query;
   getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_4);
   getProviderAvailability: (providerId: principal) -> (Result_1) query;

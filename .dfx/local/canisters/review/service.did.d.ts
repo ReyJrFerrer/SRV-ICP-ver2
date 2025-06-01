@@ -32,6 +32,7 @@ export interface _SERVICE {
   'calculateServiceRating' : ActorMethod<[string], Result_3>,
   'calculateUserAverageRating' : ActorMethod<[Principal], Result_3>,
   'deleteReview' : ActorMethod<[string], Result_2>,
+  'getAllReviews' : ActorMethod<[], Array<Review>>,
   'getBookingReviews' : ActorMethod<[string], Array<Review>>,
   'getReview' : ActorMethod<[string], Result>,
   'getReviewStatistics' : ActorMethod<

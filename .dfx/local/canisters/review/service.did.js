@@ -35,6 +35,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'deleteReview' : IDL.Func([IDL.Text], [Result_2], []),
+    'getAllReviews' : IDL.Func([], [IDL.Vec(Review)], ['query']),
     'getBookingReviews' : IDL.Func([IDL.Text], [IDL.Vec(Review)], ['query']),
     'getReview' : IDL.Func([IDL.Text], [Result], ['query']),
     'getReviewStatistics' : IDL.Func(

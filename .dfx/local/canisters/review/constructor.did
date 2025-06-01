@@ -44,6 +44,7 @@ service : {
   calculateServiceRating: (serviceId: text) -> (Result_3) query;
   calculateUserAverageRating: (userId: principal) -> (Result_3) query;
   deleteReview: (reviewId: text) -> (Result_2);
+  getAllReviews: () -> (vec Review) query;
   getBookingReviews: (bookingId: text) -> (vec Review) query;
   getReview: (reviewId: text) -> (Result) query;
   getReviewStatistics: () ->

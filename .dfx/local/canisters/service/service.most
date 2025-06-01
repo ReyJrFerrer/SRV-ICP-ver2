@@ -40,18 +40,22 @@ type ServiceStatus__906036687 = {#Available; #Suspended; #Unavailable};
 type Service__1010156053 = Service__149533164;
 type Service__149533164 =
   {
+    bookingNoticeHours : ?Nat;
     category : ServiceCategory__231591993;
     createdAt : Time__593356169;
     description : Text;
     id : Text;
+    instantBookingEnabled : ?Bool;
     location : Location__726251617;
+    maxBookingsPerDay : ?Nat;
     price : Nat;
     providerId : Principal;
     rating : ?Float;
     reviewCount : Nat;
     status : ServiceStatus__906036687;
     title : Text;
-    updatedAt : Time__593356169
+    updatedAt : Time__593356169;
+    weeklySchedule : ?[(DayOfWeek__1040845477, DayAvailability__338426443)]
   };
 type TimeSlot__557814762 = {endTime : Text; startTime : Text};
 type Time__593356169 = Int;

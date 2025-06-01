@@ -1,163 +1,64 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
-type TimeSlot = 
- record {
-   endTime: text;
-   startTime: text;
- };
 type Time = int;
-type Result_5 = 
+type ReviewStatus = 
  variant {
-   err: text;
-   ok: ProviderAvailability;
+   Flagged;
+   Hidden;
+   Visible;
  };
-type Result_4 = 
- variant {
-   err: text;
-   ok: vec AvailableSlot;
+type Review = 
+ record {
+   bookingId: text;
+   clientId: principal;
+   comment: text;
+   createdAt: Time;
+   id: text;
+   providerId: principal;
+   qualityScore: opt float64;
+   rating: nat;
+   serviceId: text;
+   status: ReviewStatus;
+   updatedAt: Time;
  };
 type Result_3 = 
  variant {
    err: text;
-   ok: bool;
+   ok: float64;
  };
 type Result_2 = 
  variant {
    err: text;
-   ok: text;
+   ok;
  };
 type Result_1 = 
  variant {
    err: text;
-   ok: Booking;
+   ok: text;
  };
 type Result = 
  variant {
    err: text;
-   ok: Evidence;
- };
-type ProviderAvailability = 
- record {
-   bookingNoticeHours: nat;
-   createdAt: Time;
-   instantBookingEnabled: bool;
-   isActive: bool;
-   maxBookingsPerDay: nat;
-   providerId: principal;
-   updatedAt: Time;
-   vacationDates: vec VacationPeriod;
-   weeklySchedule: vec record {
-                         DayOfWeek;
-                         DayAvailability;
-                       };
- };
-type Location = 
- record {
-   address: text;
-   city: text;
-   country: text;
-   latitude: float64;
-   longitude: float64;
-   postalCode: text;
-   state: text;
- };
-type Evidence = 
- record {
-   bookingId: text;
-   createdAt: Time;
-   description: text;
-   fileUrls: vec text;
-   id: text;
-   qualityScore: opt float64;
-   submitterId: principal;
- };
-type DayOfWeek = 
- variant {
-   Friday;
-   Monday;
-   Saturday;
-   Sunday;
-   Thursday;
-   Tuesday;
-   Wednesday;
- };
-type DayAvailability = 
- record {
-   isAvailable: bool;
-   slots: vec TimeSlot;
- };
-type BookingStatus = 
- variant {
-   Accepted;
-   Cancelled;
-   Completed;
-   Declined;
-   Disputed;
-   InProgress;
-   Requested;
- };
-type Booking = 
- record {
-   clientId: principal;
-   completedDate: opt Time;
-   createdAt: Time;
-   evidence: opt Evidence;
-   id: text;
-   location: Location;
-   price: nat;
-   providerId: principal;
-   requestedDate: Time;
-   scheduledDate: opt Time;
-   serviceId: text;
-   status: BookingStatus;
-   updatedAt: Time;
- };
-type AvailableSlot = 
- record {
-   conflictingBookings: vec text;
-   date: Time;
-   isAvailable: bool;
-   timeSlot: TimeSlot;
+   ok: Review;
  };
 service : {
-  acceptBooking: (bookingId: text, scheduledDate: Time) -> (Result_1);
-  cancelBooking: (bookingId: text) -> (Result_1);
-  checkProviderAvailability: (providerId: principal, requestedDateTime:
-   Time) -> (Result_3);
-  completeBooking: (bookingId: text) -> (Result_1);
-  createBooking: (serviceId: text, providerId: principal, price: nat,
-   location: Location, requestedDate: Time) -> (Result_1);
-  declineBooking: (bookingId: text) -> (Result_1);
-  disputeBooking: (bookingId: text) -> (Result_1);
-  getBooking: (bookingId: text) -> (Result_1) query;
-  getBookingsByDateRange: (startDate: Time, endDate: Time) ->
-   (vec Booking) query;
-  getBookingsByStatus: (status: BookingStatus) -> (vec Booking) query;
-  getClientActiveBookings: (clientId: principal) -> (vec Booking) query;
-  getClientBookings: (clientId: principal) -> (vec Booking) query;
-  getClientCompletedBookings: (clientId: principal) -> (vec Booking) query;
-  getDailyBookingCount: (providerId: principal, date: Time) -> (nat) query;
-  getDisputedBookings: () -> (vec Booking) query;
-  getProviderActiveBookings: (providerId: principal) -> (vec Booking) query;
-  getProviderAvailabilitySettings: (providerId: principal) -> (Result_5);
-  getProviderAvailableSlots: (providerId: principal, date: Time) ->
-   (Result_4);
-  getProviderBookingConflicts: (providerId: principal, startDate: Time,
-   endDate: Time) -> (vec Booking);
-  getProviderBookings: (providerId: principal) -> (vec Booking) query;
-  getProviderCompletedBookings: (providerId: principal) ->
-   (vec Booking) query;
-  isEligibleForReview: (bookingId: text, reviewerId: principal) ->
-   (Result_3) query;
-  setCanisterReferences: (auth: opt principal, "service": opt principal,
-   review: opt principal, reputation: opt principal) -> (Result_2);
-  startBooking: (bookingId: text) -> (Result_1);
-  submitEvidence: (bookingId: text, description: text, fileUrls: vec text) ->
-   (Result);
+  calculateProviderRating: (providerId: principal) -> (Result_3) query;
+  calculateServiceRating: (serviceId: text) -> (Result_3) query;
+  calculateUserAverageRating: (userId: principal) -> (Result_3) query;
+  deleteReview: (reviewId: text) -> (Result_2);
+  getAllReviews: () -> (vec Review) query;
+  getBookingReviews: (bookingId: text) -> (vec Review) query;
+  getReview: (reviewId: text) -> (Result) query;
+  getReviewStatistics: () ->
+   (record {
+      activeReviews: nat;
+      deletedReviews: nat;
+      flaggedReviews: nat;
+      hiddenReviews: nat;
+      totalReviews: nat;
+    }) query;
+  getUserReviews: (userId: principal) -> (vec Review) query;
+  initializeStaticReviewsManually: () -> (Result_1);
+  setCanisterReferences: (booking: principal, "service": principal,
+   reputation: principal, auth: principal) -> (Result_1);
+  submitReview: (bookingId: text, rating: nat, comment: text) -> (Result);
+  updateReview: (reviewId: text, rating: nat, comment: text) -> (Result);
 }

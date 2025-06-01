@@ -484,6 +484,11 @@ actor ReviewCanister {
         return #ok(averageRating);
     };
 
+    // Get all reviews (for admin or analytics purposes)
+    public query func getAllReviews() : async [Review] {
+        return Iter.toArray(reviews.vals());
+    };
+
     // Get review statistics
     public query func getReviewStatistics() : async {
         totalReviews : Nat;
@@ -504,6 +509,7 @@ actor ReviewCanister {
                 case (#Visible) { active += 1; };
                 case (#Hidden) { hidden += 1; };
                 case (#Flagged) { flagged += 1; };
+                case (#Deleted) { _deleted += 1; };
             };
         };
         
@@ -512,7 +518,7 @@ actor ReviewCanister {
             activeReviews = active;
             hiddenReviews = hidden;
             flaggedReviews = flagged;
-            deletedReviews = 0; // Since we don't have a deleted status anymore
+            deletedReviews = _deleted;
         };
     };
 

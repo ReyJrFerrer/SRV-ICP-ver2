@@ -73,7 +73,7 @@ const ServiceMapPage: React.FC = () => {
 
 
   const handleBackClick = () => {
-    router.back(); // Or router.push for a consistent back target
+    router.back(); 
   };
 
   // Called when search is submitted from SearchBar on this page

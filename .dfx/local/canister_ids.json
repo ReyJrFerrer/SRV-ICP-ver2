@@ -1,6 +1,6 @@
 {
   "__Candid_UI": {
-    "local": "vizcg-th777-77774-qaaea-cai"
+    "local": "vu5yx-eh777-77774-qaaga-cai"
   },
   "auth": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
@@ -12,30 +12,30 @@
     "local": "uzt4z-lp777-77774-qaabq-cai"
   },
   "booking-test": {
-    "local": "vg3po-ix777-77774-qaafa-cai"
-  },
-  "frontend": {
-    "local": "vb2j2-fp777-77774-qaafq-cai"
-  },
-  "internet_identity": {
     "local": "umunu-kh777-77774-qaaca-cai"
   },
-  "reputation": {
+  "frontend": {
     "local": "ulvla-h7777-77774-qaacq-cai"
   },
-  "reputation-test": {
-    "local": "vu5yx-eh777-77774-qaaga-cai"
+  "internet_identity": {
+    "local": "rdmx6-jaaaa-aaaaa-aaadq-cai"
   },
-  "review": {
+  "reputation": {
     "local": "ucwa4-rx777-77774-qaada-cai"
   },
-  "review-test": {
-    "local": "vt46d-j7777-77774-qaagq-cai"
-  },
-  "service": {
+  "reputation-test": {
     "local": "ufxgi-4p777-77774-qaadq-cai"
   },
-  "service-test": {
+  "review": {
+    "local": "vizcg-th777-77774-qaaea-cai"
+  },
+  "review-test": {
     "local": "vpyes-67777-77774-qaaeq-cai"
+  },
+  "service": {
+    "local": "vg3po-ix777-77774-qaafa-cai"
+  },
+  "service-test": {
+    "local": "vb2j2-fp777-77774-qaafq-cai"
   }
 }

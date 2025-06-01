@@ -1,21 +1,21 @@
 // Version: 1.0.0
-type ProfileImage__219757124 = {imageUrl : Text; thumbnailUrl : Text};
-type Profile__298844605 = Profile__405097533;
-type Profile__405097533 =
+type ProfileImage__847180220 = {imageUrl : Text; thumbnailUrl : Text};
+type Profile__26758623 =
   {
     biography : ?Text;
-    createdAt : Time__593356169;
+    createdAt : Time__380312498;
     email : Text;
     id : Principal;
     isVerified : Bool;
     name : Text;
     phone : Text;
-    profilePicture : ?ProfileImage__219757124;
-    role : UserRole__492485133;
-    updatedAt : Time__593356169
+    profilePicture : ?ProfileImage__847180220;
+    role : UserRole__576633604;
+    updatedAt : Time__380312498
   };
-type Time__593356169 = Int;
-type UserRole__492485133 = {#Client; #ServiceProvider};
+type Profile__899164101 = Profile__26758623;
+type Time__380312498 = Int;
+type UserRole__576633604 = {#Client; #ServiceProvider};
 actor {
-  stable var profileEntries : [(Principal, Profile__298844605)]
+  stable var profileEntries : [(Principal, Profile__899164101)]
 };

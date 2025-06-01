@@ -1,154 +1,97 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
-type TimeSlot = 
- record {
-   endTime: text;
-   startTime: text;
+type TrustLevel = 
+ variant {
+   High;
+   Low;
+   Medium;
+   New;
+   VeryHigh;
  };
 type Time = int;
-type ServiceStatus = 
+type ReviewStatus = 
  variant {
-   Available;
-   Suspended;
-   Unavailable;
+   Flagged;
+   Hidden;
+   Visible;
  };
-type ServiceCategory = 
+type Review = 
  record {
-   description: text;
-   id: text;
-   imageUrl: text;
-   name: text;
-   parentId: opt text;
-   slug: text;
- };
-type Service = 
- record {
-   category: ServiceCategory;
+   bookingId: text;
+   clientId: principal;
+   comment: text;
    createdAt: Time;
-   description: text;
    id: text;
-   location: Location;
-   price: nat;
    providerId: principal;
-   rating: opt float64;
-   reviewCount: nat;
-   status: ServiceStatus;
-   title: text;
+   qualityScore: opt float64;
+   rating: nat;
+   serviceId: text;
+   status: ReviewStatus;
    updatedAt: Time;
- };
-type Result_5 = 
- variant {
-   err: text;
-   ok: ServiceCategory;
- };
-type Result_4 = 
- variant {
-   err: text;
-   ok: vec AvailableSlot;
  };
 type Result_3 = 
  variant {
    err: text;
-   ok: bool;
+   ok: vec record {
+             Time;
+             float64;
+           };
  };
 type Result_2 = 
  variant {
    err: text;
-   ok: text;
+   ok: Evidence;
  };
 type Result_1 = 
  variant {
    err: text;
-   ok: ProviderAvailability;
+   ok: Review;
  };
 type Result = 
  variant {
    err: text;
-   ok: Service;
+   ok: ReputationScore;
  };
-type ProviderAvailability = 
+type ReputationScore = 
  record {
-   bookingNoticeHours: nat;
+   averageRating: opt float64;
+   completedBookings: nat;
+   detectionFlags: vec DetectionFlag;
+   lastUpdated: Time;
+   trustLevel: TrustLevel;
+   trustScore: float64;
+   userId: principal;
+ };
+type Evidence = 
+ record {
+   bookingId: text;
    createdAt: Time;
-   instantBookingEnabled: bool;
-   isActive: bool;
-   maxBookingsPerDay: nat;
-   providerId: principal;
-   updatedAt: Time;
-   vacationDates: vec VacationPeriod;
-   weeklySchedule: vec record {
-                         DayOfWeek;
-                         DayAvailability;
-                       };
+   description: text;
+   fileUrls: vec text;
+   id: text;
+   qualityScore: opt float64;
+   submitterId: principal;
  };
-type Location = 
- record {
-   address: text;
-   city: text;
-   country: text;
-   latitude: float64;
-   longitude: float64;
-   postalCode: text;
-   state: text;
- };
-type DayOfWeek = 
+type DetectionFlag = 
  variant {
-   Friday;
-   Monday;
-   Saturday;
-   Sunday;
-   Thursday;
-   Tuesday;
-   Wednesday;
- };
-type DayAvailability = 
- record {
-   isAvailable: bool;
-   slots: vec TimeSlot;
- };
-type AvailableSlot = 
- record {
-   conflictingBookings: vec text;
-   date: Time;
-   isAvailable: bool;
-   timeSlot: TimeSlot;
+   CompetitiveManipulation;
+   FakeEvidence;
+   IdentityFraud;
+   Other;
+   ReviewBomb;
  };
 service : {
-  addCategory: (name: text, description: text, parentId: opt text, slug:
-   text, imageUrl: text) -> (Result_5);
-  addVacationDates: (startDate: Time, endDate: Time, reason: opt text) ->
-   (Result_1);
-  createService: (title: text, description: text, categoryId: text, price:
-   nat, location: Location) -> (Result);
-  getAllCategories: () -> (vec ServiceCategory) query;
-  getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_4);
-  getProviderAvailability: (providerId: principal) -> (Result_1) query;
-  getService: (serviceId: text) -> (Result) query;
-  getServicesByCategory: (categoryId: text) -> (vec Service) query;
-  getServicesByProvider: (providerId: principal) -> (vec Service) query;
-  isProviderAvailable: (providerId: principal, requestedDateTime: Time) ->
-   (Result_3);
-  removeVacationDates: (vacationId: text) -> (Result_1);
-  searchServicesByLocation: (userLocation: Location, maxDistance: float64,
-   categoryId: opt text) -> (vec Service) query;
-  searchServicesWithReputationFilter: (userLocation: Location, maxDistance:
-   float64, categoryId: opt text, minTrustScore: opt float64) ->
-   (vec Service);
-  setCanisterReferences: (auth: opt principal, booking: opt principal,
-   review: opt principal, reputation: opt principal) -> (Result_2);
-  setProviderAvailability: (weeklySchedule:
-   vec record {
-         DayOfWeek;
-         DayAvailability;
-       }, instantBookingEnabled: bool, bookingNoticeHours: nat,
-   maxBookingsPerDay: nat) -> (Result_1);
-  updateServiceRating: (serviceId: text, newRating: float64, newReviewCount:
-   nat) -> (Result);
-  updateServiceStatus: (serviceId: text, status: ServiceStatus) -> (Result);
+  getReputationHistory: (userId: principal) -> (Result_3) query;
+  getReputationStatistics: () ->
+   (record {
+      averageTrustScore: float64;
+      totalUsers: nat;
+      trustLevelDistribution: vec record {
+                                    TrustLevel;
+                                    nat;
+                                  };
+    }) query;
+  testAddDetectionFlag: () -> (Result);
+  testInitializeReputation: () -> (Result);
+  testProcessEvidence: () -> (Result_2);
+  testProcessReview: () -> (Result_1);
+  testUpdateTrustScore: () -> (Result);
 }

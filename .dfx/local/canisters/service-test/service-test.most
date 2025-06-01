@@ -1,5 +1,5 @@
 // Version: 1.0.0
-type Location__726251617 =
+type Location__874944613 =
   {
     address : Text;
     city : Text;
@@ -9,8 +9,8 @@ type Location__726251617 =
     postalCode : Text;
     state : Text
   };
-type ServiceCategory__18075912 = ServiceCategory__231591993;
-type ServiceCategory__231591993 =
+type ServiceCategory__747047664 = ServiceCategory__816999276;
+type ServiceCategory__816999276 =
   {
     description : Text;
     id : Text;
@@ -19,25 +19,25 @@ type ServiceCategory__231591993 =
     parentId : ?Text;
     slug : Text
   };
-type ServiceStatus__906036687 = {#Available; #Suspended; #Unavailable};
-type Service__149533164 =
+type ServiceStatus__1025005311 = {#Available; #Suspended; #Unavailable};
+type Service__792571569 = Service__860083215;
+type Service__860083215 =
   {
-    category : ServiceCategory__231591993;
-    createdAt : Time__593356169;
+    category : ServiceCategory__816999276;
+    createdAt : Time__380312498;
     description : Text;
     id : Text;
-    location : Location__726251617;
+    location : Location__874944613;
     price : Nat;
     providerId : Principal;
     rating : ?Float;
     reviewCount : Nat;
-    status : ServiceStatus__906036687;
+    status : ServiceStatus__1025005311;
     title : Text;
-    updatedAt : Time__593356169
+    updatedAt : Time__380312498
   };
-type Service__651326784 = Service__149533164;
-type Time__593356169 = Int;
+type Time__380312498 = Int;
 actor {
-  stable var categoryEntries : [(Text, ServiceCategory__18075912)];
-  stable var serviceEntries : [(Text, Service__651326784)]
+  stable var categoryEntries : [(Text, ServiceCategory__747047664)];
+  stable var serviceEntries : [(Text, Service__792571569)]
 };

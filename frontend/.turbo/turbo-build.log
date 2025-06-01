@@ -8,11 +8,13 @@
    Creating an optimized production build ...
  ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
 Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
+ ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
+Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
 Browserslist: caniuse-lite is outdated. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
- ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
-Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
+(node:17095) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
 Browserslist: caniuse-lite is outdated. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
@@ -30,25 +32,25 @@ Browserslist: caniuse-lite is outdated. Please run:
 
 
 Route (pages)                              Size     First Load JS
-┌ ○ /                                      4.75 kB         186 kB
-├   /_app                                  0 B             179 kB
-├ ○ /404                                   181 B           179 kB
-├ ○ /client                                3.24 kB         184 kB
-├ ƒ /client/book/[slug]                    48.9 kB         227 kB
+┌ ○ /                                      4.78 kB         185 kB
+├   /_app                                  0 B             178 kB
+├ ○ /404                                   182 B           178 kB
+├ ○ /client                                3.25 kB         184 kB
+├ ƒ /client/book/[slug]                    48.7 kB         227 kB
 ├ ○ /client/booking/confirmation           1.24 kB         182 kB
-├ ○ /client/categories/[slug]              3.13 kB         189 kB
-├ ○ /client/chat                           2.38 kB         183 kB
-├ ○ /client/home (452 ms)                  7.49 kB         197 kB
-├ ○ /client/service-maps (432 ms)          2.02 kB         191 kB
-├ ○ /client/service/[slug] (392 ms)        4.36 kB         191 kB
-├ ○ /client/service/view-all (432 ms)      2.87 kB         189 kB
-├ ○ /create-profile (449 ms)               2.89 kB         181 kB
-├ ○ /provider (318 ms)                     3.24 kB         184 kB
-└ ○ /provider/home (435 ms)                8.01 kB         189 kB
+├ ○ /client/categories/[slug]              3.11 kB         189 kB
+├ ○ /client/chat                           2.37 kB         183 kB
+├ ○ /client/home                           7.46 kB         196 kB
+├ ○ /client/service-maps                   2.02 kB         191 kB
+├ ○ /client/service/[slug]                 4.38 kB         190 kB
+├ ○ /client/service/view-all               2.86 kB         189 kB
+├ ○ /create-profile                        2.92 kB         181 kB
+├ ○ /provider                              3.25 kB         184 kB
+└ ○ /provider/home                         8.08 kB         189 kB
 + First Load JS shared by all              188 kB
-  ├ chunks/framework-3f6905f6df109714.js   44.8 kB
-  ├ chunks/main-27e6c91b60120ee4.js        34 kB
-  ├ chunks/pages/_app-c36bfa93d7f9f2dd.js  97.8 kB
+  ├ chunks/framework-3f6905f6df109714.js   44.9 kB
+  ├ chunks/main-27e6c91b60120ee4.js        33.9 kB
+  ├ chunks/pages/_app-9346891ae42181fb.js  97.5 kB
   └ other shared chunks (total)            11.6 kB
 
 ○  (Static)   prerendered as static content

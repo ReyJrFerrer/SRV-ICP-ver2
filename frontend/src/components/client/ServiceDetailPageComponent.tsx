@@ -5,7 +5,7 @@ import { Service } from '../../../assets/types/service/service'; // Includes Ser
 import { DayOfWeek, ServiceAvailability } from '../../../assets/types/service/service-availability'; // Import for clarity and types
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'; // Assuming you use solid stars for display
 
-// --- Helper Functions (can be moved to a utils file) ---
+// --- Helper Functions  ---
 const parseTimeSlot = (timeSlot: string): { start: { hours: number, minutes: number }, end: { hours: number, minutes: number } } | null => {
   const parts = timeSlot.split('-');
   if (parts.length !== 2) return null;
@@ -176,7 +176,7 @@ const ServiceRatingSection: React.FC<{ service: Service; onReviewClick: () => vo
       </div>
       <button 
         onClick={onReviewClick}
-        className="btn-secondary text-sm px-4 py-2" // Ensure btn-secondary is defined in your styles
+        className="btn-secondary text-sm px-4 py-2" 
       >
         View Reviews
       </button>
@@ -275,7 +275,7 @@ const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
   </div>
 );
 
-// Placeholder Service Data (Updated for robust availability testing)
+// Placeholder Service Data 
 const createPlaceholderService = (): Service => ({
   id: 'placeholder-service',
   providerId: 'placeholder-provider',
@@ -305,13 +305,7 @@ const createPlaceholderService = (): Service => ({
 const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service }) => {
   const router = useRouter();
   const displayService = service || createPlaceholderService();
-
-  // --- Calculate effective availability status ---
   const now = new Date(); 
-  // For testing specific scenarios, you can uncomment and use a fixed date:
-  // const now = new Date("2025-06-01T10:00:00"); // Sunday, 10 AM (Should be Rest Day for placeholder)
-  // const now = new Date("2025-06-02T10:00:00"); // Monday, 10 AM (Should be Available/Busy for placeholder)
-  // const now = new Date("2025-06-02T13:00:00"); // Monday, 1 PM (Should be Rest Day due to lunch break for placeholder)
   
   let effectiveAvailabilityStatusText = 'Loading...';
   let isEffectivelyAvailable = false;
@@ -344,8 +338,6 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
   };
 
   if (!displayService) {
-    // This case should ideally be handled by the page calling this component
-    // by not rendering it or showing a specific "not found" message.
     return <div className="p-4 text-center">Service details are unavailable.</div>;
   }
 
@@ -409,8 +401,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                   <button 
                     onClick={handleBookingRequest} 
                     className="w-full btn-primary text-center"
-                    // You might want to disable booking if not effectively available:
-                    // disabled={!isEffectivelyAvailable && effectiveAvailabilityStatusText !== 'Currently Busy'}
+            
                   >
                     Send Booking Request
                   </button>
@@ -424,12 +415,11 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
         </div>
       </div>
       
-      {/* Mobile booking button - Only visible on mobile */}
+      {/* Mobile booking button  */}
       <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50">
         <button 
           onClick={handleBookingRequest} 
           className="w-full btn-primary text-center"
-          // disabled={!isEffectivelyAvailable && effectiveAvailabilityStatusText !== 'Currently Busy'}
         >
           Send Booking Request
         </button>

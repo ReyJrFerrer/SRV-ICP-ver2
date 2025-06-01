@@ -31,7 +31,7 @@ const BookingConfirmationPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Head>
-        <title>Booking Confirmed - SRV Client</title>
+        <title>SRV | Booking Request Sent</title>
         <meta name="description" content="Your booking request has been sent." />
       </Head>
 
@@ -110,7 +110,7 @@ const BookingConfirmationPage: React.FC = () => {
             </div>
 
             {/* Action Button */}
-            <Link href="/client" legacyBehavior>
+            <Link href="/client/home" legacyBehavior>
               <a className="inline-block w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                 Back to Home
               </a>
@@ -121,7 +121,7 @@ const BookingConfirmationPage: React.FC = () => {
             <p className="text-gray-600 mb-4">
               Loading booking details or an error occurred while parsing details.
             </p>
-            <Link href="/client" legacyBehavior>
+            <Link href="/client/home" legacyBehavior>
               <a className="inline-block w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                 Back to Home
               </a>

@@ -60,7 +60,7 @@ const SearchResultsPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>{searchQuery ? `Search: ${searchQuery}` : 'Search Results'} | SRV Client</title>
+        <title>SRV | {searchQuery ? `Search: ${searchQuery}` : 'Search Results'}</title>
         <meta name="description" content={`Search results for services ${searchQuery ? `related to ${searchQuery}` : ''}`} />
       </Head>
 

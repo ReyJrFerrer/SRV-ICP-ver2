@@ -87,7 +87,7 @@ const ServiceReviewsPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Reviews for {service.title} by {providerName} | SRV Client</title>
+        <title>SRV | Reviews for {service.title} by {providerName}</title>
         <meta name="description" content={`Read reviews for ${service.title} offered by ${providerName}`} />
       </Head>
 

@@ -58,7 +58,7 @@ const ServiceDetailPage: React.FC = () => {
     <>
       <Head>
         <title>
-          {service ? `${service.name} - ${service.title}` : 'Service Details'} | SRV Client
+         SRV | {service ? `${service.name} - ${service.title}` : 'Service Details'}
         </title>
         <meta 
           name="description" 

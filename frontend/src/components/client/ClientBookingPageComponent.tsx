@@ -6,7 +6,6 @@ import { Service } from '../../../assets/types/service/service';
 import { Package as ServicePackageType } from '../../../assets/types/service/service-package';
 import { ServiceAvailability, DayOfWeek } from '../../../assets/types/service/service-availability';
 
-// --- Helper Functions (dayIndexToName, parseTimeSlotString) ---
 const dayIndexToName = (dayIndex: number): string => {
   const days: DayOfWeek[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   return days[dayIndex] || '';
@@ -38,10 +37,10 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [loading, setLoading] = useState(true);
   const [packages, setPackages] = useState<SelectablePackage[]>([]);
   const [concerns, setConcerns] = useState<string>('');
-  const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
+  const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('scheduled'); 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [isSameDayPossible, setIsSameDayPossible] = useState(true);
+  const [isSameDayPossible, setIsSameDayPossible] = useState(false); 
   const [houseNumber, setHouseNumber] = useState('');
   const [street, setStreet] = useState('');
   const [barangay, setBarangay] = useState('');
@@ -52,7 +51,6 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [showManualAddress, setShowManualAddress] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // useEffect for loading service data and initializing packages (runs only when serviceSlug changes)
   useEffect(() => {
     const loadServiceData = async () => {
       if (!serviceSlug) {
@@ -64,16 +62,13 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       }
       setLoading(true);
       try {
-        const { SERVICES } = await import('../../../assets/services'); 
+        const { SERVICES } = await import('../../../assets/services');
         const foundService = SERVICES.find(s => s.slug === serviceSlug);
 
         if (foundService) {
           setService(foundService as Service);
           setPackages(
-            foundService.packages?.map((pkg: ServicePackageType) => ({
-              ...pkg,
-              checked: false, 
-            })) || []
+            foundService.packages?.map((pkg: ServicePackageType) => ({ ...pkg, checked: false })) || []
           );
           setFormError(null);
         } else {
@@ -91,14 +86,12 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       }
     };
     loadServiceData();
-  }, [serviceSlug]); 
+  }, [serviceSlug]);
 
   useEffect(() => {
     if (!service || !service.availability) {
       setIsSameDayPossible(false);
-      if (bookingOption === 'sameday') {
-          setBookingOption('scheduled');
-      }
+      setBookingOption('scheduled'); 
       return;
     }
 
@@ -107,7 +100,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     const isTodayServiceDay = service.availability.schedule.some(s => s.toLowerCase() === currentDayName.toLowerCase());
     let possibleToday = service.availability.isAvailableNow && isTodayServiceDay;
 
-    if (possibleToday && service.availability.timeSlots) {
+    if (possibleToday && service.availability.timeSlots && service.availability.timeSlots.length > 0) {
         const currentHour = today.getHours();
         const currentMinute = today.getMinutes();
         let inSlot = false;
@@ -122,47 +115,47 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             }
         }
         possibleToday = inSlot;
-    } else { 
-        possibleToday = possibleToday && (service.availability.timeSlots && service.availability.timeSlots.length > 0);
+    } else if (possibleToday) { 
+        possibleToday = false; 
     }
+    
     setIsSameDayPossible(possibleToday);
 
-    if (!possibleToday && bookingOption === 'sameday') {
+    if (possibleToday) {
+      setBookingOption('sameday');
+    } else {
       setBookingOption('scheduled');
     }
+  }, [service]); 
 
-  }, [service, bookingOption]); 
 
-  // --- Event Handlers (handlePackageChange, handleBookingOptionChange, etc.) ---
-  const handlePackageChange = (packageId: string) => {
-    setFormError(null);
-    setPackages(prevPackages =>
-      prevPackages.map(pkg =>
-        pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg
-      )
-    );
-  };
+  // Event Handlers
+  const handlePackageChange = (packageId: string) => { /* ... */ setFormError(null); setPackages(prevPackages => prevPackages.map(pkg => pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg)); };
+  
   const handleBookingOptionChange = (option: 'sameday' | 'scheduled') => {
-    if (option === 'sameday' && !isSameDayPossible) return; // Guard
     setFormError(null);
     setBookingOption(option);
-    if (option === 'sameday') { // Reset date/time if switching to same day
+    if (option === 'sameday') {
       setSelectedDate(null);
       setSelectedTime('');
     }
   };
+  
   const handleDateChange = (date: Date | null) => { setSelectedDate(date); if (!date) setSelectedTime(''); if (formError?.includes('date')) setFormError(null); };
   const handleTimeChange = (time: string) => { setSelectedTime(time); if (formError?.includes('time')) setFormError(null); };
   const handleUseCurrentLocation = () => { setFormError(null); setCurrentLocationStatus('Fetching location...'); setUseGpsLocation(true); setShowManualAddress(false); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const { latitude, longitude } = position.coords; setCurrentLocationStatus(`📍 Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)} (Using this)`); setHouseNumber(''); setStreet(''); setBarangay(''); setMunicipalityCity(''); setProvince(''); }, (error) => { setCurrentLocationStatus(`⚠️ Could not get location. Please enter manually. (Error: ${error.message})`); setUseGpsLocation(false); } ); } else { setCurrentLocationStatus("Geolocation not supported. Please enter address manually."); setUseGpsLocation(false); } };
-  
-  const toggleManualAddress = () => {
+  const toggleManualAddress = () => { 
     setShowManualAddress(!showManualAddress);
     if (!showManualAddress) {
       setUseGpsLocation(false);
       setCurrentLocationStatus('');
     }
-  };
-  
+    setFormError(null); 
+    setShowManualAddress(prev => 
+      { const nextShowState = !prev; if (nextShowState) 
+        { setUseGpsLocation(false); setCurrentLocationStatus(''); } 
+        return nextShowState; 
+      }); };
   const handleConfirmBooking = () => {
     if (!service) {
         setFormError("Service details not loaded yet.");
@@ -182,7 +175,6 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         return;
       }
     }
-
     setFormError(null);
     if (!service) { setFormError("Service details are not loaded."); return; }
     if (!packages.some(pkg => pkg.checked)) { setFormError("Please select at least one service package."); return; }
@@ -198,10 +190,10 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   };
 
   if (loading) {
-    return ( <div className="flex items-center justify-center min-h-screen p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p className="ml-3 text-gray-600">Loading service details...</p></div>);
+    return ( <div className="flex items-center justify-center min-h-screen p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p className="ml-3 text-gray-600">Loading...</p></div>);
   }
   if (!service) {
-    return ( <div className="flex items-center justify-center min-h-screen p-4 text-red-600">{formError || "Service not found or failed to load."}</div>);
+    return ( <div className="flex items-center justify-center min-h-screen p-4 text-red-600">{formError || "Service not found."}</div>);
   }
   
   const isConfirmDisabled = 
@@ -212,14 +204,13 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     (useGpsLocation && !currentLocationStatus.startsWith('📍')) ||
     (showManualAddress && [houseNumber, street, barangay, municipalityCity, province].some(f => f.trim() === ''));
 
-  // --- JSX for rendering the form (two-column layout for desktop/tablet) ---
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
-      <div className="flex-grow pb-28 md:pb-24"> {/* Padding for sticky button */}
+      <div className="flex-grow pb-28 md:pb-24">
         <div className="md:flex md:flex-row md:gap-x-6 lg:gap-x-8 md:p-4 lg:p-6">
-          {/* Left Column */}
+          {/* Left Column Wrapper */}
           <div className="md:w-1/2 md:flex md:flex-col">
-            {/* Package Selection */}
+            {/* Package Selection Section */}
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-t-xl md:border md:shadow-sm md:border-b-0">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Package *</h3>
               {packages.map((pkg) => (
@@ -233,16 +224,16 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 </label>
               ))}
             </div>
-            {/* Concerns */}
+            {/* Concerns Section */}
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Concerns</h3>
               <textarea className="w-full p-3 border border-gray-300 rounded-lg resize-none min-h-[80px] focus:ring-blue-500 focus:border-blue-500" placeholder="Add any concerns or requests..." value={concerns} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setConcerns(e.target.value)} />
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* Right Column Wrapper */}
           <div className="md:w-1/2 md:flex md:flex-col mt-4 md:mt-0">
-            {/* Booking Schedule */}
+            {/* Booking Schedule Section */}
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-t-xl md:border md:shadow-sm md:border-b-0">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Schedule *</h3>
               {service.availability && service.availability.schedule && service.availability.timeSlots ? (
@@ -256,13 +247,15 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                     <button
                       className={`flex-1 p-3 border rounded-lg text-center ${ bookingOption === 'sameday' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50 text-gray-700 border-gray-300'} ${!isSameDayPossible ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500 hover:text-white'}`}
                       onClick={() => handleBookingOptionChange('sameday')}
-                      disabled={!isSameDayPossible}>
+                      disabled={!isSameDayPossible} // Button is disabled if not possible
+                    >
                       <div className="font-medium text-sm">Same Day</div>
                       {isSameDayPossible && <div className="text-xs opacity-75">Arrive within 20-45 mins</div>}
                     </button>
                     <button
                       className={`flex-1 p-3 border rounded-lg text-center ${ bookingOption === 'scheduled' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-blue-50'}`}
-                      onClick={() => handleBookingOptionChange('scheduled')}>
+                      onClick={() => handleBookingOptionChange('scheduled')}
+                    >
                       <div className="font-medium text-sm">Scheduled</div>
                     </button>
                   </div>
@@ -285,7 +278,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 </>
               ) : ( <div className="text-sm text-gray-500 p-2">Availability information not set.</div> )}
             </div>
-            {/* Location */}
+            {/* Location Section */}
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Location *</h3>
               <button onClick={handleUseCurrentLocation} className="w-full mb-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">📍 Use Current Location</button>
@@ -296,7 +289,6 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
           </div>
         </div>
 
-        {/* Payment Info and Error Message sections */}
         <div className="px-4 md:px-0 md:mx-4 lg:mx-6 mt-4 md:mt-6">
           <div className="bg-white p-4 md:rounded-xl md:border md:shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment</h3>

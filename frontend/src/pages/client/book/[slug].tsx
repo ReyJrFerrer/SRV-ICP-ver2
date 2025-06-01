@@ -14,7 +14,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ serviceSlug }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>Book Service - SRV Client</title>
+        <title>SRV | Book Client</title>
         <meta name="description" content="Book a service with SRV" />
       </Head>
 

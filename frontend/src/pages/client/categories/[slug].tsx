@@ -107,7 +107,7 @@ const CategoryPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>{categoryInfo.name} | SRV Client</title>
+        <title>SRV | Book {categoryInfo.name} - {categoryInfo.description}</title>
         <meta name="description" content={categoryInfo.description} />
       </Head>
 

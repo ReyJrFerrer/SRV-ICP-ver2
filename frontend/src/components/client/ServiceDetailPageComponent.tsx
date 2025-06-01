@@ -333,7 +333,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
 
   const handleViewReviews = () => {
     if (displayService && displayService.slug) {
-      router.push(`/client/service/${displayService.slug}/reviews`);
+      router.push(`/client/service/reviews`);
     }
   };
 

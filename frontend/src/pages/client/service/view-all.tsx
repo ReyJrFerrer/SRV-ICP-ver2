@@ -43,7 +43,7 @@ const ViewAllServicesPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>All Services | Service Provider App</title>
+        <title>SRV | All Services</title>
         <meta name="description" content="Browse all available services" />
       </Head>
 
@@ -82,7 +82,6 @@ const ViewAllServicesPage: React.FC = () => {
                 <ServiceListItem 
                   key={service.id} 
                   service={service} 
-                  inCategories={true} 
                 />
               ))}
             </div>

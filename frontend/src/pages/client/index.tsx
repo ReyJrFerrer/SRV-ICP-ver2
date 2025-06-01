@@ -81,7 +81,7 @@ export default function ClientIndexPage() {
   return (
     <>
       <Head>
-        <title>Client Portal | Service Provider App</title>
+        <title>SRV Home Page</title>
         <meta name="description" content="Access your client portal" />
       </Head>
       

@@ -109,7 +109,7 @@ const ClientHomePage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Home | Service Provider App</title>
+        <title>SRV | Home Page</title>
         <meta name="description" content="Find the best service providers near you" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

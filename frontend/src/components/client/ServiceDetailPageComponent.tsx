@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { Service } from '../../../assets/types/service/service'; // Includes ServiceAvailability
 import { DayOfWeek, ServiceAvailability } from '../../../assets/types/service/service-availability'; // Import for clarity and types
+import { StarIcon as StarSolid } from '@heroicons/react/24/solid'; // Assuming you use solid stars for display
 
 // --- Helper Functions (can be moved to a utils file) ---
 const parseTimeSlot = (timeSlot: string): { start: { hours: number, minutes: number }, end: { hours: number, minutes: number } } | null => {
@@ -22,7 +23,7 @@ const parseTimeSlot = (timeSlot: string): { start: { hours: number, minutes: num
 };
 
 const isWithinScheduledHours = (
-  availability: ServiceAvailability, // Use imported type
+  availability: ServiceAvailability,
   currentDateTime: Date
 ): boolean => {
   const dayNames: DayOfWeek[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -49,12 +50,11 @@ const isWithinScheduledHours = (
 };
 // --- End Helper Functions ---
 
-
 interface ServiceDetailPageComponentProps {
   service: Service | null;
 }
 
-// Service Hero Image Component (no changes needed here)
+// Service Hero Image Component
 const ServiceHeroImage: React.FC<{ service: Service }> = ({ service }) => (
   <div className="w-full h-48 md:h-64 lg:h-96 overflow-hidden relative">
     <Image 
@@ -73,7 +73,7 @@ const ServiceHeroImage: React.FC<{ service: Service }> = ({ service }) => (
   </div>
 );
 
-// Service Info Section Component (no changes needed here)
+// Service Info Section Component
 const ServiceInfoSection: React.FC<{ service: Service }> = ({ service }) => (
   <div className="card mb-6">
     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3 lg:hidden">{service.title || service.name}</h2>
@@ -108,7 +108,7 @@ const ServiceInfoSection: React.FC<{ service: Service }> = ({ service }) => (
   </div>
 );
 
-// Service Availability Section Component (MODIFIED)
+// Service Availability Section Component (Utilizes effective status)
 const ServiceAvailabilitySection: React.FC<{ 
   availability: ServiceAvailability, 
   effectiveStatusText: string, 
@@ -152,8 +152,8 @@ const ServiceAvailabilitySection: React.FC<{
   </div>
 );
 
-// Service Rating Section Component (no changes needed here)
-const ServiceRatingSection: React.FC<{ service: Service }> = ({ service }) => (
+// Service Rating Section Component
+const ServiceRatingSection: React.FC<{ service: Service; onReviewClick: () => void }> = ({ service, onReviewClick }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">⭐</span>
@@ -165,22 +165,26 @@ const ServiceRatingSection: React.FC<{ service: Service }> = ({ service }) => (
         <div>
           <div className="flex text-yellow-400 mb-1">
             {[...Array(5)].map((_, i) => (
-              <span key={i} className={i < Math.floor(service.rating.average) ? 'text-yellow-400' : 'text-gray-300'}>
-                ★
-              </span>
+              <StarSolid
+                key={i} 
+                className={`h-5 w-5 ${i < Math.floor(service.rating.average) ? 'text-yellow-400' : 'text-gray-300'}`}
+              />
             ))}
           </div>
           <p className="text-sm text-gray-600">{service.rating.count} reviews</p>
         </div>
       </div>
-      <button className="btn-secondary text-sm px-4 py-2">
+      <button 
+        onClick={onReviewClick}
+        className="btn-secondary text-sm px-4 py-2" // Ensure btn-secondary is defined in your styles
+      >
         View Reviews
       </button>
     </div>
   </div>
 );
 
-// Service Requirements Section Component (no changes needed here)
+// Service Requirements Section Component
 const ServiceRequirementsSection: React.FC<{ service: Service }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -202,13 +206,20 @@ const ServiceRequirementsSection: React.FC<{ service: Service }> = ({ service })
           <span className="text-green-500 mr-2 mt-0.5">•</span>
           <span className="text-sm md:text-base text-gray-600">Service provider will discuss requirements during booking</span>
         </li>
-        {/* ... other default requirements */}
+        <li className="flex items-start">
+          <span className="text-green-500 mr-2 mt-0.5">•</span>
+          <span className="text-sm md:text-base text-gray-600">Please provide detailed description of your needs</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-green-500 mr-2 mt-0.5">•</span>
+          <span className="text-sm md:text-base text-gray-600">Ensure availability at scheduled time</span>
+        </li>
       </ul>
     )}
   </div>
 );
 
-// Service Verification Section Component (no changes needed here)
+// Service Verification Section Component
 const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerified }) => (
   <div className="card mb-6 lg:mb-0 lg:p-0 lg:bg-transparent lg:shadow-none lg:border-0">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center lg:hidden">
@@ -233,7 +244,7 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
   </div>
 );
 
-// Service Images Section Component (no changes needed here)
+// Service Images Section Component
 const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -245,7 +256,7 @@ const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
         {service.media.map((mediaItem, index) => (
           <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
             <Image
-              src={mediaItem.url as string}
+              src={mediaItem.url as string} // Assuming URL is a string path or StaticImageData
               alt={`${service.title} gallery image ${index + 1}`}
               width={120}
               height={120}
@@ -258,54 +269,57 @@ const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
       <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
         <span className="text-4xl mb-2 block">📷</span>
         <p className="text-sm">No additional images available.</p>
+        <p className="text-xs text-gray-400 mt-1">Images will be added by the service provider</p>
       </div>
     )}
   </div>
 );
 
-// Placeholder Service Data (MODIFIED for testing availability)
+// Placeholder Service Data (Updated for robust availability testing)
 const createPlaceholderService = (): Service => ({
-  // ... (other placeholder fields remain the same)
   id: 'placeholder-service',
   providerId: 'placeholder-provider',
-  name: 'Service Provider',
-  title: 'Professional Service',
-  description: 'This service provider offers professional services. Detailed information will be available once connected to the backend.',
+  name: 'Placeholder Provider',
+  title: 'Placeholder Service Title',
+  description: 'This is a placeholder service description. Availability checks will apply.',
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
-  price: { amount: 1000, currency: 'PHP', unit: '/ Hour', isNegotiable: true },
-  location: { address: 'Baguio City, Philippines', coordinates: { latitude: 16.4095, longitude: 120.5975 }, serviceRadius: 10, serviceRadiusUnit: 'km' },
+  price: { amount: 100, currency: 'PHP', unit: '/hr', isNegotiable: false },
+  location: { address: 'Anytown, Philippines', coordinates: { latitude: 14.0, longitude: 121.0 }, serviceRadius: 5, serviceRadiusUnit: 'km' },
   availability: {
-    schedule: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], // Example: No weekends
-    timeSlots: ['09:00-12:00', '13:00-17:00'], // Example: Has a lunch break
-    isAvailableNow: true // This will be overridden by schedule if current time is outside
+    schedule: ['Monday', 'Wednesday', 'Friday'], // Works Mon, Wed, Fri
+    timeSlots: ['09:00-12:00', '14:00-17:00'],  // Morning and Afternoon slots
+    isAvailableNow: true // Default toggle
   },
-  rating: { average: 4.5, count: 15 },
+  rating: { average: 0, count: 0 },
   media: [],
-  requirements: ['Please provide service details during booking', 'Ensure availability at scheduled time'],
+  requirements: ['Basic information'],
   isVerified: false,
   slug: 'placeholder-service',
-  heroImage: '/images/default-service.png',
-  category: { id: 'cat-placeholder', name: 'General Services', description: 'General professional services', slug: 'general-services', icon: 'service', imageUrl: '/images/default-category.png', isActive: true, createdAt: new Date(), updatedAt: new Date() }
+  heroImage: '/images/default-service.png', // Ensure this image exists in public/images
+  category: { id: 'cat-placeholder', name: 'Placeholder Category', description: '', slug: 'placeholder', icon: 'cog', imageUrl: '', isActive: true, createdAt: new Date(), updatedAt: new Date() }
 });
 
-// Main Service Detail Component (MODIFIED)
+// Main Service Detail Component
 const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service }) => {
   const router = useRouter();
   const displayService = service || createPlaceholderService();
 
-  // Calculate effective availability status
-  const now = new Date(); // Use actual current time
-  // For testing: const now = new Date("2025-06-01T11:50:00"); // Sunday, 11:50 AM
+  // --- Calculate effective availability status ---
+  const now = new Date(); 
+  // For testing specific scenarios, you can uncomment and use a fixed date:
+  // const now = new Date("2025-06-01T10:00:00"); // Sunday, 10 AM (Should be Rest Day for placeholder)
+  // const now = new Date("2025-06-02T10:00:00"); // Monday, 10 AM (Should be Available/Busy for placeholder)
+  // const now = new Date("2025-06-02T13:00:00"); // Monday, 1 PM (Should be Rest Day due to lunch break for placeholder)
   
-  let effectiveAvailabilityStatusText = '';
+  let effectiveAvailabilityStatusText = 'Loading...';
   let isEffectivelyAvailable = false;
 
   if (displayService) {
     const scheduledAsWorking = isWithinScheduledHours(displayService.availability, now);
     if (!scheduledAsWorking) {
-      effectiveAvailabilityStatusText = 'Rest Day'; // User requested this label
+      effectiveAvailabilityStatusText = 'Rest Day';
       isEffectivelyAvailable = false;
     } else {
       if (displayService.availability.isAvailableNow) {
@@ -317,25 +331,34 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
       }
     }
   }
-
+  // --- End availability calculation ---
 
   const handleBookingRequest = () => {
     router.push(`/client/book/${displayService.slug}`);
   };
 
-  if (!displayService) { // Should ideally not happen with placeholder
-    return <div>Loading service details...</div>;
+  const handleViewReviews = () => {
+    if (displayService && displayService.slug) {
+      router.push(`/client/service/${displayService.slug}/reviews`);
+    }
+  };
+
+  if (!displayService) {
+    // This case should ideally be handled by the page calling this component
+    // by not rendering it or showing a specific "not found" message.
+    return <div className="p-4 text-center">Service details are unavailable.</div>;
   }
 
   return (
     <div className="bg-gray-50">
       <ServiceHeroImage service={displayService} />
+      
       <div className="px-4 pt-4 pb-16 lg:px-8 lg:pt-8">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+          {/* Main Content */}
           <div className="lg:col-span-2">
             <ServiceInfoSection service={displayService} />
-            <ServiceRatingSection service={displayService} />
-            {/* Pass calculated status to ServiceAvailabilitySection */}
+            <ServiceRatingSection service={displayService} onReviewClick={handleViewReviews} />
             <ServiceAvailabilitySection 
               availability={displayService.availability} 
               effectiveStatusText={effectiveAvailabilityStatusText}
@@ -345,8 +368,10 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
             <ServiceImagesSection service={displayService} />
           </div>
           
+          {/* Sidebar for desktop */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-32 space-y-6">
+              {/* Service Provider Info Card */}
               <div className="card">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Provider</h3>
                 <div className="flex items-center space-x-3 mb-4">
@@ -363,6 +388,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                 <ServiceVerificationSection isVerified={displayService.isVerified} />
               </div>
 
+              {/* Booking Action Card */}
               <div className="card">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Book This Service</h3>
                 <div className="space-y-4">
@@ -374,7 +400,6 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                       <span className="text-sm text-gray-500 ml-1">{displayService.price.unit}</span>
                     </span>
                   </div>
-                  {/* Use calculated status in the sidebar */}
                   <div className="flex justify-between items-center py-2 border-b border-gray-100">
                     <span className="text-gray-600">Availability</span>
                     <span className={`font-medium ${isEffectivelyAvailable ? 'text-green-600' : 'text-red-600'}`}>
@@ -384,8 +409,8 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                   <button 
                     onClick={handleBookingRequest} 
                     className="w-full btn-primary text-center"
-                    // Optionally disable booking if not effectively available
-                    // disabled={!isEffectivelyAvailable} 
+                    // You might want to disable booking if not effectively available:
+                    // disabled={!isEffectivelyAvailable && effectiveAvailabilityStatusText !== 'Currently Busy'}
                   >
                     Send Booking Request
                   </button>
@@ -399,11 +424,12 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
         </div>
       </div>
       
+      {/* Mobile booking button - Only visible on mobile */}
       <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50">
         <button 
           onClick={handleBookingRequest} 
           className="w-full btn-primary text-center"
-          // disabled={!isEffectivelyAvailable}
+          // disabled={!isEffectivelyAvailable && effectiveAvailabilityStatusText !== 'Currently Busy'}
         >
           Send Booking Request
         </button>

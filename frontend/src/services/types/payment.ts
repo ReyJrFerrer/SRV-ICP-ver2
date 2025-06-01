@@ -1,4 +1,4 @@
-// Subject to change
+// Payment-related types
 export type PaymentMethod = 'GCASH' | 'PAYMAYA' | 'CREDIT_CARD' | 'DEBIT_CARD';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'REFUNDED';
 

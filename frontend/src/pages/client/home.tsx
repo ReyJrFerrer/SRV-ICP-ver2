@@ -16,6 +16,7 @@ import { ServiceProvider } from '../../../assets/types/provider/service-provider
 
 // Services
 import authCanisterService from '@app/services/authCanisterService';
+import serviceCanisterService from '@app/services/serviceCanisterService';
 import { convertProfilesToServiceProviders } from '@app/utils/serviceProviderAdapter';
 import { generateServicesFromProviders } from '@app/utils/serviceGenerator';
 
@@ -45,11 +46,33 @@ const ClientHomePage: React.FC = () => {
       try {
         setError(null);
         
-        // TODO: To apply service categories loading
-        // Load categories (always from local assets for now)
-        const categoriesModule = await import('../../../assets/categories');
-        const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
-        setCategories(adaptedCategories);
+        // Load categories from service canister first
+        try {
+          console.log('Fetching categories from service canister...');
+          const canisterCategories = await serviceCanisterService.getAllCategories();
+          console.log('Fetched categories from canister:', canisterCategories);
+          
+          if (canisterCategories && canisterCategories.length > 0) {
+            // Convert ServiceCategory to AdaptedCategory format
+            const adaptedCategories: AdaptedCategory[] = canisterCategories.map(category => ({
+              id: category.id,
+              name: category.name,
+              icon: category.imageUrl, // Map imageUrl to icon for UI compatibility
+              slug: category.slug
+            }));
+            setCategories(adaptedCategories);
+            console.log('Successfully loaded categories from service canister');
+          } else {
+            throw new Error('No categories found in service canister');
+          }
+        } catch (canisterError) {
+          console.warn('Failed to load categories from service canister, falling back to local data:', canisterError);
+          
+          // Fallback to local assets for categories
+          const categoriesModule = await import('../../../assets/categories');
+          const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
+          setCategories(adaptedCategories);
+        }
 
         // Try to load service providers from auth canister first
         try {

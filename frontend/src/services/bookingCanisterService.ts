@@ -10,10 +10,12 @@ import type {
   Evidence as CanisterEvidence,
   AvailableSlot as CanisterAvailableSlot,
   ProviderAvailability as CanisterProviderAvailability,
+  ProviderAnalytics as CanisterProviderAnalytics,
   TimeSlot as CanisterTimeSlot,
   VacationPeriod as CanisterVacationPeriod,
   DayOfWeek as CanisterDayOfWeek,
-  DayAvailability as CanisterDayAvailability
+  DayAvailability as CanisterDayAvailability,
+  Result_4
 } from '../declarations/booking/booking.did';
 
 // Canister configuration
@@ -102,6 +104,18 @@ export interface ProviderAvailability {
   updatedAt: string;
 }
 
+export interface ProviderAnalytics {
+  providerId: Principal;
+  totalJobs: number;
+  completedJobs: number;
+  cancelledJobs: number;
+  totalEarnings: number;
+  completionRate: number;
+  packageBreakdown: Array<[string, number]>;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface AvailableSlot {
   date: string;
   timeSlot: TimeSlot;
@@ -134,6 +148,7 @@ export interface Booking {
   clientId: Principal;
   providerId: Principal;
   serviceId: string;
+  servicePackageId?: string;
   status: BookingStatus;
   requestedDate: string;
   scheduledDate?: string;
@@ -260,11 +275,24 @@ const convertCanisterAvailableSlot = (slot: CanisterAvailableSlot): AvailableSlo
   conflictingBookings: slot.conflictingBookings,
 });
 
+const convertCanisterProviderAnalytics = (analytics: CanisterProviderAnalytics): ProviderAnalytics => ({
+  providerId: analytics.providerId,
+  totalJobs: Number(analytics.totalJobs),
+  completedJobs: Number(analytics.completedJobs),
+  cancelledJobs: Number(analytics.cancelledJobs),
+  totalEarnings: Number(analytics.totalEarnings),
+  completionRate: analytics.completionRate,
+  packageBreakdown: analytics.packageBreakdown.map(([pkg, count]) => [pkg, Number(count)]),
+  startDate: analytics.startDate[0] ? new Date(Number(analytics.startDate[0]) / 1000000).toISOString() : undefined,
+  endDate: analytics.endDate[0] ? new Date(Number(analytics.endDate[0]) / 1000000).toISOString() : undefined,
+});
+
 const convertCanisterBooking = (booking: CanisterBooking): Booking => ({
   id: booking.id,
   clientId: booking.clientId,
   providerId: booking.providerId,
   serviceId: booking.serviceId,
+  servicePackageId: booking.servicePackageId[0],
   status: convertCanisterBookingStatus(booking.status),
   requestedDate: new Date(Number(booking.requestedDate) / 1000000).toISOString(),
   scheduledDate: booking.scheduledDate[0] ? new Date(Number(booking.scheduledDate[0]) / 1000000).toISOString() : undefined,
@@ -286,7 +314,8 @@ export const bookingCanisterService = {
     providerId: Principal,
     price: number,
     location: Location,
-    requestedDate: Date
+    requestedDate: Date,
+    servicePackageId?: string
   ): Promise<Booking | null> {
     try {
       const actor = await getBookingActor();
@@ -298,7 +327,8 @@ export const bookingCanisterService = {
         providerId,
         BigInt(price),
         canisterLocation,
-        requestedTimestamp
+        requestedTimestamp,
+        servicePackageId ? [servicePackageId] : []
       );
       
       if ('ok' in result) {
@@ -757,6 +787,128 @@ export const bookingCanisterService = {
     } catch (error) {
       console.error('Error setting canister references:', error);
       throw new Error(`Failed to set canister references: ${error}`);
+    }
+  },
+
+  /**
+   * Get bookings by service package
+   */
+  async getBookingsByPackage(packageId: string): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const bookings = await actor.getBookingsByPackage(packageId);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching bookings by package:', error);
+      throw new Error(`Failed to fetch bookings by package: ${error}`);
+    }
+  },
+
+  /**
+   * Get client analytics
+   */
+  async getClientAnalytics(
+    clientId: Principal,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<ProviderAnalytics | null> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = startDate ? [BigInt(startDate.getTime() * 1000000)] : [];
+      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
+      
+      const result = await actor.getClientAnalytics(clientId, startTimestamp as [] | [bigint], endTimestamp as [] | [bigint]);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAnalytics(result.ok);
+      } else {
+        console.error('Error fetching client analytics:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching client analytics:', error);
+      throw new Error(`Failed to fetch client analytics: ${error}`);
+    }
+  },
+
+  /**
+   * Get provider analytics
+   */
+  async getProviderAnalytics(
+    providerId: Principal,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<ProviderAnalytics | null> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = startDate ? [BigInt(startDate.getTime() * 1000000)] : [];
+      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
+      
+      const result = await actor.getProviderAnalytics(providerId, startTimestamp as [] | [bigint], endTimestamp as [] | [bigint]);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAnalytics(result.ok);
+      } else {
+        console.error('Error fetching provider analytics:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching provider analytics:', error);
+      throw new Error(`Failed to fetch provider analytics: ${error}`);
+    }
+  },
+
+  /**
+   * Get service analytics
+   */
+  async getServiceAnalytics(
+    serviceId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<ProviderAnalytics | null> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = startDate ? [BigInt(startDate.getTime() * 1000000)] : [];
+      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
+      
+      const result = await actor.getServiceAnalytics(serviceId, startTimestamp as [] | [bigint], endTimestamp as [] | [bigint]);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAnalytics(result.ok);
+      } else {
+        console.error('Error fetching service analytics:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching service analytics:', error);
+      throw new Error(`Failed to fetch service analytics: ${error}`);
+    }
+  },
+
+  /**
+   * Get package analytics
+   */
+  async getPackageAnalytics(
+    packageId: string,
+    startDate?: Date,
+    endDate?: Date
+  ): Promise<ProviderAnalytics | null> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = startDate ? [BigInt(startDate.getTime() * 1000000)] : [];
+      const endTimestamp = endDate ? [BigInt(endDate.getTime() * 1000000)] : [];
+      
+      const result = await actor.getPackageAnalytics(packageId, startTimestamp as [] | [bigint], endTimestamp as [] | [bigint]);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAnalytics(result.ok);
+      } else {
+        console.error('Error fetching package analytics:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching package analytics:', error);
+      throw new Error(`Failed to fetch package analytics: ${error}`);
     }
   }
 };

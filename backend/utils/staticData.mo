@@ -232,7 +232,7 @@ module {
                     description = "Professional cleaning and housekeeping services";
                     parentId = ?("cat-001");
                     slug = "cleaning-services";
-                    imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/cleaning-services.jpg";
+                    imageUrl = "/images/CleaningServices-CoverImage.jpeg";
                 };
                 price = 2500;
                 location = MAGSAYSAY_LOCATION;

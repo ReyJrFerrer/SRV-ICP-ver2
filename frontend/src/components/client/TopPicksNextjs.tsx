@@ -3,20 +3,23 @@ import Link from 'next/link';
 import ServiceListItem from './ServiceListItemNextjs';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import { Service } from '@app/services/serviceCanisterService';
+import { EnrichedService, getCategoryImage } from '@app/utils/serviceHelpers';
 
 interface TopPicksProps {
-  services: Service[];
+  services: EnrichedService[];
   className?: string;
 }
 
 const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
-  // Adapter function to convert Service to ServiceListItem format
-  const adaptServiceForUI = (service: Service) => ({
+  // Adapter function to convert EnrichedService to ServiceListItem format
+  const adaptServiceForUI = (service: EnrichedService) => ({
     id: service.id,
     slug: service.id, // Using id as slug since slug is not in serviceCanister Service
     name: service.title,
     title: service.title,
-    heroImage: '/images/default-service.jpg', // Default image since serviceCanister doesn't have heroImage
+    heroImage: getCategoryImage(service.category.name), // Get image based on category
+    providerName: service.providerName,
+    providerAvatar: service.providerAvatar,
     rating: {
       average: service.rating || 0,
       count: service.reviewCount || 0,
@@ -24,6 +27,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
     price: {
       amount: service.price,
       unit: 'hour',
+      display: service.priceDisplay,
     },
     location: {
       serviceRadius: 10, // Default radius - could be calculated based on service area
@@ -39,6 +43,8 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
     },
     category: {
       name: service.category.name,
+      id: service.category.id,
+      slug: service.category.slug,
     },
   });
 

@@ -10,19 +10,15 @@ import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
 // Services
 import serviceCanisterService, { Service, ServiceCategory } from '@app/services/serviceCanisterService';
+import authCanisterService, { FrontendProfile } from '@app/services/authCanisterService';
 
-// Icon mapping function to convert category names to Heroicon names
-const getCategoryIcon = (categoryName: string): string => {
-  const lowerName = categoryName.toLowerCase();
-  if (lowerName.includes('cleaning') || lowerName.includes('house')) return 'home';
-  if (lowerName.includes('repair') || lowerName.includes('auto') || lowerName.includes('car')) return 'car';
-  if (lowerName.includes('beauty') || lowerName.includes('wellness')) return 'broom';
-  if (lowerName.includes('delivery') || lowerName.includes('courier') || lowerName.includes('truck')) return 'truck';
-  if (lowerName.includes('tech') || lowerName.includes('gadget') || lowerName.includes('computer')) return 'computer';
-  if (lowerName.includes('electric') || lowerName.includes('electrical')) return 'bolt';
-  if (lowerName.includes('wrench') || lowerName.includes('tool') || lowerName.includes('maintenance')) return 'wrench';
-  return 'default'; // fallback to default icon
-};
+// Utilities
+import { 
+  getCategoryIcon, 
+  enrichServiceWithProvider, 
+  EnrichedService, 
+  principalToString 
+} from '@app/utils/serviceHelpers';
 
 // Define the adapted category type that matches the Categories component requirements
 interface AdaptedCategory {
@@ -34,7 +30,7 @@ interface AdaptedCategory {
 
 const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<EnrichedService[]>([]);
   const [categories, setCategories] = useState<AdaptedCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,22 +65,41 @@ const ClientHomePage: React.FC = () => {
           setCategories([]);
         }
 
-        // Load services from service canister
+        // Load services and provider information
         try {
           console.log('Fetching services from service canister...');
           const canisterServices = await serviceCanisterService.getAllServices();
           console.log('Fetched services from canister:', canisterServices);
           
+          // Load service providers
+          console.log('Fetching service providers from auth canister...');
+          const serviceProviders = await authCanisterService.getAllServiceProviders();
+          console.log('Fetched service providers:', serviceProviders);
+          
+          // Create a lookup map for providers
+          const providerMap = new Map<string, FrontendProfile>();
+          serviceProviders.forEach(provider => {
+            providerMap.set(provider.id, provider);
+          });
+          
           if (canisterServices && canisterServices.length > 0) {
-            // Use services directly from serviceCanisterService
-            setServices(canisterServices);
-            console.log('Successfully loaded services from service canister');
+            // Enrich services with provider data
+            const enrichedServices: EnrichedService[] = canisterServices.map(service => {
+              // Convert Principal to string for lookup
+              const providerIdStr = principalToString(service.providerId);
+              const provider = providerMap.get(providerIdStr) || null;
+              
+              return enrichServiceWithProvider(service, provider);
+            });
+            
+            setServices(enrichedServices);
+            console.log('Successfully loaded and enriched services');
           } else {
             console.warn('No services found in service canister');
             setServices([]);
           }
-        } catch (canisterError) {
-          console.error('Failed to load services from service canister:', canisterError);
+        } catch (error) {
+          console.error('Failed to load services or providers:', error);
           setServices([]);
         }
         

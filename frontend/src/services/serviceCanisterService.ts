@@ -14,13 +14,16 @@ import type {
   DayAvailability as CanisterDayAvailability,
   DayOfWeek as CanisterDayOfWeek,
   VacationPeriod as CanisterVacationPeriod,
+  ServicePackage as CanisterServicePackage,
   Time,
   Result,
   Result_1,
   Result_2,
   Result_3,
   Result_4,
-  Result_5
+  Result_5,
+  Result_6,
+  Result_7
 } from '../declarations/service/service.did';
 
 // Canister configuration
@@ -152,6 +155,16 @@ export interface Service {
   providerName?: string;
   distance?: number;
   priceDisplay?: string;
+}
+
+export interface ServicePackage {
+  id: string;
+  serviceId: string;
+  title: string;
+  description: string;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Helper functions to convert between canister and frontend types
@@ -294,6 +307,16 @@ const convertCanisterService = (service: CanisterService): Service => ({
   maxBookingsPerDay: service.maxBookingsPerDay[0] ? Number(service.maxBookingsPerDay[0]) : undefined,
   createdAt: new Date(Number(service.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(service.updatedAt) / 1000000).toISOString(),
+});
+
+const convertCanisterServicePackage = (pkg: CanisterServicePackage): ServicePackage => ({
+  id: pkg.id,
+  serviceId: pkg.serviceId,
+  title: pkg.title,
+  description: pkg.description,
+  price: Number(pkg.price),
+  createdAt: new Date(Number(pkg.createdAt) / 1000000).toISOString(),
+  updatedAt: new Date(Number(pkg.updatedAt) / 1000000).toISOString(),
 });
 
 // Service Canister Service Functions
@@ -726,7 +749,127 @@ export const serviceCanisterService = {
       console.error('Error setting canister references:', error);
       throw new Error(`Failed to set canister references: ${error}`);
     }
-  }
+  },
+
+  /**
+   * Create a new service package
+   */
+  async createServicePackage(
+    serviceId: string,
+    title: string,
+    description: string,
+    price: number
+  ): Promise<ServicePackage | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.createServicePackage(
+        serviceId,
+        title,
+        description,
+        BigInt(price)
+      );
+
+      if ('ok' in result) {
+        return convertCanisterServicePackage(result.ok);
+      } else {
+        console.error('Error creating service package:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error creating service package:', error);
+      throw new Error(`Failed to create service package: ${error}`);
+    }
+  },
+
+  /**
+   * Get all packages for a service
+   */
+  async getServicePackages(serviceId: string): Promise<ServicePackage[]> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.getServicePackages(serviceId);
+
+      if ('ok' in result) {
+        return result.ok.map(convertCanisterServicePackage);
+      } else {
+        console.error('Error fetching service packages:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error fetching service packages:', error);
+      throw new Error(`Failed to fetch service packages: ${error}`);
+    }
+  },
+
+  /**
+   * Get a specific package by ID
+   */
+  async getPackage(packageId: string): Promise<ServicePackage | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.getPackage(packageId);
+
+      if ('ok' in result) {
+        return convertCanisterServicePackage(result.ok);
+      } else {
+        console.error('Error fetching package:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching package:', error);
+      throw new Error(`Failed to fetch package: ${error}`);
+    }
+  },
+
+  /**
+   * Update a service package
+   */
+  async updateServicePackage(
+    packageId: string,
+    title?: string,
+    description?: string,
+    price?: number
+  ): Promise<ServicePackage | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.updateServicePackage(
+        packageId,
+        title ? [title] : [],
+        description ? [description] : [],
+        price ? [BigInt(price)] : []
+      );
+
+      if ('ok' in result) {
+        return convertCanisterServicePackage(result.ok);
+      } else {
+        console.error('Error updating service package:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error updating service package:', error);
+      throw new Error(`Failed to update service package: ${error}`);
+    }
+  },
+
+  /**
+   * Delete a service package
+   */
+  async deleteServicePackage(packageId: string): Promise<string | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.deleteServicePackage(packageId);
+
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error deleting service package:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error deleting service package:', error);
+      throw new Error(`Failed to delete service package: ${error}`);
+    }
+  },
 };
 
 export default serviceCanisterService;

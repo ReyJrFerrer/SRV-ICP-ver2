@@ -1,6 +1,14 @@
 import React from 'react';
 import Link from 'next/link';
-import { HomeIcon, BoltIcon, WrenchScrewdriverIcon, EllipsisHorizontalCircleIcon } from '@heroicons/react/24/solid';
+import { 
+  HomeIcon, 
+  BoltIcon, 
+  WrenchScrewdriverIcon, 
+  EllipsisHorizontalCircleIcon,
+  TruckIcon,
+  ComputerDesktopIcon,
+  SparklesIcon
+} from '@heroicons/react/24/solid';
 
 interface Category {
   id: string;
@@ -21,8 +29,16 @@ const Categories: React.FC<CategoriesProps> = ({ categories, className = '' }) =
       case 'home':
         return <HomeIcon className="h-7 w-7" />;
       case 'broom':
-        return <BoltIcon className="h-7 w-7" />;
+        return <SparklesIcon className="h-7 w-7" />;
       case 'car':
+        return <WrenchScrewdriverIcon className="h-7 w-7" />;
+      case 'truck':
+        return <TruckIcon className="h-7 w-7" />;
+      case 'computer':
+        return <ComputerDesktopIcon className="h-7 w-7" />;
+      case 'bolt':
+        return <BoltIcon className="h-7 w-7" />;
+      case 'wrench':
         return <WrenchScrewdriverIcon className="h-7 w-7" />;
       default:
         return <EllipsisHorizontalCircleIcon className="h-7 w-7" />;

@@ -1,5 +1,4 @@
 import Principal "mo:base/Principal";
-import Time "mo:base/Time";
 import Types "../types/shared";
 
 module {
@@ -22,7 +21,7 @@ module {
             description = "Professional home maintenance and improvement services";
             parentId = null;
             slug = "home-services";
-            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/home-services.jpg";
+            imageUrl = "/images/HomeServices-CoverImage.jpg";
         }),
         ("cat-002", {
             id = "cat-002";
@@ -30,7 +29,7 @@ module {
             description = "Professional cleaning and housekeeping services";
             parentId = ?("cat-001");
             slug = "cleaning-services";
-            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/cleaning-services.jpg";
+            imageUrl = "/images/CLeaningServices-CoverImage.jpeg";
         }),
         ("cat-003", {
             id = "cat-003";
@@ -38,7 +37,7 @@ module {
             description = "Professional automobile maintenance and repair services";
             parentId = null;
             slug = "automobile-repairs";
-            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/auto-repair.jpg";
+            imageUrl = "/images/AutomobileRepairs-CoverImage.jpg";
         }),
         ("cat-004", {
             id = "cat-004";
@@ -46,7 +45,7 @@ module {
             description = "Professional repair and support for electronic devices";
             parentId = null;
             slug = "gadget-technicians";
-            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/gadget-repair.jpg";
+            imageUrl = "/images/GedgetTechnician-CoverImage1.jpg";
         }),
         ("cat-005", {
             id = "cat-005";
@@ -54,7 +53,7 @@ module {
             description = "Professional beauty and wellness services";
             parentId = null;
             slug = "beauty-wellness";
-            imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/beauty-wellness.jpg";
+            imageUrl = "/images/Beauty&Wellness-CoverImage.jpg";
         })
     ];
 
@@ -63,6 +62,77 @@ module {
         latitude = 16.4145;
         longitude = 120.5960;
         address = "Session Road, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    // Additional Baguio City Locations
+    public let BURNHAM_PARK_LOCATION : Location = {
+        latitude = 16.4167;
+        longitude = 120.5933;
+        address = "Burnham Park Area, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let UPPER_SESSION_LOCATION : Location = {
+        latitude = 16.4088;
+        longitude = 120.5968;
+        address = "Upper Session Road, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let MARCOS_HIGHWAY_LOCATION : Location = {
+        latitude = 16.4200;
+        longitude = 120.5950;
+        address = "Marcos Highway, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let MAGSAYSAY_LOCATION : Location = {
+        latitude = 16.4110;
+        longitude = 120.5980;
+        address = "Magsaysay Avenue, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let TEACHER_CAMP_LOCATION : Location = {
+        latitude = 16.3985;
+        longitude = 120.5995;
+        address = "Teacher's Camp Road, Baguio City";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let BAGUIO_CENTER_MALL_LOCATION : Location = {
+        latitude = 16.4160;
+        longitude = 120.5925;
+        address = "Baguio Center Mall Area, Magsaysay Avenue";
+        city = "Baguio City";
+        state = "Benguet";
+        country = "Philippines";
+        postalCode = "2600";
+    };
+
+    public let CAMP_JOHN_HAY_LOCATION : Location = {
+        latitude = 16.3950;
+        longitude = 120.5850;
+        address = "Camp John Hay, Baguio City";
         city = "Baguio City";
         state = "Benguet";
         country = "Philippines";
@@ -82,8 +152,8 @@ module {
                 updatedAt = 1640995200000000000;
                 isVerified = true;
                 profilePicture = ?{
-                    imageUrl = "/images/Maid1.jpg";
-                    thumbnailUrl = "/images/Maid1.jpg";
+                    imageUrl = "/images/CleaningServices-HouseMaid1.jpg";
+                    thumbnailUrl = "/images/CleaningServices-HouseMaid2.jpg";
                 };
                 biography = ?"Experienced house maid with over 10 years of experience in residential cleaning and organizing.";
             }),
@@ -97,8 +167,8 @@ module {
                 updatedAt = 1640995200000000000;
                 isVerified = true;
                 profilePicture = ?{
-                    imageUrl = "/images/Plumber1.jpg";
-                    thumbnailUrl = "/images/Plumber1.jpg";
+                    imageUrl = "/images/HomeServices-Plumbing1.jpg";
+                    thumbnailUrl = "/images/HomeServices-Plumbing2.jpg";
                 };
                 biography = ?"Emergency plumbing specialist with expertise in fixing leaks, clogs, and plumbing installations. Available 24/7 for urgent calls.";
             }),
@@ -165,7 +235,7 @@ module {
                     imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/cleaning-services.jpg";
                 };
                 price = 2500;
-                location = DEFAULT_LOCATION;
+                location = MAGSAYSAY_LOCATION;
                 status = #Available;
                 createdAt = 1640995200000000000; // 2022-01-01
                 updatedAt = 1640995200000000000;
@@ -196,18 +266,10 @@ module {
                     description = "Professional home maintenance and improvement services";
                     parentId = null;
                     slug = "home-services";
-                    imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/home-services.jpg";
+                    imageUrl = "/images/HomeServices-CoverImage.jpg";
                 };
                 price = 3500;
-                location = {
-                    latitude = 16.4088;
-                    longitude = 120.5968;
-                    address = "Upper Session Road, Baguio City";
-                    city = "Baguio City";
-                    state = "Benguet";
-                    country = "Philippines";
-                    postalCode = "2600";
-                };
+                location = UPPER_SESSION_LOCATION;
                 status = #Available;
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
@@ -238,18 +300,10 @@ module {
                     description = "Professional repair and support for electronic devices";
                     parentId = null;
                     slug = "gadget-technicians";
-                    imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/gadget-repair.jpg";
+                    imageUrl = "/images/HomeServices-CoverImage.jpg";
                 };
                 price = 2800;
-                location = {
-                    latitude = 16.4167;
-                    longitude = 120.5933;
-                    address = "Burnham Park Area, Baguio City";
-                    city = "Baguio City";
-                    state = "Benguet";
-                    country = "Philippines";
-                    postalCode = "2600";
-                };
+                location = TEACHER_CAMP_LOCATION;
                 status = #Available;
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
@@ -280,18 +334,10 @@ module {
                     description = "Professional beauty and wellness services";
                     parentId = null;
                     slug = "beauty-wellness";
-                    imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/beauty-wellness.jpg";
+                    imageUrl = "/images/Beauty&Wellness-CoverImage.jpg";
                 };
                 price = 1800;
-                location = {
-                    latitude = 16.4200;
-                    longitude = 120.5950;
-                    address = "Marcos Highway, Baguio City";
-                    city = "Baguio City";
-                    state = "Benguet";
-                    country = "Philippines";
-                    postalCode = "2600";
-                };
+                location = BAGUIO_CENTER_MALL_LOCATION;
                 status = #Available;
                 createdAt = 1640995200000000000;
                 updatedAt = 1640995200000000000;
@@ -322,10 +368,10 @@ module {
                     description = "Professional cleaning and housekeeping services";
                     parentId = ?("cat-001");
                     slug = "cleaning-services";
-                    imageUrl = "https://res.cloudinary.com/demo/image/upload/v1/samples/landscapes/cleaning-services.jpg";
+                    imageUrl = "/images/CLeaningServices-CoverImage.jpeg";
                 };
                 price = 4500;
-                location = DEFAULT_LOCATION;
+                location = CAMP_JOHN_HAY_LOCATION;
                 status = #Available;
                 createdAt = 1641081600000000000; // 2022-01-02
                 updatedAt = 1641081600000000000;

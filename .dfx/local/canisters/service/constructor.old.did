@@ -139,6 +139,7 @@ service : {
            }, instantBookingEnabled: opt bool, bookingNoticeHours: opt nat,
    maxBookingsPerDay: opt nat) -> (Result);
   getAllCategories: () -> (vec ServiceCategory) query;
+  getAllServices: () -> (vec Service) query;
   getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_4);
   getProviderAvailability: (providerId: principal) -> (Result_1) query;
   getService: (serviceId: text) -> (Result) query;

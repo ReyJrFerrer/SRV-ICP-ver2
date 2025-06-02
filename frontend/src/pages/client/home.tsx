@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@bundly/ares-react";
 import Head from 'next/head';
-import dynamic from 'next/dynamic';
 
 // Components
 import Header from '@app/components/client/HeaderNextjs';
@@ -9,19 +8,21 @@ import Categories from '@app/components/client/CategoriesNextjs';
 import TopPicks from '@app/components/client/TopPicksNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
-// Types
-import { Service } from '../../../assets/types/service/service';
-import { Category as BaseCategory } from '../../../assets/types/category/category';
-import { ServiceProvider } from '../../../assets/types/provider/service-provider';
-
 // Services
-import authCanisterService from '@app/services/authCanisterService';
-import serviceCanisterService from '@app/services/serviceCanisterService';
-import { convertProfilesToServiceProviders } from '@app/utils/serviceProviderAdapter';
-import { generateServicesFromProviders } from '@app/utils/serviceGenerator';
+import serviceCanisterService, { Service, ServiceCategory } from '@app/services/serviceCanisterService';
 
-// Utils for data adaptation
-import { adaptServiceData, adaptCategoryData } from '@app/utils/serviceDataAdapter';
+// Icon mapping function to convert category names to Heroicon names
+const getCategoryIcon = (categoryName: string): string => {
+  const lowerName = categoryName.toLowerCase();
+  if (lowerName.includes('cleaning') || lowerName.includes('house')) return 'home';
+  if (lowerName.includes('repair') || lowerName.includes('auto') || lowerName.includes('car')) return 'car';
+  if (lowerName.includes('beauty') || lowerName.includes('wellness')) return 'broom';
+  if (lowerName.includes('delivery') || lowerName.includes('courier') || lowerName.includes('truck')) return 'truck';
+  if (lowerName.includes('tech') || lowerName.includes('gadget') || lowerName.includes('computer')) return 'computer';
+  if (lowerName.includes('electric') || lowerName.includes('electrical')) return 'bolt';
+  if (lowerName.includes('wrench') || lowerName.includes('tool') || lowerName.includes('maintenance')) return 'wrench';
+  return 'default'; // fallback to default icon
+};
 
 // Define the adapted category type that matches the Categories component requirements
 interface AdaptedCategory {
@@ -31,13 +32,10 @@ interface AdaptedCategory {
   slug: string;
 }
 
-// Mock data - in production, this would be imported from your data sources
-// We're using dynamic import to avoid issues with server-side rendering of React Native components
 const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<AdaptedCategory[]>([]);
-  const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +44,7 @@ const ClientHomePage: React.FC = () => {
       try {
         setError(null);
         
-        // Load categories from service canister first
+        // Load categories from service canister
         try {
           console.log('Fetching categories from service canister...');
           const canisterCategories = await serviceCanisterService.getAllCategories();
@@ -57,62 +55,43 @@ const ClientHomePage: React.FC = () => {
             const adaptedCategories: AdaptedCategory[] = canisterCategories.map(category => ({
               id: category.id,
               name: category.name,
-              icon: category.imageUrl, // Map imageUrl to icon for UI compatibility
+              icon: getCategoryIcon(category.name), // Map category name to Heroicon
               slug: category.slug
             }));
             setCategories(adaptedCategories);
             console.log('Successfully loaded categories from service canister');
           } else {
-            throw new Error('No categories found in service canister');
+            console.warn('No categories found in service canister');
+            setCategories([]);
           }
         } catch (canisterError) {
-          console.warn('Failed to load categories from service canister, falling back to local data:', canisterError);
-          
-          // Fallback to local assets for categories
-          const categoriesModule = await import('../../../assets/categories');
-          const adaptedCategories = adaptCategoryData(categoriesModule.CATEGORIES) as AdaptedCategory[];
-          setCategories(adaptedCategories);
+          console.error('Failed to load categories from service canister:', canisterError);
+          setCategories([]);
         }
 
-        // Try to load service providers from auth canister first
+        // Load services from service canister
         try {
-          console.log('Fetching service providers from auth canister...');
-          const profiles = await authCanisterService.getAllServiceProviders();
-          console.log('Fetched profiles:', profiles);
+          console.log('Fetching services from service canister...');
+          const canisterServices = await serviceCanisterService.getAllServices();
+          console.log('Fetched services from canister:', canisterServices);
           
-          if (profiles && profiles.length > 0) {
-            // Convert backend profiles to frontend ServiceProvider format
-            const serviceProviders = convertProfilesToServiceProviders(profiles);
-            setServiceProviders(serviceProviders);
-            
-            // Generate services from provider data for TopPicks component
-            const generatedServices = generateServicesFromProviders(serviceProviders);
-            setServices(generatedServices);
-            
-            console.log('Successfully loaded data from auth canister');
+          if (canisterServices && canisterServices.length > 0) {
+            // Use services directly from serviceCanisterService
+            setServices(canisterServices);
+            console.log('Successfully loaded services from service canister');
           } else {
-            throw new Error('No service providers found in canister');
+            console.warn('No services found in service canister');
+            setServices([]);
           }
         } catch (canisterError) {
-          console.warn('Failed to load from auth canister, falling back to local data:', canisterError);
-          
-          // Fallback to local assets
-          const servicesModule = await import('../../../assets/services');
-          const serviceProvidersModule = await import('../../../assets/serviceProviders');
-          
-          const adaptedServices = adaptServiceData(servicesModule.SERVICES);
-          setServices(adaptedServices);
-          setServiceProviders(serviceProvidersModule.SERVICE_PROVIDERS);
-          
-          setError('Using local data - Auth canister unavailable');
+          console.error('Failed to load services from service canister:', canisterError);
+          setServices([]);
         }
         
       } catch (error) {
-        console.error('Failed to load any data:', error);
+        console.error('Failed to load data:', error);
         setError('Failed to load service data');
-        // Set empty arrays as last resort
         setServices([]);
-        setServiceProviders([]);
         setCategories([]);
       } finally {
         setLoading(false);
@@ -139,6 +118,11 @@ const ClientHomePage: React.FC = () => {
       </Head>
 
       <div className="min-h-screen bg-gray-50 pb-20">
+        {error && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mx-4 mt-4">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
 
         <div className="px-4 pt-4 pb-16">
           <Header className="mb-6" />

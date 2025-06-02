@@ -103,7 +103,6 @@ const AddServicePage: React.FC = () => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
         const { checked } = e.target as HTMLInputElement;
-        // Removed isNegotiable from main form, it might be per package if needed
         if (name === 'useSameTimeForAllDays') { setFormData(prev => ({ ...prev, useSameTimeForAllDays: checked }));
         } else if (name === 'availabilitySchedule') {
             const dayValue = value as DayOfWeek;
@@ -171,9 +170,8 @@ const AddServicePage: React.FC = () => {
     const mainServicePrice = {
         amount: parseFloat(firstValidPackage.price) || 0,
         currency: firstValidPackage.currency || "PHP",
-        // Unit is derived from the first package's duration or a default if duration is removed
-        unit: "/service", // Default unit as package duration is removed
-        isNegotiable: false, // Main service price is non-negotiable if derived from package
+        unit: "/service", 
+        isNegotiable: false, 
     } as ServicePrice;
 
     const newServicePayload = {

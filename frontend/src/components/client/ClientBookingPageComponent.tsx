@@ -2,12 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { Service } from '../../../assets/types/service/service';
+import { Principal } from '@dfinity/principal';
+import serviceCanisterService, { 
+  Service, 
+  ServicePackage, 
+  ProviderAvailability, 
+  DayOfWeek,
+  AvailableSlot
+} from '../../services/serviceCanisterService';
 
 // Helper functions
 const dayIndexToName = (dayIndex: number): string => {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   return days[dayIndex] || '';
+};
+
+// TO be use later
+// Map DayOfWeek enum to day index (for Date.getDay())
+const dayOfWeekToIndex = (day: DayOfWeek): number => {
+  const mapping: Record<DayOfWeek, number> = {
+    'Sunday': 0,
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6
+  };
+  return mapping[day];
 };
 
 interface ParsedTimeSlot {
@@ -28,10 +50,15 @@ const parseTimeSlotString = (slotStr: string): ParsedTimeSlot | null => {
 
 interface SelectablePackage {
   id: string;
-  name: string;
+  title: string;
   description: string;
   price: number;
   checked: boolean;
+}
+
+// Extended service interface that includes packages
+interface ExtendedService extends Service {
+  packages?: ServicePackage[];
 }
 
 interface ClientBookingPageComponentProps {
@@ -41,9 +68,10 @@ interface ClientBookingPageComponentProps {
 const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({ serviceSlug }) => {
   const router = useRouter();
 
-  // Service data (placeholder - replace with actual service fetching)
-  const [service, setService] = useState<Service | null>(null);
+  // Service data
+  const [service, setService] = useState<ExtendedService | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [packages, setPackages] = useState<SelectablePackage[]>([]);
@@ -52,6 +80,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isSameDayPossible, setIsSameDayPossible] = useState(true);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
 
   // Location state
   const [houseNumber, setHouseNumber] = useState('');
@@ -64,96 +93,53 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [showManualAddress, setShowManualAddress] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Load service data (placeholder)
+  // Load service data from canister
   useEffect(() => {
     const loadService = async () => {
+      if (!serviceSlug) return;
+      
       setLoading(true);
+      setError(null);
+      
       try {
-        // This would be replaced with actual service fetching
-        const mockService: Service = {
-          id: serviceSlug,
-          slug: serviceSlug,
-          name: "Sample Service",
-          title: "Professional Sample Service",
-          description: "This is a sample service description",
-          heroImage: "/placeholder-service.jpg",
-          category: {
-            id: "1",
-            name: "Sample Category",
-            description: "Sample category description",
-            icon: "🔧",
-            slug: "sample-category",
-            imageUrl: "/placeholder-category.jpg",
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          price: {
-            amount: 500,
-            currency: "PHP",
-            unit: "per service",
-            isNegotiable: true
-          },
-          packages: [
-            {
-              id: "1",
-              name: "Basic Package",
-              description: "Basic service package",
-              price: 500,
-              currency: "PHP",
-              features: ["Basic consultation", "Standard service"],
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            },
-            {
-              id: "2",
-              name: "Premium Package",
-              description: "Premium service package",
-              price: 800,
-              currency: "PHP",
-              features: ["Premium consultation", "Extended service", "Priority support"],
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
-          ],
-          location: {
-            address: "Quezon City, Metro Manila",
-            coordinates: { latitude: 14.6760, longitude: 121.0437 },
-            serviceRadius: 10,
-            serviceRadiusUnit: "km"
-          },
-          availability: {
-            schedule: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            timeSlots: ["09:00-17:00"],
-            isAvailableNow: true
-          },
-          rating: {
-            average: 4.5,
-            count: 10
-          },
-          media: [],
-          requirements: ["Valid ID", "Downpayment"],
-          isVerified: true,
-          providerId: "mock-provider",
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+        // Get service details
+        const serviceData = await serviceCanisterService.getService(serviceSlug);
+        if (!serviceData) {
+          setError('Service not found');
+          return;
+        }
+
+        // Get service packages
+        const servicePackages = await serviceCanisterService.getServicePackages(serviceSlug);
+
+        console.log('Service Data:', serviceData); // Debug log
+
+        // Create extended service object
+        const extendedService: ExtendedService = {
+          ...serviceData,
+          packages: servicePackages,
         };
 
-        setService(mockService);
-        setPackages(mockService.packages?.map(pkg => ({ ...pkg, checked: false })) || []);
+        setService(extendedService);
+        
+        // Set packages for selection
+        setPackages(servicePackages.map(pkg => ({ 
+          id: pkg.id, 
+          title: pkg.title, 
+          description: pkg.description, 
+          price: pkg.price, 
+          checked: false 
+        })));
+
       } catch (error) {
         console.error('Error loading service:', error);
+        setError('Failed to load service data');
       } finally {
         setLoading(false);
       }
     };
 
-    if (serviceSlug) {
-      loadService();
-    }
+    loadService();
   }, [serviceSlug]);
 
   // Calculate same-day availability
@@ -161,28 +147,37 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     if (!service) return;
     
     const calculateSameDay = () => {
-      if (!service.availability.isAvailableNow) return false;
+      // Check if service has instant booking enabled
+      if (!service.instantBookingEnabled) return false;
+      
+      // Check if weeklySchedule exists and has data
+      if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
+        return false;
+      }
       
       const today = new Date();
-      const currentDayName = dayIndexToName(today.getDay());
-      const isTodayServiceDay = service.availability.schedule
-        .map(s => s.toLowerCase())
-        .includes(currentDayName.toLowerCase());
+      const currentDayIndex = today.getDay();
+      const currentDayName = dayIndexToName(currentDayIndex);
       
-      if (!isTodayServiceDay) return false;
+      // Find today's availability in weekly schedule
+      const todayAvailability = service.weeklySchedule.find(
+        (scheduleItem) => scheduleItem.day === currentDayName as DayOfWeek
+      );
+      
+      if (!todayAvailability?.availability?.isAvailable) return false;
 
       const currentHour = today.getHours();
       const currentMinute = today.getMinutes();
+      const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
       
-      for (const slotStr of service.availability.timeSlots) {
-        const parsedSlot = parseTimeSlotString(slotStr);
-        if (parsedSlot) {
-          if ((currentHour > parsedSlot.start.h || 
-               (currentHour === parsedSlot.start.h && currentMinute >= parsedSlot.start.m)) &&
-              (currentHour < parsedSlot.end.h || 
-               (currentHour === parsedSlot.end.h && currentMinute < parsedSlot.end.m))) {
-            return true;
-          }
+      // Check if current time falls within any available slot
+      if (!todayAvailability.availability.slots || todayAvailability.availability.slots.length === 0) {
+        return false;
+      }
+      
+      for (const slot of todayAvailability.availability.slots) {
+        if (currentTimeStr >= slot.startTime && currentTimeStr < slot.endTime) {
+          return true;
         }
       }
       return false;
@@ -195,6 +190,29 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       setBookingOption('scheduled');
     }
   }, [service, bookingOption]);
+
+  // Load available slots when date is selected
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      if (!service || !selectedDate) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      try {
+        const slots = await serviceCanisterService.getAvailableTimeSlots(
+          service.providerId.toString(),
+          selectedDate
+        );
+        setAvailableSlots(slots);
+      } catch (error) {
+        console.error('Error loading available slots:', error);
+        setAvailableSlots([]);
+      }
+    };
+
+    loadAvailableSlots();
+  }, [service, selectedDate]);
 
   // Event handlers
   const handlePackageChange = (packageId: string) => {
@@ -293,52 +311,35 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
     // Validate location
     let finalAddress = "Address not specified.";
-    let addressValid = false;
-
-    if (showManualAddress && !useGpsLocation) {
-      const addressParts = [houseNumber, street, barangay, municipalityCity, province];
-      const missingFields = addressParts.filter(part => !part.trim());
-      
-      if (missingFields.length > 0) {
-        setFormError("Please fill in all address fields.");
-        return;
-      }
-      
+    if (useGpsLocation) {
+      finalAddress = currentLocationStatus;
+    } else if (houseNumber || street || barangay || municipalityCity || province) {
+      const addressParts = [houseNumber, street, barangay, municipalityCity, province].filter(Boolean);
       finalAddress = addressParts.join(', ');
-      addressValid = true;
-    } else if (useGpsLocation && currentLocationStatus.startsWith('📍')) {
-      finalAddress = currentLocationStatus.replace('📍 ', '').replace(' (Using this)', '');
-      addressValid = true;
-    }
-
-    if (!addressValid) {
-      setFormError("Please provide a service location using GPS or manual address entry.");
+    } else {
+      setFormError("Please provide your location (GPS or manual address).");
       return;
     }
 
-    // Prepare booking details
-    const bookingDetails = {
-      serviceId: service?.id,
-      serviceSlug: service?.slug,
-      serviceName: service?.title,
-      providerName: "Service Provider", // Placeholder since Service type only has providerId
-      selectedPackages: packages.filter(p => p.checked).map(p => ({ id: p.id, name: p.name })),
-      concerns: concerns.trim() || "No specific concerns.",
+    // Prepare booking data
+    const selectedPackageIds = packages.filter(pkg => pkg.checked).map(pkg => pkg.id);
+    const totalPrice = packages.filter(pkg => pkg.checked).reduce((sum, pkg) => sum + pkg.price, 0);
+
+    const bookingData = {
+      serviceId: service!.id,
+      serviceName: service!.title,
+      providerId: service!.providerId.toString(),
+      packages: packages.filter(pkg => pkg.checked),
+      totalPrice,
       bookingType: bookingOption,
-      date: bookingOption === 'scheduled' && selectedDate 
-        ? selectedDate.toISOString().split('T')[0] 
-        : (bookingOption === 'sameday' ? 'Same day' : "N/A"),
-      time: bookingOption === 'scheduled' && selectedTime 
-        ? selectedTime 
-        : (bookingOption === 'sameday' ? 'ASAP (within operating hours)' : "N/A"),
+      scheduledDate: bookingOption === 'scheduled' ? selectedDate : null,
+      scheduledTime: bookingOption === 'scheduled' ? selectedTime : null,
       location: finalAddress,
+      concerns: concerns.trim() || 'No specific concerns mentioned.',
     };
 
-    // Navigate to confirmation page
-    router.push({
-      pathname: '/client/booking/confirmation',
-      query: { details: JSON.stringify(bookingDetails) },
-    });
+    console.log('Booking Data:', bookingData);
+    alert(`Booking request prepared!\n\nService: ${bookingData.serviceName}\nPackages: ${bookingData.packages.map(p => p.title).join(', ')}\nTotal: ₱${bookingData.totalPrice}\nType: ${bookingData.bookingType}\nLocation: ${bookingData.location}`);
   };
 
   if (loading) {
@@ -347,6 +348,22 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading service details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+          <button 
+            onClick={() => router.back()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Go Back
+          </button>
         </div>
       </div>
     );
@@ -387,7 +404,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
               className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{pkg.name}</div>
+              <div className="font-medium text-gray-900">{pkg.title}</div>
               <div className="text-sm text-gray-600">{pkg.description}</div>
               <div className="text-sm font-medium text-green-600">₱{pkg.price}</div>
             </div>
@@ -410,9 +427,19 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       <div className="border-b border-gray-200 p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Schedule *</h3>
         
-        {service.availability.timeSlots.length > 0 && (
+        {service.weeklySchedule && service.weeklySchedule.length > 0 && (
           <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
-            Available: {service.availability.schedule.join(', ')} | {service.availability.timeSlots.join(', ')}
+            Available: {service.weeklySchedule
+              .filter(s => s.availability.isAvailable)
+              .map(s => s.day)
+              .join(', ')} | 
+            {service.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
+          </div>
+        )}
+
+        {(!service.weeklySchedule || service.weeklySchedule.length === 0) && (
+          <div className="mb-4 p-2 bg-yellow-50 rounded text-sm text-yellow-700 text-center">
+            No availability schedule set for this provider.
           </div>
         )}
 
@@ -427,7 +454,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             disabled={!isSameDayPossible}
           >
             <div className="font-medium">Same Day</div>
-            <div className="text-xs opacity-75">Arrive within 20-45 minutes</div>
+            <div className="text-xs opacity-75">Arrive within booking notice time</div>
           </button>
           <button
             className={`flex-1 p-3 border rounded-lg text-center ${
@@ -453,26 +480,33 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 dateFormat="MMMM d, yyyy"
                 minDate={new Date()}
                 filterDate={(date) => {
+                  if (!service.weeklySchedule) return false;
                   const dayName = dayIndexToName(date.getDay());
-                  return service.availability.schedule
-                    .map(s => s.toLowerCase())
-                    .includes(dayName.toLowerCase());
+                  return service.weeklySchedule.some(scheduleItem => 
+                    scheduleItem.day === dayName as DayOfWeek && scheduleItem.availability.isAvailable
+                  );
                 }}
               />
             </div>
             
-            {selectedDate && (
+            {selectedDate && availableSlots.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Time {service.availability.timeSlots.length > 0 && 
-                    `(${service.availability.timeSlots[0]})`}:
-                </label>
-                <input
-                  type="time"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Time:</label>
+                <select
                   className="w-full p-3 border border-gray-300 rounded-lg"
                   value={selectedTime}
                   onChange={(e) => handleTimeChange(e.target.value)}
-                />
+                >
+                  <option value="">Choose a time</option>
+                  {availableSlots
+                    .filter(slot => slot.isAvailable)
+                    .map((slot, index) => (
+                      <option key={index} value={slot.timeSlot.startTime}>
+                        {slot.timeSlot.startTime} - {slot.timeSlot.endTime}
+                      </option>
+                    ))
+                  }
+                </select>
               </div>
             )}
           </div>

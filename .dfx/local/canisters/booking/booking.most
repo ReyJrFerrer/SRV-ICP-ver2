@@ -23,6 +23,7 @@ type Booking__842560951 =
     requestedDate : Time__593356169;
     scheduledDate : ?Time__593356169;
     serviceId : Text;
+    servicePackageId : ?Text;
     status : BookingStatus__502820684;
     updatedAt : Time__593356169
   };

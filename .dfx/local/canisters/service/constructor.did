@@ -18,6 +18,16 @@ type ServiceStatus =
    Suspended;
    Unavailable;
  };
+type ServicePackage = 
+ record {
+   createdAt: Time;
+   description: text;
+   id: text;
+   price: nat;
+   serviceId: text;
+   title: text;
+   updatedAt: Time;
+ };
 type ServiceCategory = 
  record {
    description: text;
@@ -49,30 +59,40 @@ type Service =
                              DayAvailability;
                            };
  };
-type Result_5 = 
+type Result_7 = 
  variant {
    err: text;
    ok: ServiceCategory;
  };
-type Result_4 = 
+type Result_6 = 
  variant {
    err: text;
    ok: vec AvailableSlot;
  };
-type Result_3 = 
+type Result_5 = 
+ variant {
+   err: text;
+   ok: vec ServicePackage;
+ };
+type Result_4 = 
  variant {
    err: text;
    ok: bool;
  };
-type Result_2 = 
+type Result_3 = 
  variant {
    err: text;
    ok: text;
  };
-type Result_1 = 
+type Result_2 = 
  variant {
    err: text;
    ok: ProviderAvailability;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: ServicePackage;
  };
 type Result = 
  variant {
@@ -128,9 +148,9 @@ type AvailableSlot =
  };
 service : {
   addCategory: (name: text, description: text, parentId: opt text, slug:
-   text, imageUrl: text) -> (Result_5);
+   text, imageUrl: text) -> (Result_7);
   addVacationDates: (startDate: Time, endDate: Time, reason: opt text) ->
-   (Result_1);
+   (Result_2);
   createService: (title: text, description: text, categoryId: text, price:
    nat, location: Location, weeklySchedule:
    opt vec record {
@@ -138,29 +158,36 @@ service : {
              DayAvailability;
            }, instantBookingEnabled: opt bool, bookingNoticeHours: opt nat,
    maxBookingsPerDay: opt nat) -> (Result);
+  createServicePackage: (serviceId: text, title: text, description: text,
+   price: nat) -> (Result_1);
+  deleteServicePackage: (packageId: text) -> (Result_3);
   getAllCategories: () -> (vec ServiceCategory) query;
   getAllServices: () -> (vec Service) query;
-  getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_4);
-  getProviderAvailability: (providerId: principal) -> (Result_1) query;
+  getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_6);
+  getPackage: (packageId: text) -> (Result_1) query;
+  getProviderAvailability: (providerId: principal) -> (Result_2) query;
   getService: (serviceId: text) -> (Result) query;
+  getServicePackages: (serviceId: text) -> (Result_5) query;
   getServicesByCategory: (categoryId: text) -> (vec Service) query;
   getServicesByProvider: (providerId: principal) -> (vec Service) query;
   isProviderAvailable: (providerId: principal, requestedDateTime: Time) ->
-   (Result_3);
-  removeVacationDates: (vacationId: text) -> (Result_1);
+   (Result_4);
+  removeVacationDates: (vacationId: text) -> (Result_2);
   searchServicesByLocation: (userLocation: Location, maxDistance: float64,
    categoryId: opt text) -> (vec Service) query;
   searchServicesWithReputationFilter: (userLocation: Location, maxDistance:
    float64, categoryId: opt text, minTrustScore: opt float64) ->
    (vec Service);
   setCanisterReferences: (auth: opt principal, booking: opt principal,
-   review: opt principal, reputation: opt principal) -> (Result_2);
+   review: opt principal, reputation: opt principal) -> (Result_3);
   setProviderAvailability: (weeklySchedule:
    vec record {
          DayOfWeek;
          DayAvailability;
        }, instantBookingEnabled: bool, bookingNoticeHours: nat,
-   maxBookingsPerDay: nat) -> (Result_1);
+   maxBookingsPerDay: nat) -> (Result_2);
+  updateServicePackage: (packageId: text, title: opt text, description:
+   opt text, price: opt nat) -> (Result_1);
   updateServiceRating: (serviceId: text, newRating: float64, newReviewCount:
    nat) -> (Result);
   updateServiceStatus: (serviceId: text, status: ServiceStatus) -> (Result);

@@ -152,6 +152,10 @@ actor ServiceCanister {
             servicePackages.put(id, package);
         };
     };
+    // Initialize static data if categories or services are empty
+    if (categories.size() < 1 or services.size() < 1) {
+        initializeStaticData();
+    };
 
     // Initialization
     system func preupgrade() {

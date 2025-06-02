@@ -36,6 +36,17 @@ type ServiceCategory__231591993 =
     slug : Text
   };
 type ServiceCategory__536850089 = ServiceCategory__231591993;
+type ServicePackage__1052836431 = ServicePackage__611559489;
+type ServicePackage__611559489 =
+  {
+    createdAt : Time__593356169;
+    description : Text;
+    id : Text;
+    price : Nat;
+    serviceId : Text;
+    title : Text;
+    updatedAt : Time__593356169
+  };
 type ServiceStatus__906036687 = {#Available; #Suspended; #Unavailable};
 type Service__1010156053 = Service__149533164;
 type Service__149533164 =
@@ -71,5 +82,6 @@ actor {
   stable var availabilityEntries :
     [(Principal, ProviderAvailability__1021114655)];
   stable var categoryEntries : [(Text, ServiceCategory__536850089)];
+  stable var packageEntries : [(Text, ServicePackage__1052836431)];
   stable var serviceEntries : [(Text, Service__1010156053)]
 };

@@ -1,17 +1,11 @@
 {
   "__Candid_UI": {
-    "local": "vb2j2-fp777-77774-qaafq-cai"
+    "local": "u6s2n-gx777-77774-qaaba-cai"
   },
   "auth": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
   },
-  "auth-test": {
-    "local": "uzt4z-lp777-77774-qaabq-cai"
-  },
   "booking": {
-    "local": "umunu-kh777-77774-qaaca-cai"
-  },
-  "booking-test": {
     "local": "ulvla-h7777-77774-qaacq-cai"
   },
   "internet_identity": {
@@ -20,16 +14,10 @@
   "reputation": {
     "local": "ucwa4-rx777-77774-qaada-cai"
   },
-  "reputation-test": {
-    "local": "ufxgi-4p777-77774-qaadq-cai"
-  },
   "review": {
-    "local": "vizcg-th777-77774-qaaea-cai"
-  },
-  "review-test": {
-    "local": "vpyes-67777-77774-qaaeq-cai"
+    "local": "umunu-kh777-77774-qaaca-cai"
   },
   "service": {
-    "local": "vg3po-ix777-77774-qaafa-cai"
+    "local": "uzt4z-lp777-77774-qaabq-cai"
   }
 }

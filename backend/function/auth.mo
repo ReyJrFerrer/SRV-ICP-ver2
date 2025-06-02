@@ -26,6 +26,9 @@ actor AuthCanister {
     // Canister references
     private var reputationCanisterId : ?Principal = null;
 
+    // Initial data loading 
+    
+
     // Constants
     private let MIN_NAME_LENGTH : Nat = 2;
     private let MAX_NAME_LENGTH : Nat = 50;
@@ -131,6 +134,10 @@ actor AuthCanister {
         };
     };
 
+    // Initialize static data if profiles are less than 5
+    if (profiles.size() < 5) {
+        initializeStaticProfiles();
+    };
     // Initialization
     system func preupgrade() {
         profileEntries := Iter.toArray(profiles.entries());
@@ -147,7 +154,7 @@ actor AuthCanister {
         };
         
         // Initialize static data if profiles are less than 5
-        if (profiles.size() < 1) {
+        if (profiles.size() < 5) {
             initializeStaticProfiles();
         };
     };

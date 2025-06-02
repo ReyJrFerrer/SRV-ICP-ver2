@@ -58,6 +58,8 @@ actor ReviewCanister {
         };
     };
 
+    initializeStaticReviews();
+
     // Pre-upgrade hook
     system func preupgrade() {
         reviewEntries := Iter.toArray(reviews.entries());

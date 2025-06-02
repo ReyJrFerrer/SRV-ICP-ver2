@@ -1,5 +1,6 @@
 import Principal "mo:base/Principal";
 import Types "../types/shared";
+import Time "mo:base/Time";
 
 module {
     public type Profile = Types.Profile;
@@ -12,6 +13,7 @@ module {
     public type DayOfWeek = Types.DayOfWeek;
     public type DayAvailability = Types.DayAvailability;
     public type TimeSlot = Types.TimeSlot;
+    public type ServicePackage = Types.ServicePackage;
 
     // Static Categories
     public let STATIC_CATEGORIES : [(Text, ServiceCategory)] = [
@@ -394,6 +396,156 @@ module {
         ];
     };
 
+    // Static Service Packages
+    public func getStaticServicePackages() : [(Text, ServicePackage)] {
+        return [
+            // Professional House Cleaning (svc-001) packages
+            ("pkg-001", {
+                id = "pkg-001";
+                serviceId = "svc-001";
+                title = "Basic Cleaning Package";
+                description = "Standard cleaning service for homes up to 1,500 sq ft. Includes cleaning of all rooms, dusting, vacuuming, and mopping.";
+                price = 2000; // 20.00 units
+                createdAt = 1640995200000000000; // 2022-01-01
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-002", {
+                id = "pkg-002";
+                serviceId = "svc-001";
+                title = "Premium Cleaning Package";
+                description = "Deep cleaning service including baseboards, inside appliances, window cleaning, and detailed bathroom cleaning. Best for monthly maintenance.";
+                price = 3500; // 35.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-003", {
+                id = "pkg-003";
+                serviceId = "svc-001";
+                title = "Move-In/Move-Out Package";
+                description = "Comprehensive cleaning for moving situations. Includes everything in Premium package plus inside cabinet cleaning, wall washing, and appliance detailing.";
+                price = 4500; // 45.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            
+            // Emergency Plumbing Services (svc-002) packages
+            ("pkg-004", {
+                id = "pkg-004";
+                serviceId = "svc-002";
+                title = "Emergency Repair Package";
+                description = "Urgent plumbing repairs for leaks, clogs, and water damage. Available 24/7 with 1-hour response time.";
+                price = 4000; // 40.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-005", {
+                id = "pkg-005";
+                serviceId = "svc-002";
+                title = "Fixture Installation Package";
+                description = "Professional installation of sinks, toilets, faucets, and other bathroom/kitchen fixtures. Includes removal of old fixtures and all necessary parts.";
+                price = 3000; // 30.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-006", {
+                id = "pkg-006";
+                serviceId = "svc-002";
+                title = "Preventative Maintenance Package";
+                description = "Complete plumbing system inspection and maintenance. Includes water pressure testing, pipe inspection, and minor repairs to prevent future issues.";
+                price = 2500; // 25.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            
+            // Appliance Repair (svc-003) packages
+            ("pkg-007", {
+                id = "pkg-007";
+                serviceId = "svc-003";
+                title = "Appliance Diagnosis Package";
+                description = "Professional diagnosis of appliance issues with detailed repair recommendations. Fee waived if you proceed with repairs.";
+                price = 1500; // 15.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-008", {
+                id = "pkg-008";
+                serviceId = "svc-003";
+                title = "Standard Repair Package";
+                description = "Repair service for common appliance issues including part replacement for refrigerators, washers, dryers, and dishwashers.";
+                price = 3000; // 30.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-009", {
+                id = "pkg-009";
+                serviceId = "svc-003";
+                title = "Major Appliance Overhaul";
+                description = "Complete reconditioning of major appliances with multiple issues. Includes comprehensive parts replacement and system upgrades.";
+                price = 4500; // 45.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            
+            // Hair Styling (svc-004) packages
+            ("pkg-010", {
+                id = "pkg-010";
+                serviceId = "svc-004";
+                title = "Basic Cut Package";
+                description = "Professional haircut and styling with consultation. Includes shampoo, conditioning, and blow dry.";
+                price = 1200; // 12.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-011", {
+                id = "pkg-011";
+                serviceId = "svc-004";
+                title = "Cut & Color Package";
+                description = "Complete hair transformation with professional cut and color. Includes consultation, coloring, treatment, cut, and styling.";
+                price = 2500; // 25.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            ("pkg-012", {
+                id = "pkg-012";
+                serviceId = "svc-004";
+                title = "Special Event Styling";
+                description = "Elegant hair styling for weddings, formal events, and photoshoots. Includes consultation, trial run, and day-of styling.";
+                price = 3500; // 35.00 units
+                createdAt = 1640995200000000000;
+                updatedAt = 1640995200000000000;
+            }),
+            
+            // Deep Cleaning (svc-005) packages
+            ("pkg-013", {
+                id = "pkg-013";
+                serviceId = "svc-005";
+                title = "Standard Deep Clean";
+                description = "Thorough deep cleaning of all areas including often-missed spots like baseboards, ceiling fans, and under furniture. Perfect for seasonal cleaning.";
+                price = 4000; // 40.00 units
+                createdAt = 1641081600000000000; // 2022-01-02
+                updatedAt = 1641081600000000000;
+            }),
+            ("pkg-014", {
+                id = "pkg-014";
+                serviceId = "svc-005";
+                title = "Premium Organization Package";
+                description = "Deep cleaning with professional organization of closets, pantries, and storage areas. Includes custom organization recommendations.";
+                price = 5500; // 55.00 units
+                createdAt = 1641081600000000000;
+                updatedAt = 1641081600000000000;
+            }),
+            ("pkg-015", {
+                id = "pkg-015";
+                serviceId = "svc-005";
+                title = "Commercial Deep Clean";
+                description = "Comprehensive deep cleaning service for offices and commercial spaces. Includes all surfaces, restrooms, break rooms, and common areas.";
+                price = 6500; // 65.00 units
+                createdAt = 1641081600000000000;
+                updatedAt = 1641081600000000000;
+            })
+        ];
+    };
+
     // Static Bookings
     public func getStaticBookings() : [(Text, Booking)] {
         return [ // return empty 
@@ -503,4 +655,5 @@ module {
     public let getSTATIC_SERVICES = getStaticServices;
     public let getSTATIC_BOOKINGS = getStaticBookings;
     public let getSTATIC_REVIEWS = getStaticReviews;
+    public let getSTATIC_PACKAGES = getStaticServicePackages;
 }

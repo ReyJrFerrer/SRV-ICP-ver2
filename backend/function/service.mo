@@ -146,6 +146,11 @@ actor ServiceCanister {
         for ((id, service) in StaticData.getStaticServices().vals()) {
             services.put(id, service);
         };
+        
+        // Initialize service packages from shared static data
+        for ((id, package) in StaticData.getSTATIC_PACKAGES().vals()) {
+            servicePackages.put(id, package);
+        };
     };
 
     // Initialization

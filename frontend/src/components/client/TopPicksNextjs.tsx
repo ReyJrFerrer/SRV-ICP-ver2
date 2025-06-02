@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import ServiceListItem from './ServiceListItemNextjs';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import { Service } from '@app/services/serviceCanisterService';
 import { EnrichedService, getCategoryImage } from '@app/utils/serviceHelpers';
 
 interface TopPicksProps {
@@ -15,11 +14,11 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
   const adaptServiceForUI = (service: EnrichedService) => ({
     id: service.id,
     slug: service.id, // Using id as slug since slug is not in serviceCanister Service
-    name: service.title,
-    title: service.title,
-    heroImage: getCategoryImage(service.category.name), // Get image based on category
+    name: service.providerName, // Use provider name as the main name
+    title: service.title, // Service title as the secondary title
+    heroImage: getCategoryImage(service.category.name), // Temporary fallback image
     providerName: service.providerName,
-    providerAvatar: service.providerAvatar,
+    providerAvatar: service.providerAvatar || '/images/default-avatar.jpg', // Use provider avatar or default
     rating: {
       average: service.rating || 0,
       count: service.reviewCount || 0,

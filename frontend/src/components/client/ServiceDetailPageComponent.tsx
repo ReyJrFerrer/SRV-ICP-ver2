@@ -1,14 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { Service } from '../../../assets/types/service/service'; // TODO: To apply backend func
 
 interface ServiceDetailPageComponentProps {
-  service: Service | null;
+  service: any; // Using any temporarily to handle different service formats
 }
 
 // Service Hero Image Component
-const ServiceHeroImage: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
   <div className="w-full h-48 md:h-64 lg:h-96 overflow-hidden relative">
     <Image 
       src={service.heroImage || '/images/default-service.png'} 
@@ -30,7 +29,7 @@ const ServiceHeroImage: React.FC<{ service: Service }> = ({ service }) => (
 );
 
 // Service Info Section Component
-const ServiceInfoSection: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceInfoSection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     {/* Title only shown on mobile/tablet, hidden on desktop due to hero overlay */}
     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3 lg:hidden">{service.title || service.name}</h2>
@@ -68,7 +67,7 @@ const ServiceInfoSection: React.FC<{ service: Service }> = ({ service }) => (
 );
 
 // Service Availability Section Component
-const ServiceAvailabilitySection: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">📅</span>
@@ -79,7 +78,7 @@ const ServiceAvailabilitySection: React.FC<{ service: Service }> = ({ service })
       <div>
         <span className="font-medium text-gray-800 block mb-2">Schedule</span>
         <div className="flex flex-wrap gap-1">
-          {service.availability.schedule.map((day, index) => (
+          {service.availability.schedule.map((day: string, index: number) => (
             <span key={index} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
               {day}
             </span>
@@ -90,7 +89,7 @@ const ServiceAvailabilitySection: React.FC<{ service: Service }> = ({ service })
       <div>
         <span className="font-medium text-gray-800 block mb-2">Hours</span>
         <div className="flex flex-wrap gap-1">
-          {service.availability.timeSlots.map((slot, index) => (
+          {service.availability.timeSlots.map((slot: string, index: number) => (
             <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
               {slot}
             </span>
@@ -111,7 +110,7 @@ const ServiceAvailabilitySection: React.FC<{ service: Service }> = ({ service })
 );
 
 // Service Rating Section Component
-const ServiceRatingSection: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">⭐</span>
@@ -139,7 +138,7 @@ const ServiceRatingSection: React.FC<{ service: Service }> = ({ service }) => (
 );
 
 // Service Requirements Section Component
-const ServiceRequirementsSection: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceRequirementsSection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">📋</span>
@@ -147,7 +146,7 @@ const ServiceRequirementsSection: React.FC<{ service: Service }> = ({ service })
     </h3>
     {service.requirements && service.requirements.length > 0 ? (
       <ul className="space-y-2">
-        {service.requirements.map((req, index) => (
+        {service.requirements.map((req: string, index: number) => (
           <li key={index} className="flex items-start">
             <span className="text-green-500 mr-2 mt-0.5">•</span>
             <span className="text-sm md:text-base text-gray-600">{req}</span>
@@ -186,15 +185,12 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
           {isVerified ? '✅' : '⚠️'}
         </span>
         <div>
-          <span className={`font-medium text-sm lg:text-xs ${isVerified ? 'text-green-800' : 'text-yellow-800'}`}>
-            {isVerified ? "Verified Provider" : "Pending Verification"}
+          <span className={`font-medium ${isVerified ? 'text-green-700' : 'text-yellow-700'}`}>
+            {isVerified ? 'Verified Provider' : 'Verification Pending'}
           </span>
-          <p className={`text-xs lg:text-xs ${isVerified ? 'text-green-600' : 'text-yellow-600'} mt-1 lg:hidden`}>
-            {isVerified 
-              ? "This provider has been verified by our team" 
-              : "Verification process is ongoing"
-            }
-          </p>
+          <span className="block text-xs text-gray-500 mt-0.5">
+            {isVerified ? 'All requirements verified' : 'Background check in progress'}
+          </span>
         </div>
       </div>
       {isVerified && (
@@ -205,7 +201,7 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
 );
 
 // Service Images Section Component
-const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
+const ServiceImagesSection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">🖼️</span>
@@ -213,10 +209,10 @@ const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
     </h3>
     {service.media && service.media.length > 0 ? (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {service.media.map((mediaItem, index) => (
+        {service.media.map((mediaItem: {url: string, type: string}, index: number) => (
           <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
             <Image
-              src={mediaItem.url as string}
+              src={mediaItem.url}
               alt={`${service.title} gallery image ${index + 1}`}
               width={120}
               height={120}
@@ -236,7 +232,7 @@ const ServiceImagesSection: React.FC<{ service: Service }> = ({ service }) => (
 );
 
 // Placeholder Service Data
-const createPlaceholderService = (): Service => ({
+const createPlaceholderService = (): any => ({
   id: 'placeholder-service',
   providerId: 'placeholder-provider',
   name: 'Service Provider',
@@ -310,63 +306,65 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
       {/* Content Layout - Full width like home.tsx */}
       <div className="px-4 pt-4 pb-16 lg:px-8 lg:pt-8">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-          {/* Main Content */}
+          {/* Main Content - 2/3 width on desktop */}
           <div className="lg:col-span-2">
             <ServiceInfoSection service={displayService} />
-            <ServiceRatingSection service={displayService} />
             <ServiceAvailabilitySection service={displayService} />
+            <ServiceRatingSection service={displayService} />
             <ServiceRequirementsSection service={displayService} />
             <ServiceImagesSection service={displayService} />
           </div>
           
-          {/* Sidebar for desktop */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="sticky top-32 space-y-6">
-              {/* Service Provider Info Card */}
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Service Provider</h3>
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-semibold text-lg">
-                      {displayService.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{displayService.name}</p>
-                    <p className="text-sm text-gray-600">{displayService.category.name}</p>
+          {/* Sidebar - 1/3 width on desktop */}
+          <div className="hidden lg:block">
+            <div className="sticky top-24">
+              <div className="card mb-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Book This Service</h3>
+                <div className="mb-4">
+                  <p className="text-gray-600 text-sm mb-2">Provider</p>
+                  <div className="flex items-center">
+                    {displayService.providerAvatar ? (
+                      <Image
+                        src={displayService.providerAvatar}
+                        alt={displayService.providerName || 'Service Provider'}
+                        width={40}
+                        height={40}
+                        className="rounded-full mr-3"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3">
+                        <span className="text-xl">👤</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium text-gray-800 block">
+                        {displayService.providerName || 'Service Provider'}
+                      </span>
+                      <span className="text-xs text-gray-500">Member since {new Date(displayService.createdAt).getFullYear()}</span>
+                    </div>
                   </div>
                 </div>
-                <ServiceVerificationSection isVerified={displayService.isVerified} />
-              </div>
-
-              {/* Booking Action Card */}
-              <div className="card">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Book This Service</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Price</span>
-                    <span className="font-semibold text-lg text-green-600">
+                
+                <div className="border-t border-gray-100 pt-4 mb-4">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-600">Price:</span>
+                    <span className="font-semibold text-gray-800">
                       {displayService.price.currency === 'PHP' ? '₱' : displayService.price.currency}
-                      {displayService.price.amount.toFixed(2)}
-                      <span className="text-sm text-gray-500 ml-1">{displayService.price.unit}</span>
+                      {displayService.price.amount.toFixed(2)} {displayService.price.unit}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-600">Availability</span>
-                    <span className={`font-medium ${displayService.availability.isAvailableNow ? 'text-green-600' : 'text-red-600'}`}>
-                      {displayService.availability.isAvailableNow ? 'Available Now' : 'Currently Busy'}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={handleBookingRequest} 
-                    className="w-full btn-primary text-center"
+                  <button
+                    onClick={handleBookingRequest}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                   >
-                    Send Booking Request
+                    Book Now
                   </button>
-                  {displayService.price.isNegotiable && (
-                    <p className="text-xs text-gray-500 text-center">Price is negotiable</p>
-                  )}
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    You won't be charged yet
+                  </p>
                 </div>
+                
+                <ServiceVerificationSection isVerified={displayService.isVerified} />
               </div>
             </div>
           </div>
@@ -375,11 +373,18 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
       
       {/* Mobile booking button - Only visible on mobile */}
       <div className="lg:hidden fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-200 z-50">
-        <button 
-          onClick={handleBookingRequest} 
-          className="w-full btn-primary text-center"
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-gray-600">Price:</span>
+          <span className="font-semibold text-gray-800">
+            {displayService.price.currency === 'PHP' ? '₱' : displayService.price.currency}
+            {displayService.price.amount.toFixed(2)} {displayService.price.unit}
+          </span>
+        </div>
+        <button
+          onClick={handleBookingRequest}
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
         >
-          Send Booking Request
+          Book Now
         </button>
       </div>
     </div>

@@ -40,56 +40,49 @@ interface ServiceListItemProps {
 const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories = false }) => {
   return (
     <Link href={`/client/service/${service.slug}`}>
-      <div className={`service-card ${inCategories ? 'w-full' : 'w-80 md:w-96'} bg-white rounded-lg shadow-md overflow-hidden`}>
+      <div className={`service-card ${inCategories ? 'w-full' : 'w-80 md:w-96'} bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300`}>
+          {/* Provider info - displayed prominently */}  
         <div className="relative">
-          <div className="aspect-video w-full">
+          <div className="aspect-[4/3] w-full">
             <Image 
-              src={service.heroImage}
+              src={service.providerAvatar}
               alt={service.title || service.name}
               className="service-image object-cover"
-              width={400}
-              height={240}
+              width={500}
+              height={375}
               priority
             />
           </div>
           {service.category && (
-            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded">
+            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
               {service.category.name}
             </div>
           )}
         </div>
         
-        <div className="service-content p-4">
-          <div className="flex justify-between items-center mb-1">
-            <h3 className="text-lg font-bold text-gray-800">{service.name}</h3>
-            <div className="flex items-center text-gray-700">
-              <StarIcon className="h-4 w-4 text-yellow-500 mr-1" />
-              <span>{service.rating.average.toFixed(1)} ({service.rating.count})</span>
+        <div className="service-content p-5">
+                
+          {/* Service Name and Ratings */}
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-xl font-bold text-gray-900">{service.name}</h3>
+            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-md">
+              <StarIcon className="h-5 w-5 text-yellow-500 mr-1" />
+              <span className="font-medium">{service.rating.average.toFixed(1)}</span>
+              <span className="text-sm text-gray-500 ml-1">({service.rating.count})</span>
             </div>
           </div>
           
-          {/* Provider info */}
-          {service.providerName && (
-            <div className="flex items-center text-sm text-gray-600 mb-2">
-              {service.providerAvatar ? (
-                <Image 
-                  src={service.providerAvatar} 
-                  alt={service.providerName}
-                  width={20}
-                  height={20}
-                  className="rounded-full mr-1"
-                />
-              ) : (
-                <UserCircleIcon className="h-5 w-5 mr-1 text-gray-500" />
-              )}
-              <span>{service.providerName}</span>
+          {/* Service Title as smaller heading */}
+          {service.title && (
+            <div className="mb-3">
+              <h4 className="text-md text-gray-600">{service.title}</h4>
             </div>
           )}
           
           {/* Location */}
           {service.location && (service.location.city || service.location.address) && (
-            <div className="flex items-center text-sm text-gray-600 mb-2">
-              <MapPinIcon className="h-4 w-4 mr-1 text-gray-500" />
+            <div className="flex items-center text-sm text-gray-600 mb-3">
+              <MapPinIcon className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
               <span>
                 {service.location.city || service.location.address}
                 {service.location.state ? `, ${service.location.state}` : ''}
@@ -97,12 +90,13 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories
             </div>
           )}
           
-          <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
+          {/* Price and Service Radius */}
+          <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
             <p className="text-xl font-bold text-green-600">
               {service.price.display || `$${service.price.amount.toFixed(2)}/${service.price.unit}`}
             </p>
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPinIcon className="h-4 w-4 mr-1" />
+            <div className="flex items-center text-sm bg-gray-50 px-2 py-1 rounded-md">
+              <MapPinIcon className="h-4 w-4 mr-1 text-blue-500" />
               <span>{service.location.serviceRadius} {service.location.serviceRadiusUnit}</span>
             </div>
           </div>

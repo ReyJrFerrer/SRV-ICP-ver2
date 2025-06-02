@@ -8,6 +8,7 @@ import Nat "mo:base/Nat";
 import Option "mo:base/Option";
 import Int "mo:base/Int";
 import Debug "mo:base/Debug";
+import Float "mo:base/Float";
 
 import Types "../types/shared";
 import StaticData "../utils/staticData";
@@ -48,6 +49,8 @@ actor BookingCanister {
     
     private func isBookingEligibleForReview(booking : Booking) : Bool {
         return booking.status == #Completed and 
+               Option.isSome(booking.completedDate) and
+               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000); 
                Option.isSome(booking.completedDate) and
                (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
     };
@@ -100,6 +103,7 @@ actor BookingCanister {
             clientId = existingBooking.clientId;
             providerId = existingBooking.providerId;
             serviceId = existingBooking.serviceId;
+            servicePackageId = existingBooking.servicePackageId;
             status = newStatus;
             requestedDate = existingBooking.requestedDate;
             scheduledDate = existingBooking.scheduledDate;
@@ -216,7 +220,8 @@ actor BookingCanister {
         providerId : Principal,
         price : Nat,
         location : Location,
-        requestedDate : Time.Time
+        requestedDate : Time.Time,
+        servicePackageId : ?Text
     ) : async Result<Booking> {
         let caller = msg.caller;
         
@@ -237,12 +242,37 @@ actor BookingCanister {
             case (?serviceCanisterId) {
                 let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
                     getService : (Text) -> async Types.Result<Types.Service>;
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
                 };
                 
                 switch (await serviceCanister.getService(serviceId)) {
                     case (#ok(service)) {
                         if (service.providerId != providerId) {
                             return #err("Service does not belong to the specified provider");
+                        };
+                        
+                        // If a package is specified, validate it exists and belongs to this service
+                        switch (servicePackageId) {
+                            case (?packageId) {
+                                switch (await serviceCanister.getPackage(packageId)) {
+                                    case (#ok(package)) {
+                                        if (package.serviceId != serviceId) {
+                                            return #err("Package does not belong to the specified service");
+                                        };
+                                        
+                                        // If price doesn't match package price, use package price
+                                        if (price != package.price) {
+                                            // We'll override the price with the package price later
+                                        };
+                                    };
+                                    case (#err(msg)) {
+                                        return #err("Package not found: " # msg);
+                                    };
+                                };
+                            };
+                            case (null) {
+                                // No package specified, continue with regular service booking
+                            };
                         };
                     };
                     case (#err(msg)) {
@@ -273,16 +303,43 @@ actor BookingCanister {
         
         let bookingId = generateId();
         
+        // If a package is specified, get its price
+        var finalPrice = price;
+        
+        if (Option.isSome(servicePackageId)) {
+            switch (serviceCanisterId) {
+                case (?serviceCanisterId) {
+                    let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                        getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                    };
+                    
+                    switch (await serviceCanister.getPackage(Option.unwrap(servicePackageId))) {
+                        case (#ok(package)) {
+                            finalPrice := package.price;
+                        };
+                        case (#err(_)) {
+                            // We already validated the package exists earlier, so this shouldn't happen
+                            // But if it does, we'll use the provided price
+                        };
+                    };
+                };
+                case (null) {
+                    // We already validated the service canister exists earlier, so this shouldn't happen
+                };
+            };
+        };
+        
         let newBooking : Booking = {
             id = bookingId;
             clientId = caller;
             providerId = providerId;
             serviceId = serviceId;
+            servicePackageId = servicePackageId;
             status = #Requested;
             requestedDate = requestedDate;
             scheduledDate = null;
             completedDate = null;
-            price = price;
+            price = finalPrice;
             location = location;
             evidence = null;
             createdAt = Time.now();
@@ -349,6 +406,7 @@ actor BookingCanister {
                             clientId = updatedBooking.clientId;
                             providerId = updatedBooking.providerId;
                             serviceId = updatedBooking.serviceId;
+                            servicePackageId = updatedBooking.servicePackageId;
                             status = updatedBooking.status;
                             requestedDate = updatedBooking.requestedDate;
                             scheduledDate = ?scheduledDate;
@@ -517,6 +575,7 @@ actor BookingCanister {
                     clientId = existingBooking.clientId;
                     providerId = existingBooking.providerId;
                     serviceId = existingBooking.serviceId;
+                    servicePackageId = existingBooking.servicePackageId;
                     status = existingBooking.status;
                     requestedDate = existingBooking.requestedDate;
                     scheduledDate = existingBooking.scheduledDate;
@@ -552,6 +611,7 @@ actor BookingCanister {
                     clientId = existingBooking.clientId;
                     providerId = existingBooking.providerId;
                     serviceId = existingBooking.serviceId;
+                    servicePackageId = existingBooking.servicePackageId;
                     status = #Disputed;
                     requestedDate = existingBooking.requestedDate;
                     scheduledDate = existingBooking.scheduledDate;
@@ -786,7 +846,540 @@ actor BookingCanister {
         startOfDaySeconds * 1_000_000_000
     };
 
-    // TODO: Payment Integration
-    // Current implementation tracks price but defers actual payment processing
-    // to be implemented in future versions
+    // Get bookings by package
+    public query func getBookingsByPackage(servicePackageId : Text) : async [Booking] {
+        let packageBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                switch (booking.servicePackageId) {
+                    case (?id) id == servicePackageId;
+                    case (null) false;
+                }
+            }
+        );
+        
+        return packageBookings;
+    };
+
+    // ANALYTICS FUNCTIONS
+
+    // Get provider analytics (completed jobs, completion rate, total earnings)
+    public shared(msg) func getProviderAnalytics(
+        providerId : Principal,
+        startDate : ?Time.Time,
+        endDate : ?Time.Time
+    ) : async Result<Types.ProviderAnalytics> {
+        let caller = msg.caller;
+        
+        // Security check: only allow providers to view their own analytics
+        // or admin users (which could be implemented with role-based auth)
+        if (caller != providerId) {
+            return #err("Not authorized to view this provider's analytics");
+        };
+        
+        let now = Time.now();
+        let actualStartDate = switch (startDate) {
+            case (?date) date;
+            case (null) 0; // Beginning of time
+        };
+        
+        let actualEndDate = switch (endDate) {
+            case (?date) date;
+            case (null) now; // Current time
+        };
+        
+        // Get all bookings for this provider within the date range
+        let providerBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                let bookingDate = booking.createdAt;
+                return booking.providerId == providerId 
+                    and bookingDate >= actualStartDate 
+                    and bookingDate <= actualEndDate;
+            }
+        );
+        
+        // Count total bookings
+        let totalJobs = providerBookings.size();
+        
+        if (totalJobs == 0) {
+            return #ok({
+                providerId = providerId;
+                completedJobs = 0;
+                cancelledJobs = 0;
+                totalJobs = 0;
+                completionRate = 0.0;
+                totalEarnings = 0;
+                startDate = startDate;
+                endDate = endDate;
+                packageBreakdown = [];
+            });
+        };
+        
+        // Count completed bookings
+        let completedBookings = Array.filter<Booking>(
+            providerBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Completed;
+            }
+        );
+        
+        let completedJobs = completedBookings.size();
+        
+        // Count cancelled bookings
+        let cancelledBookings = Array.filter<Booking>(
+            providerBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Cancelled or booking.status == #Declined;
+            }
+        );
+        
+        let cancelledJobs = cancelledBookings.size();
+        
+        // Count accepted bookings (used for completion rate)
+        let acceptedBookings = Array.filter<Booking>(
+            providerBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Accepted or 
+                       booking.status == #InProgress or 
+                       booking.status == #Completed;
+            }
+        );
+        
+        let acceptedJobs = acceptedBookings.size();
+        
+        // Calculate completion rate
+        let completionRate = if (acceptedJobs == 0) {
+            0.0
+        } else {
+            Float.fromInt(completedJobs * 100) / Float.fromInt(acceptedJobs)
+        };
+        
+        // Calculate total earnings from completed bookings
+        var totalEarnings : Nat = 0;
+        for (booking in completedBookings.vals()) {
+            totalEarnings += booking.price;
+        };
+        
+        // Create a breakdown of package bookings
+        var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
+        
+        for (booking in completedBookings.vals()) {
+            switch (booking.servicePackageId) {
+                case (?packageId) {
+                    let currentCount = switch (packageCounts.get(packageId)) {
+                        case (?count) count;
+                        case (null) 0;
+                    };
+                    packageCounts.put(packageId, currentCount + 1);
+                };
+                case (null) {}; // Skip non-package bookings
+            };
+        };
+        
+        let packageBreakdown = Iter.toArray(packageCounts.entries());
+        
+        // Return the analytics data
+        return #ok({
+            providerId = providerId;
+            completedJobs = completedJobs;
+            cancelledJobs = cancelledJobs;
+            totalJobs = totalJobs;
+            completionRate = completionRate;
+            totalEarnings = totalEarnings;
+            startDate = startDate;
+            endDate = endDate;
+            packageBreakdown = packageBreakdown;
+        });
+    };
+    
+    // Get client analytics (spending, booking patterns)
+    public shared(msg) func getClientAnalytics(
+        clientId : Principal,
+        startDate : ?Time.Time,
+        endDate : ?Time.Time
+    ) : async Result<Types.ProviderAnalytics> {
+        let caller = msg.caller;
+        
+        // Security check: only allow clients to view their own analytics
+        if (caller != clientId) {
+            return #err("Not authorized to view this client's analytics");
+        };
+        
+        let now = Time.now();
+        let actualStartDate = switch (startDate) {
+            case (?date) date;
+            case (null) 0; // Beginning of time
+        };
+        
+        let actualEndDate = switch (endDate) {
+            case (?date) date;
+            case (null) now; // Current time
+        };
+        
+        // Get all bookings for this client within the date range
+        let clientBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                let bookingDate = booking.createdAt;
+                return booking.clientId == clientId 
+                    and bookingDate >= actualStartDate 
+                    and bookingDate <= actualEndDate;
+            }
+        );
+        
+        // Count total bookings
+        let totalJobs = clientBookings.size();
+        
+        if (totalJobs == 0) {
+            return #ok({
+                providerId = clientId; // Reusing the providerId field for client
+                completedJobs = 0;
+                cancelledJobs = 0;
+                totalJobs = 0;
+                completionRate = 0.0;
+                totalEarnings = 0; // For clients, this is total spending
+                startDate = startDate;
+                endDate = endDate;
+                packageBreakdown = [];
+            });
+        };
+        
+        // Count completed bookings
+        let completedBookings = Array.filter<Booking>(
+            clientBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Completed;
+            }
+        );
+        
+        let completedJobs = completedBookings.size();
+        
+        // Count cancelled bookings
+        let cancelledBookings = Array.filter<Booking>(
+            clientBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Cancelled;
+            }
+        );
+        
+        let cancelledJobs = cancelledBookings.size();
+        
+        // Calculate completion rate (percentage of bookings client completed)
+        let completionRate = if (totalJobs == 0) {
+            0.0
+        } else {
+            Float.fromInt(completedJobs * 100) / Float.fromInt(totalJobs)
+        };
+        
+        // Calculate total spending from all bookings
+        var totalSpending : Nat = 0;
+        for (booking in completedBookings.vals()) {
+            totalSpending += booking.price;
+        };
+        
+        // Create a breakdown of package bookings
+        var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
+        
+        for (booking in completedBookings.vals()) {
+            switch (booking.servicePackageId) {
+                case (?packageId) {
+                    let currentCount = switch (packageCounts.get(packageId)) {
+                        case (?count) count;
+                        case (null) 0;
+                    };
+                    packageCounts.put(packageId, currentCount + 1);
+                };
+                case (null) {}; // Skip non-package bookings
+            };
+        };
+        
+        let packageBreakdown = Iter.toArray(packageCounts.entries());
+        
+        // Return the analytics data
+        return #ok({
+            providerId = clientId; // Reusing the providerId field for client
+            completedJobs = completedJobs;
+            cancelledJobs = cancelledJobs;
+            totalJobs = totalJobs;
+            completionRate = completionRate;
+            totalEarnings = totalSpending; // For clients, this is total spending
+            startDate = startDate;
+            endDate = endDate;
+            packageBreakdown = packageBreakdown;
+        });
+    };
+    
+    // Get analytics for a specific service
+    public func getServiceAnalytics(
+        serviceId : Text,
+        startDate : ?Time.Time,
+        endDate : ?Time.Time
+    ) : async Result<Types.ProviderAnalytics> {
+        let now = Time.now();
+        let actualStartDate = switch (startDate) {
+            case (?date) date;
+            case (null) 0; // Beginning of time
+        };
+        
+        let actualEndDate = switch (endDate) {
+            case (?date) date;
+            case (null) now; // Current time
+        };
+        
+        // Verify service exists
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getService : (Text) -> async Types.Result<Types.Service>;
+                };
+                
+                switch (await serviceCanister.getService(serviceId)) {
+                    case (#err(msg)) {
+                        return #err("Service not found: " # msg);
+                    };
+                    case (#ok(_)) {
+                        // Service exists, continue with analytics
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+        
+        // Get all bookings for this service within the date range
+        let serviceBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                let bookingDate = booking.createdAt;
+                return booking.serviceId == serviceId 
+                    and bookingDate >= actualStartDate 
+                    and bookingDate <= actualEndDate;
+            }
+        );
+        
+        // Count total bookings
+        let totalJobs = serviceBookings.size();
+        
+        if (totalJobs == 0) {
+            return #ok({
+                providerId = Principal.fromText("aaaaa-aa"); // Using IC management canister as placeholder
+                completedJobs = 0;
+                cancelledJobs = 0;
+                totalJobs = 0;
+                completionRate = 0.0;
+                totalEarnings = 0;
+                startDate = startDate;
+                endDate = endDate;
+                packageBreakdown = [];
+            });
+        };
+        
+        // Count completed bookings
+        let completedBookings = Array.filter<Booking>(
+            serviceBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Completed;
+            }
+        );
+        
+        let completedJobs = completedBookings.size();
+        
+        // Count cancelled bookings
+        let cancelledBookings = Array.filter<Booking>(
+            serviceBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Cancelled or booking.status == #Declined;
+            }
+        );
+        
+        let cancelledJobs = cancelledBookings.size();
+        
+        // Count accepted bookings (used for completion rate)
+        let acceptedBookings = Array.filter<Booking>(
+            serviceBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Accepted or 
+                       booking.status == #InProgress or 
+                       booking.status == #Completed;
+            }
+        );
+        
+        let acceptedJobs = acceptedBookings.size();
+        
+        // Calculate completion rate
+        let completionRate = if (acceptedJobs == 0) {
+            0.0
+        } else {
+            Float.fromInt(completedJobs * 100) / Float.fromInt(acceptedJobs)
+        };
+        
+        // Calculate total revenue from completed bookings
+        var totalEarnings : Nat = 0;
+        for (booking in completedBookings.vals()) {
+            totalEarnings += booking.price;
+        };
+        
+        // Create a breakdown of package bookings
+        var packageCounts = HashMap.HashMap<Text, Nat>(10, Text.equal, Text.hash);
+        
+        for (booking in completedBookings.vals()) {
+            switch (booking.servicePackageId) {
+                case (?packageId) {
+                    let currentCount = switch (packageCounts.get(packageId)) {
+                        case (?count) count;
+                        case (null) 0;
+                    };
+                    packageCounts.put(packageId, currentCount + 1);
+                };
+                case (null) {}; // Skip non-package bookings
+            };
+        };
+        
+        let packageBreakdown = Iter.toArray(packageCounts.entries());
+        
+        // Get the service provider (for the analytics result)
+        var providerId = Principal.fromText("aaaaa-aa"); // Default to IC management canister
+        if (serviceBookings.size() > 0) {
+            providerId := serviceBookings[0].providerId;
+        };
+        
+        // Return the analytics data
+        return #ok({
+            providerId = providerId;
+            completedJobs = completedJobs;
+            cancelledJobs = cancelledJobs;
+            totalJobs = totalJobs;
+            completionRate = completionRate;
+            totalEarnings = totalEarnings;
+            startDate = startDate;
+            endDate = endDate;
+            packageBreakdown = packageBreakdown;
+        });
+    };
+    
+    // Get analytics for a specific package
+    public func getPackageAnalytics(
+        packageId : Text,
+        startDate : ?Time.Time,
+        endDate : ?Time.Time
+    ) : async Result<Types.ProviderAnalytics> {
+        let now = Time.now();
+        let actualStartDate = switch (startDate) {
+            case (?date) date;
+            case (null) 0; // Beginning of time
+        };
+        
+        let actualEndDate = switch (endDate) {
+            case (?date) date;
+            case (null) now; // Current time
+        };
+        
+        // Verify package exists
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                };
+                
+                switch (await serviceCanister.getPackage(packageId)) {
+                    case (#err(msg)) {
+                        return #err("Package not found: " # msg);
+                    };
+                    case (#ok(_)) {
+                        // Package exists, continue with analytics
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+        
+        // Get all bookings for this package within the date range
+        let packageBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                let bookingDate = booking.createdAt;
+                let matchesPackage = switch (booking.servicePackageId) {
+                    case (?id) id == packageId;
+                    case (null) false;
+                };
+                return matchesPackage 
+                    and bookingDate >= actualStartDate 
+                    and bookingDate <= actualEndDate;
+            }
+        );
+        
+        // Count total bookings
+        let totalJobs = packageBookings.size();
+        
+        if (totalJobs == 0) {
+            return #ok({
+                providerId = Principal.fromText("aaaaa-aa"); // Using IC management canister as placeholder
+                completedJobs = 0;
+                cancelledJobs = 0;
+                totalJobs = 0;
+                completionRate = 0.0;
+                totalEarnings = 0;
+                startDate = startDate;
+                endDate = endDate;
+                packageBreakdown = [];
+            });
+        };
+        
+        // Rest of analytics calculations follow the same pattern as serviceAnalytics
+        // Count completed bookings
+        let completedBookings = Array.filter<Booking>(
+            packageBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Completed;
+            }
+        );
+        
+        let completedJobs = completedBookings.size();
+        
+        // Count cancelled bookings
+        let cancelledBookings = Array.filter<Booking>(
+            packageBookings,
+            func (booking : Booking) : Bool {
+                return booking.status == #Cancelled or booking.status == #Declined;
+            }
+        );
+        
+        let cancelledJobs = cancelledBookings.size();
+        
+        // Calculate total revenue from completed bookings
+        var totalEarnings : Nat = 0;
+        for (booking in completedBookings.vals()) {
+            totalEarnings += booking.price;
+        };
+        
+        // Calculate completion rate
+        let completionRate = if (totalJobs == 0) {
+            0.0
+        } else {
+            Float.fromInt(completedJobs * 100) / Float.fromInt(totalJobs)
+        };
+        
+        // Get the service provider (for the analytics result)
+        var providerId = Principal.fromText("aaaaa-aa"); // Default to IC management canister
+        if (packageBookings.size() > 0) {
+            providerId := packageBookings[0].providerId;
+        };
+        
+        // Return the analytics data
+        return #ok({
+            providerId = providerId;
+            completedJobs = completedJobs;
+            cancelledJobs = cancelledJobs;
+            totalJobs = totalJobs;
+            completionRate = completionRate;
+            totalEarnings = totalEarnings;
+            startDate = startDate;
+            endDate = endDate;
+            packageBreakdown = []; // No sub-packages for package analytics
+        });
+    };
 }

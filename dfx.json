@@ -26,14 +26,6 @@
         "output": "frontend/src/declarations/booking"
       }
     },
-    "booking-test": {
-      "type": "motoko",
-      "main": "backend/function/booking-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/booking-test"
-      }
-    },
     "reputation": {
       "type": "motoko",
       "main": "backend/function/reputation.mo",

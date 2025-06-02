@@ -106,6 +106,16 @@ module {
         conflictingBookings: [Text]; // Booking IDs that conflict
     };
 
+    public type ServicePackage = {
+        id: Text;
+        serviceId: Text;
+        title: Text;
+        description: Text;
+        price: Nat;
+        createdAt: Time.Time;
+        updatedAt: Time.Time;
+    };
+
     public type Service = {
         id: Text;
         providerId: Principal;
@@ -124,6 +134,7 @@ module {
         instantBookingEnabled: ?Bool;
         bookingNoticeHours: ?Nat; // Minimum hours in advance for booking
         maxBookingsPerDay: ?Nat;
+        // Package reference not needed as we'll use serviceId to look up packages
     };
 
     // Booking types
@@ -152,6 +163,7 @@ module {
         clientId: Principal;
         providerId: Principal;
         serviceId: Text;
+        servicePackageId: ?Text;  // ID of the package if booking a package
         status: BookingStatus;
         requestedDate: Time.Time;
         scheduledDate: ?Time.Time;
@@ -209,6 +221,19 @@ module {
         averageRating: ?Float;
         detectionFlags: [DetectionFlag];
         lastUpdated: Time.Time;
+    };
+
+    // Analytics types
+    public type ProviderAnalytics = {
+        providerId: Principal;
+        completedJobs: Nat;
+        cancelledJobs: Nat;
+        totalJobs: Nat;
+        completionRate: Float;
+        totalEarnings: Nat;
+        startDate: ?Time.Time;
+        endDate: ?Time.Time;
+        packageBreakdown: [(Text, Nat)]; // (packageId, count) pairs for package bookings
     };
 
     // API Response

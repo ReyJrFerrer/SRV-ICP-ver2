@@ -24,6 +24,7 @@ actor ServiceCanister {
     type TimeSlot = Types.TimeSlot;
     type VacationPeriod = Types.VacationPeriod;
     type AvailableSlot = Types.AvailableSlot;
+    type ServicePackage = Types.ServicePackage;
 
     // State variables
     private stable var serviceEntries : [(Text, Service)] = [];
@@ -35,6 +36,10 @@ actor ServiceCanister {
     // Availability state variables
     private stable var availabilityEntries : [(Principal, ProviderAvailability)] = [];
     private var providerAvailabilities = HashMap.HashMap<Principal, ProviderAvailability>(10, Principal.equal, Principal.hash);
+    
+    // Service package state variables
+    private stable var packageEntries : [(Text, ServicePackage)] = [];
+    private var servicePackages = HashMap.HashMap<Text, ServicePackage>(10, Text.equal, Text.hash);
 
     // Canister references
     private var authCanisterId : ?Principal = null;
@@ -148,6 +153,7 @@ actor ServiceCanister {
         serviceEntries := Iter.toArray(services.entries());
         categoryEntries := Iter.toArray(categories.entries());
         availabilityEntries := Iter.toArray(providerAvailabilities.entries());
+        packageEntries := Iter.toArray(servicePackages.entries());
     };
 
     system func postupgrade() {
@@ -159,6 +165,9 @@ actor ServiceCanister {
         
         providerAvailabilities := HashMap.fromIter<Principal, ProviderAvailability>(availabilityEntries.vals(), 10, Principal.equal, Principal.hash);
         availabilityEntries := [];
+        
+        servicePackages := HashMap.fromIter<Text, ServicePackage>(packageEntries.vals(), 10, Text.equal, Text.hash);
+        packageEntries := [];
         
         // Initialize static data if categories or services are empty
         if (categories.size() < 1 or services.size() < 1) {
@@ -913,5 +922,202 @@ actor ServiceCanister {
         let daysSinceEpoch = secondsSinceEpoch / 86400;
         let startOfDaySeconds = daysSinceEpoch * 86400;
         startOfDaySeconds * 1_000_000_000
+    };
+
+    // Package-related functions
+    
+    // Create a new service package
+    public shared(msg) func createServicePackage(
+        serviceId : Text,
+        title : Text,
+        description : Text,
+        price : Nat
+    ) : async Result<ServicePackage> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        // Check if service exists and caller is the service provider
+        switch (services.get(serviceId)) {
+            case (?service) {
+                if (service.providerId != caller) {
+                    return #err("Not authorized to create packages for this service");
+                };
+                
+                // Validate input
+                if (not validateTitle(title)) {
+                    return #err("Title must be between " # Nat.toText(MIN_TITLE_LENGTH) # " and " # Nat.toText(MAX_TITLE_LENGTH) # " characters");
+                };
+
+                if (not validateDescription(description)) {
+                    return #err("Description must be between " # Nat.toText(MIN_DESCRIPTION_LENGTH) # " and " # Nat.toText(MAX_DESCRIPTION_LENGTH) # " characters");
+                };
+
+                if (not validatePrice(price)) {
+                    return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+                };
+                
+                let packageId = generateId();
+                
+                let newPackage : ServicePackage = {
+                    id = packageId;
+                    serviceId = serviceId;
+                    title = title;
+                    description = description;
+                    price = price;
+                    createdAt = Time.now();
+                    updatedAt = Time.now();
+                };
+                
+                servicePackages.put(packageId, newPackage);
+                return #ok(newPackage);
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+    
+    // Get all packages for a service
+    public query func getServicePackages(serviceId : Text) : async Result<[ServicePackage]> {
+        // Check if service exists
+        switch (services.get(serviceId)) {
+            case (?_) {
+                let allPackages = Iter.toArray(servicePackages.vals());
+                let servicePackagesList = Array.filter<ServicePackage>(
+                    allPackages,
+                    func (pkg : ServicePackage) : Bool {
+                        return pkg.serviceId == serviceId;
+                    }
+                );
+                
+                return #ok(servicePackagesList);
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+    
+    // Get a specific package by ID
+    public query func getPackage(packageId : Text) : async Result<ServicePackage> {
+        switch (servicePackages.get(packageId)) {
+            case (?package) {
+                return #ok(package);
+            };
+            case (null) {
+                return #err("Package not found");
+            };
+        };
+    };
+    
+    // Update a service package
+    public shared(msg) func updateServicePackage(
+        packageId : Text,
+        title : ?Text,
+        description : ?Text,
+        price : ?Nat
+    ) : async Result<ServicePackage> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (servicePackages.get(packageId)) {
+            case (?existingPackage) {
+                // Verify caller is the service provider
+                switch (services.get(existingPackage.serviceId)) {
+                    case (?service) {
+                        if (service.providerId != caller) {
+                            return #err("Not authorized to update this package");
+                        };
+                    };
+                    case (null) {
+                        return #err("Associated service not found");
+                    };
+                };
+                
+                // Validate updated fields
+                let updatedTitle = switch (title) {
+                    case (?t) {
+                        if (not validateTitle(t)) {
+                            return #err("Title must be between " # Nat.toText(MIN_TITLE_LENGTH) # " and " # Nat.toText(MAX_TITLE_LENGTH) # " characters");
+                        };
+                        t;
+                    };
+                    case (null) existingPackage.title;
+                };
+                
+                let updatedDescription = switch (description) {
+                    case (?d) {
+                        if (not validateDescription(d)) {
+                            return #err("Description must be between " # Nat.toText(MIN_DESCRIPTION_LENGTH) # " and " # Nat.toText(MAX_DESCRIPTION_LENGTH) # " characters");
+                        };
+                        d;
+                    };
+                    case (null) existingPackage.description;
+                };
+                
+                let updatedPrice = switch (price) {
+                    case (?p) {
+                        if (not validatePrice(p)) {
+                            return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+                        };
+                        p;
+                    };
+                    case (null) existingPackage.price;
+                };
+                
+                let updatedPackage : ServicePackage = {
+                    id = existingPackage.id;
+                    serviceId = existingPackage.serviceId;
+                    title = updatedTitle;
+                    description = updatedDescription;
+                    price = updatedPrice;
+                    createdAt = existingPackage.createdAt;
+                    updatedAt = Time.now();
+                };
+                
+                servicePackages.put(packageId, updatedPackage);
+                return #ok(updatedPackage);
+            };
+            case (null) {
+                return #err("Package not found");
+            };
+        };
+    };
+    
+    // Delete a service package
+    public shared(msg) func deleteServicePackage(packageId : Text) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (servicePackages.get(packageId)) {
+            case (?existingPackage) {
+                // Verify caller is the service provider
+                switch (services.get(existingPackage.serviceId)) {
+                    case (?service) {
+                        if (service.providerId != caller) {
+                            return #err("Not authorized to delete this package");
+                        };
+                        
+                        servicePackages.delete(packageId);
+                        return #ok("Package deleted successfully");
+                    };
+                    case (null) {
+                        return #err("Associated service not found");
+                    };
+                };
+            };
+            case (null) {
+                return #err("Package not found");
+            };
+        };
     };
 }

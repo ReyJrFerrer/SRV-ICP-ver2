@@ -32,7 +32,6 @@ interface ServicePackageUIData {
   description: string;
   price: string; 
   currency: string;
-  // duration: string; // REMOVED DURATION
   features: string; 
   isPopular: boolean;
 }

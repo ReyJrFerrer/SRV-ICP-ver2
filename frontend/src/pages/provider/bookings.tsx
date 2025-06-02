@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router'; 
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderBookingItemCard from '@app/components/provider/ProviderBookingItemCard';
 
@@ -7,24 +8,32 @@ import { PROVIDER_ORDERS, PROVIDER_BOOKING_REQUESTS } from '../../../assets/prov
 import { ProviderOrder as ProviderOrderType } from '../../../assets/types/provider/provider-order';
 
 type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled';
+const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'Completed', 'Cancelled'];
 
 
 const ProviderBookingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<BookingStatusTab>('Pending');
-  
+  const router = useRouter();
+  const { tab: queryTab } = router.query; 
+
+  const [activeTab, setActiveTab] = useState<BookingStatusTab>('Pending'); 
+
+  useEffect(() => {
+    if (typeof queryTab === 'string' && TAB_ITEMS.includes(queryTab as BookingStatusTab)) {
+      setActiveTab(queryTab as BookingStatusTab);
+    } else if (!queryTab) {
+        setActiveTab('Pending');
+    }
+  }, [queryTab]); 
+
   const categorizedBookings = useMemo(() => {
     const now = new Date();
-
     const pending = PROVIDER_BOOKING_REQUESTS.map(req => ({ ...req, status: 'PENDING' as const, effectiveStatus: 'Pending' as BookingStatusTab }));
-    
     const upcoming = PROVIDER_ORDERS.filter(
       order => order.status === 'CONFIRMED' && new Date(order.scheduledStartTime) >= now
     ).map(order => ({ ...order, effectiveStatus: 'Upcoming' as BookingStatusTab }));
-    
     const completed = PROVIDER_ORDERS.filter(
       order => order.status === 'COMPLETED'
     ).map(order => ({ ...order, effectiveStatus: 'Completed' as BookingStatusTab }));
-
     const cancelled = PROVIDER_ORDERS.filter(
       order => order.status === 'CANCELLED'
     ).map(order => ({ ...order, effectiveStatus: 'Cancelled' as BookingStatusTab }));
@@ -39,9 +48,6 @@ const ProviderBookingsPage: React.FC = () => {
 
   const currentBookings: ProviderOrderType[] = (categorizedBookings[activeTab] || []) as ProviderOrderType[];
 
-
-  const tabItems: BookingStatusTab[] = ['Pending', 'Upcoming', 'Completed', 'Cancelled']; 
-
   return (
     <>
       <Head>
@@ -53,12 +59,14 @@ const ProviderBookingsPage: React.FC = () => {
           <h1 className="text-xl font-semibold text-gray-800 text-center">My Bookings</h1>
         </header>
 
-        <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10"> 
+        <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10"> {/* Adjust based on header height */}
           <nav className="flex space-x-1 sm:space-x-2 p-1 sm:p-2 justify-around">
-            {tabItems.map(tab => (
+            {TAB_ITEMS.map(tab => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                }}
                 className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md flex-grow text-center transition-colors
                             ${activeTab === tab 
                                 ? 'bg-blue-600 text-white shadow-sm' 
@@ -72,8 +80,7 @@ const ProviderBookingsPage: React.FC = () => {
 
         <main className="flex-grow overflow-y-auto p-3 sm:p-4 pb-20">
           {currentBookings.length > 0 ? (
-            // Responsive Grid Layout
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {currentBookings.map(booking => (
                 <ProviderBookingItemCard 
                     key={booking.id} 

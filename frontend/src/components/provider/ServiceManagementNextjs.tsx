@@ -2,7 +2,41 @@ import React from 'react';
 import { PlusIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
 import { PaintBrushIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+
+// Define local interfaces
+interface ServiceCategory {
+  id?: string;
+  name: string;
+}
+
+interface ServicePrice {
+  amount: number;
+  unit: string;
+}
+
+interface ServiceRating {
+  average: number;
+  count: number;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description?: string;
+  price: ServicePrice | number;
+  category: ServiceCategory | string;
+  imageUrl?: string;
+  isActive?: boolean;
+  rating?: ServiceRating | number;
+}
+
+interface ServiceProvider {
+  id: string;
+  services: Service[];
+  servicesOffered?: Service[];
+  // Other properties are not needed for this component
+  [key: string]: any;
+}
 
 interface ServiceManagementProps {
   provider: ServiceProvider;
@@ -10,13 +44,28 @@ interface ServiceManagementProps {
 }
 
 const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({ provider, className = '' }) => {
-  const { servicesOffered } = provider;
+  // Handle different service property names and formats
+  const services = provider.servicesOffered || provider.services || [];
   
-  // Example service status (in production, this would come from your data)
-  const servicesWithStatus = servicesOffered.map((service, index) => ({
-    ...service,
-    isActive: index === 0 // First service is active, others are inactive for demo
-  }));
+  // Adapt services to the expected format
+  const adaptedServices = services.map((service, index) => {
+    const isServiceObj = typeof service === 'object';
+    const serviceWithStatus = {
+      ...service,
+      id: isServiceObj ? service.id : `service-${index}`,
+      isActive: service.isActive !== undefined ? service.isActive : index === 0,
+      category: isServiceObj && service.category ? 
+        (typeof service.category === 'string' ? { name: service.category } : service.category) : 
+        { name: 'General' },
+      price: isServiceObj && service.price ? 
+        (typeof service.price === 'number' ? { amount: service.price, unit: 'hour' } : service.price) : 
+        { amount: 0, unit: 'hour' },
+      rating: isServiceObj && service.rating ? 
+        (typeof service.rating === 'number' ? { average: service.rating, count: 0 } : service.rating) : 
+        { average: 0, count: 0 }
+    };
+    return serviceWithStatus;
+  });
 
   return (
     <div className={`services-section ${className}`}>
@@ -29,9 +78,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({ provider, c
         </Link>
       </div>
       
-      {servicesWithStatus.length > 0 ? (
+      {adaptedServices.length > 0 ? (
         <div className="space-y-3">
-          {servicesWithStatus.map((service) => (
+          {adaptedServices.map((service) => (
             <div key={service.id} className="service-card">
               <div className="flex justify-between items-start">
                 <div className="flex items-center">
@@ -66,9 +115,9 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({ provider, c
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    <span className="ml-1 text-sm">{service.rating?.average || 0}</span>
+                    <span className="ml-1 text-sm">{service.rating.average}</span>
                   </div>
-                  <span className="text-sm text-gray-500">({service.rating?.count || 0} reviews)</span>
+                  <span className="text-sm text-gray-500">({service.rating.count} reviews)</span>
                 </div>
               </div>
               

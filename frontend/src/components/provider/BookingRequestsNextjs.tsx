@@ -5,7 +5,13 @@ import {
   ArrowRightIcon 
 } from '@heroicons/react/24/solid';
 import Link from 'next/link';
-import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+
+// Define local interface
+interface ServiceProvider {
+  id: string;
+  // Other properties not used directly in this component
+  [key: string]: any;
+}
 
 interface BookingRequestsProps {
   provider: ServiceProvider;

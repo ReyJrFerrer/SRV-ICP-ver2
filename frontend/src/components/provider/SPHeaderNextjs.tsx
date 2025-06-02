@@ -1,7 +1,15 @@
 import React from 'react';
 import { MapPinIcon, BellIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+
+// Define local interface
+interface ServiceProvider {
+  id: string;
+  name: string;
+  firstName?: string; // Add optional for backward compatibility
+  // Other properties are not needed for this component
+  [key: string]: any;
+}
 
 interface SPHeaderProps {
   provider: ServiceProvider;
@@ -14,7 +22,8 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   notificationCount = 0,
   className = '' 
 }) => {
-  const { firstName } = provider;
+  // Extract firstName from name if not directly available
+  const firstName = provider.firstName || provider.name.split(' ')[0];
   
   return (
     <header className={`provider-header ${className}`}>

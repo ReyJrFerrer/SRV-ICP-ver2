@@ -61,6 +61,8 @@ actor ReviewCanister {
     // Pre-upgrade hook
     system func preupgrade() {
         reviewEntries := Iter.toArray(reviews.entries());
+        reviews := HashMap.fromIter<Text, Review>(reviewEntries.vals(), 0, Text.equal, Text.hash);
+        initializeStaticReviews();
     };
 
     // Post-upgrade hook

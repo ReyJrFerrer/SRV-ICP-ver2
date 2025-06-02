@@ -161,7 +161,7 @@ actor ServiceCanister {
         availabilityEntries := [];
         
         // Initialize static data if categories or services are empty
-        if (categories.size() < 10 or services.size() < 10) {
+        if (categories.size() < 1 or services.size() < 1) {
             initializeStaticData();
         };
     };

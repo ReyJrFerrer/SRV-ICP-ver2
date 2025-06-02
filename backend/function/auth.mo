@@ -147,7 +147,7 @@ actor AuthCanister {
         };
         
         // Initialize static data if profiles are less than 5
-        if (profiles.size() < 5) {
+        if (profiles.size() < 1) {
             initializeStaticProfiles();
         };
     };

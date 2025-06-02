@@ -163,26 +163,29 @@ const ViewAllServicesPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>All Services | Service Provider App</title>
+        <title>SRV | All Services</title>
         <meta name="description" content="Browse all available services" />
       </Head>
 
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
-        <div className="bg-white px-4 py-4 shadow-sm">
+        <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-30">
           <div className="flex items-center gap-3 mb-4">
             <button 
               onClick={handleBackClick}
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Go back"
             >
               <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
             </button>
-            <h1 className="text-xl font-bold">All Services</h1>
+            <h1 className="text-xl font-bold text-gray-800">All Services</h1>
           </div>
           
           <SearchBar 
             placeholder="Search for service"
             className="mb-2"
+            servicesList={services}
+            redirectToSearchResultsPage={false}
           />
         </div>
 

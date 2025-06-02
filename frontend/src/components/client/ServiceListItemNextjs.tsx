@@ -33,75 +33,115 @@ interface ServiceListItemProps {
       id?: string;
       slug?: string;
     };
+    availability?: {
+      isAvailable?: boolean;
+    };
   };
   inCategories?: boolean;
+  isGridItem?: boolean;
+  retainMobileLayout?: boolean;
 }
 
-const ServiceListItem: React.FC<ServiceListItemProps> = ({ service, inCategories = false }) => {
+const ServiceListItem: React.FC<ServiceListItemProps> = ({ 
+  service, 
+  inCategories = false,
+  isGridItem = false,
+  retainMobileLayout = false
+}) => {
+  // Define layout classes based on props
+  const itemWidthClass = isGridItem 
+    ? 'w-full' // Full width for grid items
+    : (inCategories ? 'w-full' : 'w-80 md:w-96'); // Default width for list items
+
+  // Determine availability status (simplified since we may not have full availability data)
+  const isAvailable = service.availability?.isAvailable ?? false;
+  const availabilityText = isAvailable ? 'Available' : 'Not Available';
+
+  // Define responsive classes based on retainMobileLayout
+  const nameRatingContainerClass = retainMobileLayout
+    ? "flex flex-row justify-between items-start mb-1" // Name and Rating on same line
+    : "flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1"; // Default responsive
+
+  const priceLocationContainerClass = retainMobileLayout
+    ? "flex flex-row justify-between items-center mt-auto pt-2 border-t border-gray-100" // Price and Location on same line
+    : "flex flex-col items-start sm:flex-row sm:justify-between sm:items-center mt-auto pt-2 border-t border-gray-100"; // Default responsive
+
+  const nameMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
+  const ratingMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0 sm:ml-2" : "sm:ml-2"; 
+  const priceMarginClass = !retainMobileLayout ? "mb-0.5 sm:mb-0" : "";
+  const locationMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0" : "";
+
   return (
-    <Link href={`/client/service/${service.slug}`}>
-      <div className={`service-card ${inCategories ? 'w-full' : 'w-80 md:w-96'} bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300`}>
-          {/* Provider info - displayed prominently */}  
-        <div className="relative">
-          <div className="aspect-[4/3] w-full">
+    <Link href={`/client/service/${service.slug}`} legacyBehavior>
+      <a className={`service-card block ${itemWidthClass} group overflow-hidden flex flex-col`}>
+        <div className="relative"> {/* Image container */}
+          <div className="aspect-video w-full">
             <Image 
-              src={service.providerAvatar}
+              src={service.heroImage || service.providerAvatar}
               alt={service.title || service.name}
-              className="service-image object-cover"
-              width={500}
-              height={375}
+              className="service-image group-hover:scale-105 transition-transform duration-300"
+              style={{ objectFit: 'cover' }}
+              fill
               priority
             />
           </div>
+          
+          {/* Category badge */}
           {service.category && (
-            <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
+            <div className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow bg-blue-600">
               {service.category.name}
             </div>
           )}
+          
+          {/* Availability badge */}
+          <div 
+            className={`absolute top-2 right-2 px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow
+                      ${isAvailable ? 'bg-green-500' : 'bg-red-500'}`}
+          >
+            {availabilityText}
+          </div>
         </div>
         
-        <div className="service-content p-5">
-                
-          {/* Service Name and Ratings */}
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-xl font-bold text-gray-900">{service.name}</h3>
-            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-md">
-              <StarIcon className="h-5 w-5 text-yellow-500 mr-1" />
-              <span className="font-medium">{service.rating.average.toFixed(1)}</span>
-              <span className="text-sm text-gray-500 ml-1">({service.rating.count})</span>
+        <div className="service-content p-3 flex flex-col flex-grow">
+          <div className="flex-grow"> {/* This div helps push price/location to bottom */}
+            <div className={nameRatingContainerClass}>
+              <h3 className={`text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors ${nameMarginClass}`}>
+                {service.name}
+              </h3>
+              <div className={`flex items-center text-blue-800 text-xs flex-shrink-0 ${ratingMarginClass}`}>
+                <StarIcon className="h-3 w-3 text-blue-800 mr-0.5" />
+                <span>{service.rating.average.toFixed(1)} ({service.rating.count})</span>
+              </div>
             </div>
+            
+            {service.title && (
+              <p className="text-blue-700 text-sm mb-2 leading-snug">{service.title}</p>
+            )}
+            
+            {/* Location info - city/address if available */}
+            {service.location && (service.location.city || service.location.address) && (
+              <div className="flex items-center text-xs text-blue-700 mb-2">
+                <MapPinIcon className="h-3 w-3 mr-0.5 flex-shrink-0" />
+                <span className="truncate">
+                  {service.location.city || service.location.address}
+                  {service.location.state ? `, ${service.location.state}` : ''}
+                </span>
+              </div>
+            )}
           </div>
           
-          {/* Service Title as smaller heading */}
-          {service.title && (
-            <div className="mb-3">
-              <h4 className="text-md text-gray-600">{service.title}</h4>
-            </div>
-          )}
-          
-          {/* Location */}
-          {service.location && (service.location.city || service.location.address) && (
-            <div className="flex items-center text-sm text-gray-600 mb-3">
-              <MapPinIcon className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
-              <span>
-                {service.location.city || service.location.address}
-                {service.location.state ? `, ${service.location.state}` : ''}
-              </span>
-            </div>
-          )}
-          
-          {/* Price and Service Radius */}
-          <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
-            <p className="text-xl font-bold text-green-600">
-              {service.price.display || `$${service.price.amount.toFixed(2)}/${service.price.unit}`}
+          <div className={priceLocationContainerClass}>
+            <p className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}>
+              {service.price.display || `₱${service.price.amount.toFixed(2)}`}
+              <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span>
             </p>
-            <div className="flex items-center text-sm bg-gray-50 px-2 py-1 rounded-md">
-              <MapPinIcon className="h-4 w-4 mr-1 text-blue-500" />
+            <div className={`flex items-center text-blue-800 text-xs ${locationMarginClass}`}>
+              <MapPinIcon className="h-3 w-3 mr-0.5" />
               <span>{service.location.serviceRadius} {service.location.serviceRadiusUnit}</span>
             </div>
           </div>
         </div>
-      </div>
+      </a>
     </Link>
   );
 };

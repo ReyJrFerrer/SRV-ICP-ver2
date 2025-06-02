@@ -17,7 +17,7 @@ const dayIndexToName = (dayIndex: number): string => {
   return days[dayIndex] || '';
 };
 
-// TO be use later
+// TODO later
 // Map DayOfWeek enum to day index (for Date.getDay())
 const dayOfWeekToIndex = (day: DayOfWeek): number => {
   const mapping: Record<DayOfWeek, number> = {
@@ -391,217 +391,226 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     (bookingOption === 'scheduled' && (!selectedDate || !selectedTime.trim()));
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Package Selection */}
-      <div className="border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Package *</h3>
-        {packages.map((pkg) => (
-          <label key={pkg.id} className="flex items-start space-x-3 mb-3 cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={pkg.checked} 
-              onChange={() => handlePackageChange(pkg.id)}
-              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-gray-900">{pkg.title}</div>
-              <div className="text-sm text-gray-600">{pkg.description}</div>
-              <div className="text-sm font-medium text-green-600">₱{pkg.price}</div>
-            </div>
-          </label>
-        ))}
-      </div>
-
-      {/* Concerns */}
-      <div className="border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Concerns</h3>
-        <textarea
-          className="w-full p-3 border border-gray-300 rounded-lg resize-vertical min-h-20"
-          placeholder="Add any concerns or requests..."
-          value={concerns}
-          onChange={(e) => setConcerns(e.target.value)}
-        />
-      </div>
-
-      {/* Booking Schedule */}
-      <div className="border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Schedule *</h3>
-        
-        {service.weeklySchedule && service.weeklySchedule.length > 0 && (
-          <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
-            Available: {service.weeklySchedule
-              .filter(s => s.availability.isAvailable)
-              .map(s => s.day)
-              .join(', ')} | 
-            {service.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
-          </div>
-        )}
-
-        {(!service.weeklySchedule || service.weeklySchedule.length === 0) && (
-          <div className="mb-4 p-2 bg-yellow-50 rounded text-sm text-yellow-700 text-center">
-            No availability schedule set for this provider.
-          </div>
-        )}
-
-        <div className="flex gap-3 mb-4">
-          <button
-            className={`flex-1 p-3 border rounded-lg text-center ${
-              bookingOption === 'sameday' 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'bg-gray-50 text-gray-700 border-gray-300'
-            } ${!isSameDayPossible ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={() => handleBookingOptionChange('sameday')}
-            disabled={!isSameDayPossible}
-          >
-            <div className="font-medium">Same Day</div>
-            <div className="text-xs opacity-75">Arrive within booking notice time</div>
-          </button>
-          <button
-            className={`flex-1 p-3 border rounded-lg text-center ${
-              bookingOption === 'scheduled' 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'bg-gray-50 text-gray-700 border-gray-300'
-            }`}
-            onClick={() => handleBookingOptionChange('scheduled')}
-          >
-            <div className="font-medium">Scheduled</div>
-          </button>
-        </div>
-
-        {bookingOption === 'scheduled' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Date:</label>
-              <DatePicker
-                selected={selectedDate}
-                onChange={handleDateChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholderText="Click to select a date"
-                dateFormat="MMMM d, yyyy"
-                minDate={new Date()}
-                filterDate={(date) => {
-                  if (!service.weeklySchedule) return false;
-                  const dayName = dayIndexToName(date.getDay());
-                  return service.weeklySchedule.some(scheduleItem => 
-                    scheduleItem.day === dayName as DayOfWeek && scheduleItem.availability.isAvailable
-                  );
-                }}
-              />
+    <div className="bg-gray-50 min-h-screen flex flex-col">
+      <div className="flex-grow pb-28 md:pb-24">
+        <div className="md:flex md:flex-row md:gap-x-6 lg:gap-x-8 md:p-4 lg:p-6">
+          {/* Left Column Wrapper */}
+          <div className="md:w-1/2 md:flex md:flex-col">
+            {/* Package Selection Section */}
+            <div className="bg-white border-b border-gray-200 p-4 md:rounded-t-xl md:border md:shadow-sm md:border-b-0">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Package *</h3>
+              {packages.map((pkg) => (
+                <label key={pkg.id} className="flex items-start space-x-3 mb-3 cursor-pointer p-2 hover:bg-gray-50 rounded-md">
+                  <input 
+                    type="checkbox" 
+                    checked={pkg.checked} 
+                    onChange={() => handlePackageChange(pkg.id)}
+                    className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{pkg.title}</div>
+                    <div className="text-sm text-gray-600">{pkg.description}</div>
+                    <div className="text-sm font-medium text-green-600">₱{pkg.price}</div>
+                  </div>
+                </label>
+              ))}
             </div>
             
-            {selectedDate && availableSlots.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Time:</label>
-                <select
-                  className="w-full p-3 border border-gray-300 rounded-lg"
-                  value={selectedTime}
-                  onChange={(e) => handleTimeChange(e.target.value)}
+            {/* Concerns Section */}
+            <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Concerns</h3>
+              <textarea
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none min-h-[80px] focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Add any concerns or requests..."
+                value={concerns}
+                onChange={(e) => setConcerns(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Right Column Wrapper */}
+          <div className="md:w-1/2 md:flex md:flex-col mt-4 md:mt-0">
+            {/* Booking Schedule Section */}
+            <div className="bg-white border-b border-gray-200 p-4 md:rounded-t-xl md:border md:shadow-sm md:border-b-0">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Schedule *</h3>
+              
+              {service.weeklySchedule && service.weeklySchedule.length > 0 && (
+                <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
+                  Available: {service.weeklySchedule
+                    .filter(s => s.availability.isAvailable)
+                    .map(s => s.day)
+                    .join(', ')} | 
+                  {service.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
+                </div>
+              )}
+
+              {(!service.weeklySchedule || service.weeklySchedule.length === 0) && (
+                <div className="mb-4 p-2 bg-yellow-50 rounded text-sm text-yellow-700 text-center">
+                  No availability schedule set for this provider.
+                </div>
+              )}
+
+              <div className="flex gap-3 mb-4">
+                <button
+                  className={`flex-1 p-3 border rounded-lg text-center ${
+                    bookingOption === 'sameday' 
+                      ? 'bg-blue-600 text-white border-blue-600' 
+                      : 'bg-gray-50 text-gray-700 border-gray-300'
+                  } ${!isSameDayPossible ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500 hover:text-white'}`}
+                  onClick={() => handleBookingOptionChange('sameday')}
+                  disabled={!isSameDayPossible}
                 >
-                  <option value="">Choose a time</option>
-                  {availableSlots
-                    .filter(slot => slot.isAvailable)
-                    .map((slot, index) => (
-                      <option key={index} value={slot.timeSlot.startTime}>
-                        {slot.timeSlot.startTime} - {slot.timeSlot.endTime}
-                      </option>
-                    ))
-                  }
-                </select>
+                  <div className="font-medium text-sm">Same Day</div>
+                  {isSameDayPossible && <div className="text-xs opacity-75">Arrive within 20-45 mins</div>}
+                </button>
+                <button
+                  className={`flex-1 p-3 border rounded-lg text-center ${
+                    bookingOption === 'scheduled' 
+                      ? 'bg-blue-600 text-white border-blue-600' 
+                      : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-blue-50'
+                  }`}
+                  onClick={() => handleBookingOptionChange('scheduled')}
+                >
+                  <div className="font-medium text-sm">Scheduled</div>
+                </button>
               </div>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Location */}
-      <div className="border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Location *</h3>
-        
-        <button 
-          onClick={handleUseCurrentLocation}
-          className="w-full mb-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          📍 Use Current Location
-        </button>
-        
-        {currentLocationStatus && (
-          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700 text-center">
-            {currentLocationStatus}
+              {bookingOption === 'scheduled' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Date:</label>
+                    <DatePicker
+                      selected={selectedDate}
+                      onChange={handleDateChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholderText="Click to select a date"
+                      dateFormat="MMMM d, yyyy"
+                      minDate={new Date()}
+                      filterDate={(date) => {
+                        if (!service.weeklySchedule) return false;
+                        const dayName = dayIndexToName(date.getDay());
+                        return service.weeklySchedule.some(scheduleItem => 
+                          scheduleItem.day === dayName as DayOfWeek && scheduleItem.availability.isAvailable
+                        );
+                      }}
+                    />
+                  </div>
+                  
+                  {selectedDate && availableSlots.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Select Time:</label>
+                      <select
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        value={selectedTime}
+                        onChange={(e) => handleTimeChange(e.target.value)}
+                      >
+                        <option value="">Choose a time</option>
+                        {availableSlots
+                          .filter(slot => slot.isAvailable)
+                          .map((slot, index) => (
+                            <option key={index} value={slot.timeSlot.startTime}>
+                              {slot.timeSlot.startTime} - {slot.timeSlot.endTime}
+                            </option>
+                          ))
+                        }
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Location Section */}
+            <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Location *</h3>
+              
+              <button 
+                onClick={handleUseCurrentLocation}
+                className="w-full mb-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                📍 Use Current Location
+              </button>
+              
+              {currentLocationStatus && (
+                <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 text-center">
+                  {currentLocationStatus}
+                </div>
+              )}
+              
+              {!showManualAddress && (
+                <button 
+                  onClick={toggleManualAddress}
+                  className="w-full p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                >
+                  Enter Address Manually
+                </button>
+              )}
+              
+              {showManualAddress && (
+                <div className="space-y-3 mt-2">
+                  <p className="text-xs text-gray-600">Enter address manually (all fields required*):</p>
+                  <input 
+                    type="text" 
+                    placeholder="House No. / Unit / Building *" 
+                    value={houseNumber} 
+                    onChange={(e) => setHouseNumber(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Street Name *" 
+                    value={street} 
+                    onChange={(e) => setStreet(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Barangay *" 
+                    value={barangay} 
+                    onChange={(e) => setBarangay(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Municipality / City *" 
+                    value={municipalityCity} 
+                    onChange={(e) => setMunicipalityCity(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Province *" 
+                    value={province} 
+                    onChange={(e) => setProvince(e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
-        
-        {!showManualAddress && (
-          <button 
-            onClick={toggleManualAddress}
-            className="w-full p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-          >
-            Enter Address Manually
-          </button>
-        )}
-        
-        {showManualAddress && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">Enter address manually (all fields required*):</p>
-            <input 
-              type="text" 
-              placeholder="House No. / Unit / Building *" 
-              value={houseNumber} 
-              onChange={(e) => setHouseNumber(e.target.value)} 
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-            <input 
-              type="text" 
-              placeholder="Street Name *" 
-              value={street} 
-              onChange={(e) => setStreet(e.target.value)} 
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-            <input 
-              type="text" 
-              placeholder="Barangay *" 
-              value={barangay} 
-              onChange={(e) => setBarangay(e.target.value)} 
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-            <input 
-              type="text" 
-              placeholder="Municipality / City *" 
-              value={municipalityCity} 
-              onChange={(e) => setMunicipalityCity(e.target.value)} 
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-            <input 
-              type="text" 
-              placeholder="Province *" 
-              value={province} 
-              onChange={(e) => setProvince(e.target.value)} 
-              className="w-full p-3 border border-gray-300 rounded-lg"
-            />
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* Payment Info */}
-      <div className="border-b border-gray-200 p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment</h3>
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-          💸 Cash payment only.
+        <div className="px-4 md:px-0 md:mx-4 lg:mx-6 mt-4 md:mt-6">
+          <div className="bg-white p-4 md:rounded-xl md:border md:shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment</h3>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+              💸 Cash payment only.
+            </div>
+          </div>
+          
+          {formError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 text-center">
+              {formError}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Error Message */}
-      {formError && (
-        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 text-center">
-          {formError}
-        </div>
-      )}
-
-      {/* Confirm Button */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 shadow-top-md">
         <button 
           onClick={handleConfirmBooking}
           disabled={isConfirmDisabled}
-          className={`w-full py-4 rounded-lg font-semibold text-white ${
+          className={`w-full py-3 md:py-4 rounded-lg font-semibold text-white transition-colors ${
             isConfirmDisabled 
               ? 'bg-gray-300 cursor-not-allowed' 
               : 'bg-green-600 hover:bg-green-700'

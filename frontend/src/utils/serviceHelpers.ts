@@ -32,7 +32,11 @@ export const enrichServiceWithProvider = (
  * @returns Formatted price string
  */
 export const formatPrice = (price: number): string => {
-  return `$${price.toFixed(2)}`;
+  // Check if price is a valid number before using toFixed
+  if (price === undefined || price === null) {
+    return '$0.00';
+  }
+  return `$${Number(price).toFixed(2)}`;
 };
 
 /**

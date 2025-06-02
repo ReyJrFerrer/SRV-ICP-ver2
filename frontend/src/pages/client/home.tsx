@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@bundly/ares-react";
 import Head from 'next/head';
+import Image from 'next/image';
 
 // Components
 import Header from '@app/components/client/HeaderNextjs';
@@ -127,7 +128,7 @@ const ClientHomePage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Home | Service Provider App</title>
+        <title>SRV | Find Local Service Providers</title>
         <meta name="description" content="Find the best service providers near you" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -144,7 +145,8 @@ const ClientHomePage: React.FC = () => {
 
           <Categories 
             categories={categories} 
-            className="mb-8" 
+            className="mb-8"
+            initialItemCount={4}
           />
 
           <TopPicks 

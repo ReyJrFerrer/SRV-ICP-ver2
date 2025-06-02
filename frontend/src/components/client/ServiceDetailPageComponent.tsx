@@ -1,9 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { enrichServiceWithProvider } from '@app/utils/serviceHelpers';
+import { FrontendProfile } from '@app/services/authCanisterService';
+import { Service } from '@app/services/serviceCanisterService';
 
 interface ServiceDetailPageComponentProps {
   service: any; // Using any temporarily to handle different service formats
+  provider?: FrontendProfile | null;
 }
 
 // Service Hero Image Component
@@ -22,8 +26,13 @@ const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
     
     {/* Hero content overlay for desktop */}
     <div className="hidden lg:block absolute bottom-6 left-8 text-white">
-      <h1 className="text-3xl font-bold mb-2">{service.title || service.name}</h1>
-      <p className="text-lg opacity-90">{service.category.name}</p>
+      <h1 className="text-3xl font-bold mb-2">{service.name}</h1>
+      <div className="flex items-center">
+        <p className="text-lg opacity-90 mr-4">{service.category.name}</p>
+        <div className="flex items-center text-white/90 bg-black/30 px-3 py-1 rounded-full">
+          <span className="text-sm">By {service.providerName}</span>
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -32,7 +41,18 @@ const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
 const ServiceInfoSection: React.FC<{ service: any }> = ({ service }) => (
   <div className="card mb-6">
     {/* Title only shown on mobile/tablet, hidden on desktop due to hero overlay */}
-    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-3 lg:hidden">{service.title || service.name}</h2>
+    <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1 lg:hidden">{service.title || service.name}</h2>
+    
+    {/* Provider name for mobile display */}
+    <div className="flex items-center mb-3 lg:hidden">
+      <div className="text-sm text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+        By {service.providerName}
+      </div>
+      <div className="text-sm text-gray-600 ml-2 bg-blue-50 px-3 py-1 rounded-full">
+        {service.category.name}
+      </div>
+    </div>
+    
     <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">{service.description}</p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -274,6 +294,9 @@ const createPlaceholderService = (): any => ({
   isVerified: false,
   slug: 'placeholder-service',
   heroImage: '/images/default-service.png',
+  providerName: 'Service Provider', // Added provider name
+  providerAvatar: null, // Added provider avatar
+  priceDisplay: '$1000.00', // Added price display
   category: {
     id: 'cat-placeholder',
     name: 'General Services',
@@ -288,11 +311,19 @@ const createPlaceholderService = (): any => ({
 });
 
 // Main Service Detail Component
-const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service }) => {
+const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({ service, provider }) => {
   const router = useRouter();
 
   // Use placeholder service if no service is provided
-  const displayService = service || createPlaceholderService();
+  const placeholderService = createPlaceholderService();
+  
+  // Enrich service with provider data if available
+  const enrichedService = service 
+    ? enrichServiceWithProvider(service as Service, provider || null) 
+    : placeholderService;
+
+  // Use the enriched service for display
+  const displayService = enrichedService;
 
   const handleBookingRequest = () => {
     // Navigate to booking page with the service slug (works for both real and placeholder data)
@@ -338,7 +369,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                     )}
                     <div>
                       <span className="font-medium text-gray-800 block">
-                        {displayService.providerName || 'Service Provider'}
+                        {displayService.providerName}
                       </span>
                       <span className="text-xs text-gray-500">Member since {new Date(displayService.createdAt).getFullYear()}</span>
                     </div>

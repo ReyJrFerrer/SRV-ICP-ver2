@@ -50,7 +50,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
   return (
     <div className={`${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Top Picks!</h2>
+        <h2 className="text-lg sm:text-xl font-bold">Top Picks!</h2>
         <Link 
           href="/client/service/view-all"
           className="text-green-600 flex items-center hover:text-green-700 transition-colors"
@@ -69,30 +69,19 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium text-gray-900">No services available yet</h3>
-              <p className="text-gray-500 max-w-sm">
-                We're working on bringing you the best service providers. Check back soon!
-              </p>
-            </div>
-            <Link 
-              href="/client/service/view-all"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
-            >
-              Explore Services
-            </Link>
+            <p className="text-gray-500">No services available at the moment</p>
           </div>
         </div>
       ) : (
-        // Services list
-        <div className="relative -mx-4 px-4">
-          <div className="flex overflow-x-auto pb-4 -mx-4 px-4 space-x-4 scrollbar-hide">
-            {services.map((service) => (
-              <div key={service.id} className="flex-shrink-0">
-                <ServiceListItem service={adaptServiceForUI(service)} />
-              </div>
-            ))}
-          </div>
+        // Service grid with responsive sizing
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {services.map((service) => (
+            <div key={service.id}>
+              <ServiceListItem 
+                service={adaptServiceForUI(service)} 
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

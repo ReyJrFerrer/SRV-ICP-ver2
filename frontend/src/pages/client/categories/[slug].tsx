@@ -72,6 +72,7 @@ const CategoryPage: React.FC = () => {
   const [services, setServices] = useState<FormattedServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Function to transform EnrichedService to the format required by ServiceListItem component
   const formatServiceForDisplay = (service: EnrichedService): FormattedServiceItem => {
@@ -226,6 +227,16 @@ const CategoryPage: React.FC = () => {
     router.back();
   };
 
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const filteredServices = services.filter(service => 
+    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (service.title && service.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (service.category.name && service.category.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -256,42 +267,47 @@ const CategoryPage: React.FC = () => {
 
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header */}
-        <div className="bg-white px-4 py-4 shadow-sm">
+        <div className="bg-white px-4 py-4 shadow-sm sticky top-0 z-40">
           <div className="flex items-center gap-3 mb-4">
             <button 
               onClick={handleBackClick}
               className="p-2 rounded-full hover:bg-gray-100"
+              aria-label="Go back"
             >
               <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
             </button>
-            <h1 className="text-xl font-bold">{category.name}</h1>
+            <h1 className="text-xl font-bold truncate">{category.name}</h1>
           </div>
           
           <SearchBar 
             placeholder={`Search in ${category.name}`}
             className="mb-2"
+            onSearch={handleSearch}
           />
         </div>
 
         {/* Services List */}
-        <div className="px-4 py-6">
+        <div className="p-2 sm:p-4">
           {error && (
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
               <span className="block sm:inline">{error}</span>
             </div>
           )}
           
-          {services.length === 0 && !error ? (
+          {filteredServices.length === 0 && !error ? (
             <div className="text-center py-10">
-              <p className="text-gray-500">No services found in this category</p>
+              <p className="text-gray-500">
+                {searchTerm ? `No services found for "${searchTerm}" in this category.` : "No services found in this category."}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {services.map((service) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+              {filteredServices.map((service) => (
                 <ServiceListItem 
                   key={service.id} 
                   service={service} 
-                  inCategories={true} 
+                  isGridItem={true}
+                  retainMobileLayout={true}
                 />
               ))}
             </div>

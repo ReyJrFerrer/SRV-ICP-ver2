@@ -5,6 +5,9 @@
   "auth": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
   },
+  "auth-test": {
+    "local": "vt46d-j7777-77774-qaagq-cai"
+  },
   "booking": {
     "local": "ulvla-h7777-77774-qaacq-cai"
   },
@@ -14,8 +17,14 @@
   "reputation": {
     "local": "ucwa4-rx777-77774-qaada-cai"
   },
+  "reputation-test": {
+    "local": "v27v7-7x777-77774-qaaha-cai"
+  },
   "review": {
     "local": "umunu-kh777-77774-qaaca-cai"
+  },
+  "review-test": {
+    "local": "v56tl-sp777-77774-qaahq-cai"
   },
   "service": {
     "local": "uzt4z-lp777-77774-qaabq-cai"

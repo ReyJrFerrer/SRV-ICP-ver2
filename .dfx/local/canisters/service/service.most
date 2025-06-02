@@ -1,9 +1,9 @@
 // Version: 1.0.0
-type DayAvailability__71544038 =
-  {isAvailable : Bool; slots : [TimeSlot__427192309]};
-type DayOfWeek__953386363 =
+type DayAvailability__172656187 =
+  {isAvailable : Bool; slots : [TimeSlot__1072129858]};
+type DayOfWeek__661364122 =
   {#Friday; #Monday; #Saturday; #Sunday; #Thursday; #Tuesday; #Wednesday};
-type Location__874944613 =
+type Location__189794061 =
   {
     address : Text;
     city : Text;
@@ -13,8 +13,7 @@ type Location__874944613 =
     postalCode : Text;
     state : Text
   };
-type ProviderAvailability__473498373 = ProviderAvailability__709526158;
-type ProviderAvailability__709526158 =
+type ProviderAvailability__231152326 =
   {
     bookingNoticeHours : Nat;
     createdAt : Time__380312498;
@@ -23,11 +22,12 @@ type ProviderAvailability__709526158 =
     maxBookingsPerDay : Nat;
     providerId : Principal;
     updatedAt : Time__380312498;
-    vacationDates : [VacationPeriod__582833371];
-    weeklySchedule : [(DayOfWeek__953386363, DayAvailability__71544038)]
+    vacationDates : [VacationPeriod__29127577];
+    weeklySchedule : [(DayOfWeek__661364122, DayAvailability__172656187)]
   };
-type ServiceCategory__188976952 = ServiceCategory__816999276;
-type ServiceCategory__816999276 =
+type ProviderAvailability__574934089 = ProviderAvailability__231152326;
+type ServiceCategory__249490638 = ServiceCategory__40023902;
+type ServiceCategory__40023902 =
   {
     description : Text;
     id : Text;
@@ -36,26 +36,26 @@ type ServiceCategory__816999276 =
     parentId : ?Text;
     slug : Text
   };
-type ServiceStatus__1025005311 = {#Available; #Suspended; #Unavailable};
-type Service__176638351 = Service__860083215;
-type Service__860083215 =
+type ServiceStatus__84215126 = {#Available; #Suspended; #Unavailable};
+type Service__290647298 =
   {
-    category : ServiceCategory__816999276;
+    category : ServiceCategory__40023902;
     createdAt : Time__380312498;
     description : Text;
     id : Text;
-    location : Location__874944613;
+    location : Location__189794061;
     price : Nat;
     providerId : Principal;
     rating : ?Float;
     reviewCount : Nat;
-    status : ServiceStatus__1025005311;
+    status : ServiceStatus__84215126;
     title : Text;
     updatedAt : Time__380312498
   };
-type TimeSlot__427192309 = {endTime : Text; startTime : Text};
+type Service__343565316 = Service__290647298;
+type TimeSlot__1072129858 = {endTime : Text; startTime : Text};
 type Time__380312498 = Int;
-type VacationPeriod__582833371 =
+type VacationPeriod__29127577 =
   {
     createdAt : Time__380312498;
     endDate : Time__380312498;
@@ -65,7 +65,7 @@ type VacationPeriod__582833371 =
   };
 actor {
   stable var availabilityEntries :
-    [(Principal, ProviderAvailability__473498373)];
-  stable var categoryEntries : [(Text, ServiceCategory__188976952)];
-  stable var serviceEntries : [(Text, Service__176638351)]
+    [(Principal, ProviderAvailability__574934089)];
+  stable var categoryEntries : [(Text, ServiceCategory__249490638)];
+  stable var serviceEntries : [(Text, Service__343565316)]
 };

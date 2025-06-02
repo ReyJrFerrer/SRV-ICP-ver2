@@ -1,5 +1,5 @@
 // Version: 1.0.0
-type BookingStatus__552339041 =
+type BookingStatus__32519137 =
   {
     #Accepted;
     #Cancelled;
@@ -9,24 +9,24 @@ type BookingStatus__552339041 =
     #InProgress;
     #Requested
   };
-type Booking__233847833 = Booking__577718489;
-type Booking__577718489 =
+type Booking__181705895 =
   {
     clientId : Principal;
     completedDate : ?Time__380312498;
     createdAt : Time__380312498;
-    evidence : ?Evidence__199454118;
+    evidence : ?Evidence__280004648;
     id : Text;
-    location : Location__874944613;
+    location : Location__189794061;
     price : Nat;
     providerId : Principal;
     requestedDate : Time__380312498;
     scheduledDate : ?Time__380312498;
     serviceId : Text;
-    status : BookingStatus__552339041;
+    status : BookingStatus__32519137;
     updatedAt : Time__380312498
   };
-type Evidence__199454118 =
+type Booking__726430424 = Booking__181705895;
+type Evidence__280004648 =
   {
     bookingId : Text;
     createdAt : Time__380312498;
@@ -36,8 +36,8 @@ type Evidence__199454118 =
     qualityScore : ?Float;
     submitterId : Principal
   };
-type Evidence__303328784 = Evidence__199454118;
-type Location__874944613 =
+type Evidence__505320078 = Evidence__280004648;
+type Location__189794061 =
   {
     address : Text;
     city : Text;
@@ -49,6 +49,6 @@ type Location__874944613 =
   };
 type Time__380312498 = Int;
 actor {
-  stable var bookingEntries : [(Text, Booking__233847833)];
-  stable var evidenceEntries : [(Text, Evidence__303328784)]
+  stable var bookingEntries : [(Text, Booking__726430424)];
+  stable var evidenceEntries : [(Text, Evidence__505320078)]
 };

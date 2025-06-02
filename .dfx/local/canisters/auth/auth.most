@@ -1,6 +1,7 @@
 // Version: 1.0.0
-type ProfileImage__847180220 = {imageUrl : Text; thumbnailUrl : Text};
-type Profile__26758623 =
+type ProfileImage__460681414 = {imageUrl : Text; thumbnailUrl : Text};
+type Profile__28087604 = Profile__804013198;
+type Profile__804013198 =
   {
     biography : ?Text;
     createdAt : Time__380312498;
@@ -9,13 +10,12 @@ type Profile__26758623 =
     isVerified : Bool;
     name : Text;
     phone : Text;
-    profilePicture : ?ProfileImage__847180220;
-    role : UserRole__576633604;
+    profilePicture : ?ProfileImage__460681414;
+    role : UserRole__518313563;
     updatedAt : Time__380312498
   };
-type Profile__899164101 = Profile__26758623;
 type Time__380312498 = Int;
-type UserRole__576633604 = {#Client; #ServiceProvider};
+type UserRole__518313563 = {#Client; #ServiceProvider};
 actor {
-  stable var profileEntries : [(Principal, Profile__899164101)]
+  stable var profileEntries : [(Principal, Profile__28087604)]
 };

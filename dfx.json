@@ -92,14 +92,6 @@
         }
       },
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
-    },
-    "frontend": {
-      "type": "assets",
-      "source": ["frontend/build"],
-      "dependencies": ["auth", "booking", "review", "reputation", "service"],
-      "frontend": {
-        "entrypoint": "frontend/build/index.html"
-      }
     }
   }
 }

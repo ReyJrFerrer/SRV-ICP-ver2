@@ -6,53 +6,42 @@
   - Environments: .env
 
    Creating an optimized production build ...
- ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
-Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
- ⚠ For production Image Optimization with Next.js, the optional 'sharp' package is strongly recommended. Run 'npm i sharp', and Next.js will use it automatically for Image Optimization.
-Read more: https://nextjs.org/docs/messages/sharp-missing-in-production
-Browserslist: caniuse-lite is outdated. Please run:
-  npx update-browserslist-db@latest
-  Why you should do it regularly: https://github.com/browserslist/update-db#readme
-(node:17095) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
-Browserslist: caniuse-lite is outdated. Please run:
-  npx update-browserslist-db@latest
-  Why you should do it regularly: https://github.com/browserslist/update-db#readme
- ✓ Compiled successfully
-   Linting and checking validity of types ...
- ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
-   Collecting page data ...
-   Generating static pages (0/15) ...
-   Generating static pages (3/15) 
-   Generating static pages (7/15) 
-   Generating static pages (11/15) 
- ✓ Generating static pages (15/15)
-   Finalizing page optimization ...
-   Collecting build traces ...
+Failed to compile.
+
+./src/pages/client/index.tsx
+Module not found: Can't resolve '../../declarations/auth/auth.did.js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/pages/create-profile.tsx
+Module not found: Can't resolve '../declarations/auth/auth.did.js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/pages/index.tsx
+Module not found: Can't resolve '../declarations/auth/auth.did.js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/pages/provider/index.tsx
+Module not found: Can't resolve '../../declarations/auth/auth.did.js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+./src/services/authCanisterService.ts
+Module not found: Can't resolve '../declarations/auth/auth.did.js'
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./src/pages/client/home.tsx
 
 
-Route (pages)                              Size     First Load JS
-┌ ○ /                                      4.78 kB         185 kB
-├   /_app                                  0 B             178 kB
-├ ○ /404                                   182 B           178 kB
-├ ○ /client                                3.25 kB         184 kB
-├ ƒ /client/book/[slug]                    48.7 kB         227 kB
-├ ○ /client/booking/confirmation           1.24 kB         182 kB
-├ ○ /client/categories/[slug]              3.11 kB         189 kB
-├ ○ /client/chat                           2.37 kB         183 kB
-├ ○ /client/home                           7.46 kB         196 kB
-├ ○ /client/service-maps                   2.02 kB         191 kB
-├ ○ /client/service/[slug]                 4.38 kB         190 kB
-├ ○ /client/service/view-all               2.86 kB         189 kB
-├ ○ /create-profile                        2.92 kB         181 kB
-├ ○ /provider                              3.25 kB         184 kB
-└ ○ /provider/home                         8.08 kB         189 kB
-+ First Load JS shared by all              188 kB
-  ├ chunks/framework-3f6905f6df109714.js   44.9 kB
-  ├ chunks/main-27e6c91b60120ee4.js        33.9 kB
-  ├ chunks/pages/_app-9346891ae42181fb.js  97.5 kB
-  └ other shared chunks (total)            11.6 kB
-
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
+> Build failed because of webpack errors
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /home/jadolation/Documents/SRV-ICP-ver2-2/frontend
+npm error workspace frontend
+npm error location /home/jadolation/Documents/SRV-ICP-ver2-2/frontend
+npm error command failed
+npm error command sh -c next build

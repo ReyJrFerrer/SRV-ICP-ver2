@@ -51,7 +51,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
   const locationAddress = booking.location?.address || orderDetails?.location?.address || "Location not specified";
   const status = booking.status || orderDetails?.status;
 
-  // Placeholder actions
   const handleAccept = () => alert(`Accept booking: ${booking.id}`);
   const handleReject = () => alert(`Reject booking: ${booking.id}`);
   const handleContactClient = () => alert(`Contact client: ${clientContact || 'Contact info not available'}`);
@@ -61,7 +60,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
   return (
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col h-full"> {/* Added flex flex-col h-full */}
       <div className="flex justify-between items-start mb-3">
-        {/* Ensure text size remains constant for mobile look */}
         <h3 className="text-base font-semibold text-blue-700 group-hover:text-blue-800 transition-colors pr-2 flex-grow break-words">
             {serviceTitle}
         </h3>
@@ -79,8 +77,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
         </span>
       </div>
 
-      {/* Ensure text sizes here are fixed (mobile-like) */}
-      <div className="space-y-2 text-xs text-gray-700 flex-grow"> {/* Added flex-grow */}
+      <div className="space-y-2 text-xs text-gray-700 flex-grow"> 
         <div className="flex items-center">
           <UserIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
           <span>Client: <span className="font-medium">{clientName}</span></span>
@@ -123,7 +120,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
         )}
       </div>
 
-      {/* Action buttons remain in the footer, text size fixed */}
       <div className="mt-auto pt-3 border-t border-gray-200 flex flex-wrap gap-2 justify-end"> {/* Added mt-auto */}
         {status === 'PENDING' && (
           <>

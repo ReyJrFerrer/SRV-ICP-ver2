@@ -3,9 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { 
   HomeIcon, 
-  // ChatBubbleLeftRightIcon, // No longer needed for chat here
   WrenchScrewdriverIcon,
-  CalendarDaysIcon // New icon for "My Bookings"
+  CalendarDaysIcon 
 } from '@heroicons/react/24/solid';
 
 interface BottomNavigationProps {
@@ -18,7 +17,7 @@ const BottomNavigationNextjs: React.FC<BottomNavigationProps> = ({ className = '
   const navItems = [
     {
       label: 'Dashboard',
-      icon: <HomeIcon className="h-5 w-5 sm:h-6 sm:w-6" />, // Adjusted size for consistency
+      icon: <HomeIcon className="h-5 w-5 sm:h-6 sm:w-6" />, 
       href: '/provider/home'
     },
     {

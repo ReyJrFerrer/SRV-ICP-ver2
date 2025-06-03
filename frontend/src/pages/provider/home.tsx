@@ -4,7 +4,6 @@ import SPHeaderNextjs from '@app/components/provider/SPHeaderNextjs';
 import ProviderStatsNextjs from '@app/components/provider/ProviderStatsNextjs';
 import BookingRequestsNextjs from '@app/components/provider/BookingRequestsNextjs';
 import ServiceManagementNextjs from '@app/components/provider/ServiceManagementNextjs';
-import AvailabilityManagementNextjs from '@app/components/provider/AvailabilityManagementNextjs';
 import CredentialsDisplayNextjs from '@app/components/provider/CredentialsDisplayNextjs';
 import BottomNavigationNextjs from '@app/components/provider/BottomNavigationNextjs';
 import { SERVICE_PROVIDERS } from '../../../assets/serviceProviders'; 
@@ -68,7 +67,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
           />
           
           <ServiceManagementNextjs provider={provider} />
-          <AvailabilityManagementNextjs provider={provider} />
+
           <CredentialsDisplayNextjs provider={provider} />
         </div>
         

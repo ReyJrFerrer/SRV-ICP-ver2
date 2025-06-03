@@ -2,41 +2,10 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { StarIcon, MapPinIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { EnrichedService } from '@app/hooks/serviceInformation';
 
 interface ServiceListItemProps {
-  service: {
-    id: string;
-    slug: string;
-    name: string;
-    title?: string;
-    heroImage: string;
-    providerName?: string;
-    providerAvatar?: any;
-    rating: {
-      average: number;
-      count: number;
-    };
-    price: {
-      amount: number;
-      unit: string;
-      display?: string;
-    };
-    location: {
-      serviceRadius: number;
-      serviceRadiusUnit: string;
-      address?: string;
-      city?: string;
-      state?: string;
-    };
-    category: {
-      name: string;
-      id?: string;
-      slug?: string;
-    };
-    availability?: {
-      isAvailable?: boolean;
-    };
-  };
+  service: EnrichedService;
   inCategories?: boolean;
   isGridItem?: boolean;
   retainMobileLayout?: boolean;
@@ -78,7 +47,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           <div className="aspect-video w-full">
             <Image 
               src={service.heroImage || service.providerAvatar}
-              alt={service.title || service.name}
+              alt={service.title}
               className="service-image group-hover:scale-105 transition-transform duration-300"
               style={{ objectFit: 'cover' }}
               fill
@@ -106,7 +75,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           <div className="flex-grow"> {/* This div helps push price/location to bottom */}
             <div className={nameRatingContainerClass}>
               <h3 className={`text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors ${nameMarginClass}`}>
-                {service.name}
+                {service.providerName}
               </h3>
               <div className={`flex items-center text-blue-800 text-xs flex-shrink-0 ${ratingMarginClass}`}>
                 <StarIcon className="h-3 w-3 text-blue-800 mr-0.5" />
@@ -114,9 +83,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
               </div>
             </div>
             
-            {service.title && (
-              <p className="text-blue-700 text-sm mb-2 leading-snug">{service.title}</p>
-            )}
+            {/* Display service title */}
+            <p className="text-blue-700 text-sm mb-2 leading-snug">{service.title}</p>
             
             {/* Location info - city/address if available */}
             {service.location && (service.location.city || service.location.address) && (

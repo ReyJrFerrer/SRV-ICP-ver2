@@ -83,16 +83,25 @@ export const authCanisterService = {
   async getProfile(userId: string): Promise<FrontendProfile | null> {
     try {
       const actor = await getAuthActor();
-      const result = await actor.getProfile(userId as any); // Principal conversion
+      
+      // Convert string to Principal
+      console.log('Converting userId to Principal:', userId);
+      const userPrincipal = Principal.fromText(userId);
+      console.log('Principal created:', userPrincipal.toString());
+      
+      const result = await actor.getProfile(userPrincipal);
+      console.log('getProfile result:', result);
       
       if ('ok' in result) {
+        console.log('Profile found:', result.ok);
         return adaptBackendProfile(result.ok);
       } else {
-        console.error('Error fetching profile:', result.err);
+        console.log('Profile not found, error:', result.err);
         return null;
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      console.error('UserId that caused error:', userId);
       throw new Error(`Failed to fetch profile: ${error}`);
     }
   },
@@ -174,10 +183,16 @@ export const authCanisterService = {
   /**
    * Verify a user
    */
+  /**
+   * Verify a user
+   */
   async verifyUser(userId: string): Promise<boolean> {
     try {
       const actor = await getAuthActor();
-      const result = await actor.verifyUser(userId as any); // Principal conversion
+      
+      // Convert string to Principal
+      const userPrincipal = Principal.fromText(userId);
+      const result = await actor.verifyUser(userPrincipal);
       
       if ('ok' in result) {
         return result.ok;

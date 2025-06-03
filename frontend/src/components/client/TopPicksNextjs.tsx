@@ -1,50 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import ServiceListItem from './ServiceListItemNextjs';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import { EnrichedService, getCategoryImage } from '@app/utils/serviceHelpers';
+import { EnrichedService, useTopPickServices } from '@app/hooks/serviceInformation';
+import { getCategoryImage } from '@app/utils/serviceHelpers';
 
 interface TopPicksProps {
-  services: EnrichedService[];
   className?: string;
+  limit?: number;
 }
 
-const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
-  // Adapter function to convert EnrichedService to ServiceListItem format
-  const adaptServiceForUI = (service: EnrichedService) => ({
-    id: service.id,
-    slug: service.id, // Using id as slug since slug is not in serviceCanister Service
-    name: service.providerName, // Use provider name as the main name
-    title: service.title, // Service title as the secondary title
-    heroImage: getCategoryImage(service.category.name), // Temporary fallback image
-    providerName: service.providerName,
-    providerAvatar: service.providerAvatar || '/images/default-avatar.jpg', // Use provider avatar or default
-    rating: {
-      average: service.rating || 0,
-      count: service.reviewCount || 0,
-    },
-    price: {
-      amount: service.price,
-      unit: 'hour',
-      display: service.priceDisplay,
-    },
-    location: {
-      serviceRadius: 10, // Default radius - could be calculated based on service area
-      serviceRadiusUnit: 'km',
-      // Additional location data from service.mo
-      address: service.location.address,
-      city: service.location.city,
-      state: service.location.state,
-      country: service.location.country,
-      postalCode: service.location.postalCode,
-      latitude: service.location.latitude,
-      longitude: service.location.longitude,
-    },
-    category: {
-      name: service.category.name,
-      id: service.category.id,
-      slug: service.category.slug,
-    },
+const TopPicks: React.FC<TopPicksProps> = ({ className = '', limit = 4 }) => {
+  // Use our custom hook to fetch top pick services
+  const { services, loading, error } = useTopPickServices(limit);
+  
+  // Use the EnrichedService directly, but update heroImage using category helper
+  const enhanceService = (service: EnrichedService): EnrichedService => ({
+    ...service,
+    heroImage: getCategoryImage(service.category.name)
   });
 
   return (
@@ -78,7 +51,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ services, className = '' }) => {
           {services.map((service) => (
             <div key={service.id}>
               <ServiceListItem 
-                service={adaptServiceForUI(service)} 
+                service={enhanceService(service)} 
               />
             </div>
           ))}

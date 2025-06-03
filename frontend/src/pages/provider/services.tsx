@@ -116,13 +116,13 @@ const MyServicesPage: React.FC = () => {
           )}
 
           {!loading && providerServices.length > 0 && (
-            <div className="space-y-6">
+            <div className="space-y-6"> {/* This div lists all the services */}
               {providerServices.map(service => (
-                <ProviderServiceListItem
+                <ProviderServiceListItem // Each service is rendered by this component
                   key={service.id}
                   service={service}
-                  onToggleActive={handleToggleActive}
-                  onDeleteService={handleDeleteService}
+                  onToggleActive={handleToggleActive} // Placeholder for actual toggle logic
+                  onDeleteService={handleDeleteService} // Placeholder for actual delete logic
                 />
               ))}
             </div>

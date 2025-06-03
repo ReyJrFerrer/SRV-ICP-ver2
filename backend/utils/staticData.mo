@@ -361,37 +361,37 @@ module {
             }),
             ("svc-005", {
                 id = "svc-005";
-                providerId = Principal.fromText("2vxsx-fae"); // Mary Gold - Deep Cleaning
-                title = "Deep Cleaning & Organization";
-                description = "Intensive deep cleaning service perfect for spring cleaning, move-in/move-out situations, or periodic maintenance. Includes detailed cleaning of all areas plus organization services.";
+                providerId = Principal.fromText("2vxsx-fae"); // Mary Gold - Home Repair Technician
+                title = "General Home Repairs & Maintenance";
+                description = "Comprehensive home repair services including minor plumbing fixes, electrical work, drywall repair, painting touch-ups, door/window adjustments, and general handyman services. Perfect for those small but important home maintenance tasks.";
                 category = {
-                    id = "cat-002";
-                    name = "Cleaning Services";
-                    description = "Professional cleaning and housekeeping services";
-                    parentId = ?("cat-001");
-                    slug = "cleaning-services";
-                    imageUrl = "/images/CLeaningServices-CoverImage.jpeg";
+                    id = "cat-001";
+                    name = "Home Services";
+                    description = "Professional home maintenance and improvement services";
+                    parentId = null;
+                    slug = "home-services";
+                    imageUrl = "/images/HomeServices-CoverImage.jpg";
                 };
-                price = 4500;
+                price = 2800;
                 location = CAMP_JOHN_HAY_LOCATION;
                 status = #Available;
                 createdAt = 1641081600000000000; // 2022-01-02
                 updatedAt = 1641081600000000000;
-                rating = ?4.9;
-                reviewCount = 15;
-                // Availability information - Intensive service, limited slots
+                rating = ?4.7;
+                reviewCount = 19;
+                // Availability information - Handyman service schedule
                 weeklySchedule = ?[
-                    (#Monday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "16:00" }] }),
-                    (#Tuesday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "16:00" }] }),
-                    (#Wednesday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "16:00" }] }),
-                    (#Thursday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "16:00" }] }),
-                    (#Friday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "16:00" }] }),
-                    (#Saturday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "14:00" }] }),
+                    (#Monday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
+                    (#Tuesday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
+                    (#Wednesday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
+                    (#Thursday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
+                    (#Friday, { isAvailable = true; slots = [{ startTime = "09:00"; endTime = "17:00" }] }),
+                    (#Saturday, { isAvailable = true; slots = [{ startTime = "08:00"; endTime = "15:00" }] }),
                     (#Sunday, { isAvailable = false; slots = [] })
                 ];
-                instantBookingEnabled = ?false; // Deep cleaning requires advance planning
-                bookingNoticeHours = ?72; // 3 days advance notice
-                maxBookingsPerDay = ?1; // Only one deep cleaning per day
+                instantBookingEnabled = ?false; // Home repairs require assessment
+                bookingNoticeHours = ?48; // 2 days advance notice for proper planning
+                maxBookingsPerDay = ?3; // Multiple repair jobs per day
             })
         ];
     };
@@ -515,31 +515,31 @@ module {
                 updatedAt = 1640995200000000000;
             }),
             
-            // Deep Cleaning (svc-005) packages
+            // General Home Repairs (svc-005) packages
             ("pkg-013", {
                 id = "pkg-013";
                 serviceId = "svc-005";
-                title = "Standard Deep Clean";
-                description = "Thorough deep cleaning of all areas including often-missed spots like baseboards, ceiling fans, and under furniture. Perfect for seasonal cleaning.";
-                price = 4000; // 40.00 units
+                title = "Minor Repair Package";
+                description = "Quick fixes for common household issues like leaky faucets, squeaky doors, loose handles, and small holes in walls. Perfect for maintenance tasks.";
+                price = 2000; // 20.00 units
                 createdAt = 1641081600000000000; // 2022-01-02
                 updatedAt = 1641081600000000000;
             }),
             ("pkg-014", {
                 id = "pkg-014";
                 serviceId = "svc-005";
-                title = "Premium Organization Package";
-                description = "Deep cleaning with professional organization of closets, pantries, and storage areas. Includes custom organization recommendations.";
-                price = 5500; // 55.00 units
+                title = "Multi-Room Repair Package";
+                description = "Comprehensive repair service covering multiple rooms with various maintenance needs. Includes painting touch-ups, hardware adjustments, and basic electrical fixes.";
+                price = 3500; // 35.00 units
                 createdAt = 1641081600000000000;
                 updatedAt = 1641081600000000000;
             }),
             ("pkg-015", {
                 id = "pkg-015";
                 serviceId = "svc-005";
-                title = "Commercial Deep Clean";
-                description = "Comprehensive deep cleaning service for offices and commercial spaces. Includes all surfaces, restrooms, break rooms, and common areas.";
-                price = 6500; // 65.00 units
+                title = "Home Maintenance Inspection";
+                description = "Complete home maintenance assessment with minor repairs included. Identifies potential issues and provides immediate fixes for safety and functionality concerns.";
+                price = 4200; // 42.00 units
                 createdAt = 1641081600000000000;
                 updatedAt = 1641081600000000000;
             })

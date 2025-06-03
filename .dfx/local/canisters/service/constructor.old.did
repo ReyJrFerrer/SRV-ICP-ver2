@@ -1,11 +1,3 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
 type TimeSlot = 
  record {
    endTime: text;
@@ -108,7 +100,6 @@ type ProviderAvailability =
    maxBookingsPerDay: nat;
    providerId: principal;
    updatedAt: Time;
-   vacationDates: vec VacationPeriod;
    weeklySchedule: vec record {
                          DayOfWeek;
                          DayAvailability;
@@ -149,8 +140,6 @@ type AvailableSlot =
 service : {
   addCategory: (name: text, description: text, parentId: opt text, slug:
    text, imageUrl: text) -> (Result_7);
-  addVacationDates: (startDate: Time, endDate: Time, reason: opt text) ->
-   (Result_2);
   createService: (title: text, description: text, categoryId: text, price:
    nat, location: Location, weeklySchedule:
    opt vec record {
@@ -163,16 +152,18 @@ service : {
   deleteServicePackage: (packageId: text) -> (Result_3);
   getAllCategories: () -> (vec ServiceCategory) query;
   getAllServices: () -> (vec Service) query;
-  getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_6);
+  getAvailableTimeSlots: (serviceId: text, date: Time) -> (Result_6);
   getPackage: (packageId: text) -> (Result_1) query;
   getProviderAvailability: (providerId: principal) -> (Result_2) query;
   getService: (serviceId: text) -> (Result) query;
+  getServiceAvailability: (serviceId: text) -> (Result_2) query;
   getServicePackages: (serviceId: text) -> (Result_5) query;
   getServicesByCategory: (categoryId: text) -> (vec Service) query;
   getServicesByProvider: (providerId: principal) -> (vec Service) query;
   isProviderAvailable: (providerId: principal, requestedDateTime: Time) ->
    (Result_4);
-  removeVacationDates: (vacationId: text) -> (Result_2);
+  isServiceAvailable: (serviceId: text, requestedDateTime: Time) ->
+   (Result_4);
   searchServicesByLocation: (userLocation: Location, maxDistance: float64,
    categoryId: opt text) -> (vec Service) query;
   searchServicesWithReputationFilter: (userLocation: Location, maxDistance:
@@ -181,6 +172,12 @@ service : {
   setCanisterReferences: (auth: opt principal, booking: opt principal,
    review: opt principal, reputation: opt principal) -> (Result_3);
   setProviderAvailability: (weeklySchedule:
+   vec record {
+         DayOfWeek;
+         DayAvailability;
+       }, instantBookingEnabled: bool, bookingNoticeHours: nat,
+   maxBookingsPerDay: nat) -> (Result_2);
+  setServiceAvailability: (serviceId: text, weeklySchedule:
    vec record {
          DayOfWeek;
          DayAvailability;

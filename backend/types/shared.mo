@@ -79,18 +79,10 @@ module {
         slots: [TimeSlot];
     };
 
-    public type VacationPeriod = {
-        id: Text;
-        startDate: Time.Time;
-        endDate: Time.Time;
-        reason: ?Text;
-        createdAt: Time.Time;
-    };
 
     public type ProviderAvailability = {
         providerId: Principal;
         weeklySchedule: [(DayOfWeek, DayAvailability)];
-        vacationDates: [VacationPeriod];
         instantBookingEnabled: Bool;
         bookingNoticeHours: Nat; // Minimum hours in advance for booking
         maxBookingsPerDay: Nat;

@@ -13,7 +13,6 @@ import type {
   TimeSlot as CanisterTimeSlot,
   DayAvailability as CanisterDayAvailability,
   DayOfWeek as CanisterDayOfWeek,
-  VacationPeriod as CanisterVacationPeriod,
   ServicePackage as CanisterServicePackage,
   Time,
   Result,
@@ -88,14 +87,6 @@ export interface DayAvailability {
   slots: TimeSlot[];
 }
 
-export interface VacationPeriod {
-  id: string;
-  startDate: string;
-  endDate: string;
-  reason?: string;
-  createdAt: string;
-}
-
 export interface ProviderAvailability {
   providerId: Principal;
   isActive: boolean;
@@ -103,7 +94,6 @@ export interface ProviderAvailability {
   bookingNoticeHours: number;
   maxBookingsPerDay: number;
   weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>;
-  vacationDates: VacationPeriod[];
   createdAt: string;
   updatedAt: string;
 }
@@ -228,14 +218,6 @@ const convertToCanisterDayAvailability = (availability: DayAvailability): Canist
   slots: availability.slots.map(convertToCanisterTimeSlot),
 });
 
-const convertCanisterVacationPeriod = (vacation: CanisterVacationPeriod): VacationPeriod => ({
-  id: vacation.id,
-  startDate: new Date(Number(vacation.startDate) / 1000000).toISOString(),
-  endDate: new Date(Number(vacation.endDate) / 1000000).toISOString(),
-  reason: vacation.reason[0],
-  createdAt: new Date(Number(vacation.createdAt) / 1000000).toISOString(),
-});
-
 const convertCanisterProviderAvailability = (availability: CanisterProviderAvailability): ProviderAvailability => ({
   providerId: availability.providerId,
   isActive: availability.isActive,
@@ -246,7 +228,6 @@ const convertCanisterProviderAvailability = (availability: CanisterProviderAvail
     day: convertCanisterDayOfWeek(day),
     availability: convertCanisterDayAvailability(avail),
   })),
-  vacationDates: availability.vacationDates.map(convertCanisterVacationPeriod),
   createdAt: new Date(Number(availability.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(availability.updatedAt) / 1000000).toISOString(),
 });
@@ -512,9 +493,9 @@ export const serviceCanisterService = {
   async addCategory(
     name: string,
     slug: string,
+    parentId: string | undefined,
     description: string,
-    imageUrl: string,
-    parentId?: string
+    imageUrl: string
   ): Promise<ServiceCategory | null> {
     try {
       const actor = await getServiceActor();
@@ -569,9 +550,10 @@ export const serviceCanisterService = {
   },
 
   /**
-   * Set provider availability
+   * Set service availability
    */
-  async setProviderAvailability(
+  async setServiceAvailability(
+    serviceId: string,
     weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>,
     instantBookingEnabled: boolean,
     bookingNoticeHours: number,
@@ -579,7 +561,8 @@ export const serviceCanisterService = {
   ): Promise<ProviderAvailability | null> {
     try {
       const actor = await getServiceActor();
-      const result = await actor.setProviderAvailability(
+      const result = await actor.setServiceAvailability(
+        serviceId,
         weeklySchedule.map(({ day, availability }) => [
           convertToCanisterDayOfWeek(day),
           convertToCanisterDayAvailability(availability)
@@ -592,12 +575,12 @@ export const serviceCanisterService = {
       if ('ok' in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error('Error setting provider availability:', result.err);
+        console.error('Error setting service availability:', result.err);
         throw new Error(result.err);
       }
     } catch (error) {
-      console.error('Error setting provider availability:', error);
-      throw new Error(`Failed to set provider availability: ${error}`);
+      console.error('Error setting service availability:', error);
+      throw new Error(`Failed to set service availability: ${error}`);
     }
   },
 
@@ -622,64 +605,36 @@ export const serviceCanisterService = {
   },
 
   /**
-   * Add vacation dates
+   * Get service availability
    */
-  async addVacationDates(
-    startDate: Date,
-    endDate: Date,
-    reason?: string
-  ): Promise<ProviderAvailability | null> {
+  async getServiceAvailability(serviceId: string): Promise<ProviderAvailability | null> {
     try {
       const actor = await getServiceActor();
-      const result = await actor.addVacationDates(
-        BigInt(startDate.getTime() * 1000000), // Convert to nanoseconds
-        BigInt(endDate.getTime() * 1000000),   // Convert to nanoseconds
-        reason ? [reason] : []
-      );
+      const result = await actor.getServiceAvailability(serviceId);
 
       if ('ok' in result) {
         return convertCanisterProviderAvailability(result.ok);
       } else {
-        console.error('Error adding vacation dates:', result.err);
-        throw new Error(result.err);
+        console.error('Error fetching service availability:', result.err);
+        return null;
       }
     } catch (error) {
-      console.error('Error adding vacation dates:', error);
-      throw new Error(`Failed to add vacation dates: ${error}`);
+      console.error('Error fetching service availability:', error);
+      throw new Error(`Failed to fetch service availability: ${error}`);
     }
   },
 
   /**
-   * Remove vacation dates
-   */
-  async removeVacationDates(vacationId: string): Promise<ProviderAvailability | null> {
-    try {
-      const actor = await getServiceActor();
-      const result = await actor.removeVacationDates(vacationId);
-
-      if ('ok' in result) {
-        return convertCanisterProviderAvailability(result.ok);
-      } else {
-        console.error('Error removing vacation dates:', result.err);
-        throw new Error(result.err);
-      }
-    } catch (error) {
-      console.error('Error removing vacation dates:', error);
-      throw new Error(`Failed to remove vacation dates: ${error}`);
-    }
-  },
-
-  /**
-   * Get available time slots for a specific date and provider
+   * Get available time slots for a specific date and service
    */
   async getAvailableTimeSlots(
-    providerId: string,
+    serviceId: string,
     date: Date
   ): Promise<AvailableSlot[]> {
     try {
       const actor = await getServiceActor();
       const result = await actor.getAvailableTimeSlots(
-        Principal.fromText(providerId),
+        serviceId,
         BigInt(date.getTime() * 1000000) // Convert to nanoseconds
       );
 
@@ -718,6 +673,32 @@ export const serviceCanisterService = {
     } catch (error) {
       console.error('Error checking provider availability:', error);
       throw new Error(`Failed to check provider availability: ${error}`);
+    }
+  },
+
+  /**
+   * Check if service is available at specific date and time
+   */
+  async isServiceAvailable(
+    serviceId: string,
+    requestedDateTime: Date
+  ): Promise<boolean> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.isServiceAvailable(
+        serviceId,
+        BigInt(requestedDateTime.getTime() * 1000000) // Convert to nanoseconds
+      );
+
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error checking service availability:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error checking service availability:', error);
+      throw new Error(`Failed to check service availability: ${error}`);
     }
   },
 
@@ -868,6 +849,56 @@ export const serviceCanisterService = {
     } catch (error) {
       console.error('Error deleting service package:', error);
       throw new Error(`Failed to delete service package: ${error}`);
+    }
+  },
+
+  /**
+   * Update a service
+   */
+  async updateService(
+    serviceId: string,
+    title?: string,
+    description?: string,
+    price?: number
+  ): Promise<Service | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.updateService(
+        serviceId,
+        title ? [title] : [],
+        description ? [description] : [],
+        price ? [BigInt(price)] : []
+      );
+
+      if ('ok' in result) {
+        return convertCanisterService(result.ok);
+      } else {
+        console.error('Error updating service:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error updating service:', error);
+      throw new Error(`Failed to update service: ${error}`);
+    }
+  },
+
+  /**
+   * Delete a service
+   */
+  async deleteService(serviceId: string): Promise<string | null> {
+    try {
+      const actor = await getServiceActor();
+      const result = await actor.deleteService(serviceId);
+
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error deleting service:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      throw new Error(`Failed to delete service: ${error}`);
     }
   },
 };

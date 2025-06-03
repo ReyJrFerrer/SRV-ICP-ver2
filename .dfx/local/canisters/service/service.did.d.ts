@@ -29,7 +29,6 @@ export interface Location {
   'address' : string,
 }
 export interface ProviderAvailability {
-  'vacationDates' : Array<VacationPeriod>,
   'weeklySchedule' : Array<[DayOfWeek, DayAvailability]>,
   'createdAt' : Time,
   'instantBookingEnabled' : boolean,
@@ -95,19 +94,11 @@ export type ServiceStatus = { 'Available' : null } |
   { 'Unavailable' : null };
 export type Time = bigint;
 export interface TimeSlot { 'startTime' : string, 'endTime' : string }
-export interface VacationPeriod {
-  'id' : string,
-  'endDate' : Time,
-  'createdAt' : Time,
-  'startDate' : Time,
-  'reason' : [] | [string],
-}
 export interface _SERVICE {
   'addCategory' : ActorMethod<
     [string, string, [] | [string], string, string],
     Result_7
   >,
-  'addVacationDates' : ActorMethod<[Time, Time, [] | [string]], Result_2>,
   'createService' : ActorMethod<
     [
       string,
@@ -126,18 +117,20 @@ export interface _SERVICE {
     [string, string, string, bigint],
     Result_1
   >,
+  'deleteService' : ActorMethod<[string], Result_3>,
   'deleteServicePackage' : ActorMethod<[string], Result_3>,
   'getAllCategories' : ActorMethod<[], Array<ServiceCategory>>,
   'getAllServices' : ActorMethod<[], Array<Service>>,
-  'getAvailableTimeSlots' : ActorMethod<[Principal, Time], Result_6>,
+  'getAvailableTimeSlots' : ActorMethod<[string, Time], Result_6>,
   'getPackage' : ActorMethod<[string], Result_1>,
   'getProviderAvailability' : ActorMethod<[Principal], Result_2>,
   'getService' : ActorMethod<[string], Result>,
+  'getServiceAvailability' : ActorMethod<[string], Result_2>,
   'getServicePackages' : ActorMethod<[string], Result_5>,
   'getServicesByCategory' : ActorMethod<[string], Array<Service>>,
   'getServicesByProvider' : ActorMethod<[Principal], Array<Service>>,
   'isProviderAvailable' : ActorMethod<[Principal, Time], Result_4>,
-  'removeVacationDates' : ActorMethod<[string], Result_2>,
+  'isServiceAvailable' : ActorMethod<[string, Time], Result_4>,
   'searchServicesByLocation' : ActorMethod<
     [Location, number, [] | [string]],
     Array<Service>
@@ -150,9 +143,13 @@ export interface _SERVICE {
     [[] | [Principal], [] | [Principal], [] | [Principal], [] | [Principal]],
     Result_3
   >,
-  'setProviderAvailability' : ActorMethod<
-    [Array<[DayOfWeek, DayAvailability]>, boolean, bigint, bigint],
+  'setServiceAvailability' : ActorMethod<
+    [string, Array<[DayOfWeek, DayAvailability]>, boolean, bigint, bigint],
     Result_2
+  >,
+  'updateService' : ActorMethod<
+    [string, [] | [string], [] | [string], [] | [bigint]],
+    Result
   >,
   'updateServicePackage' : ActorMethod<
     [string, [] | [string], [] | [string], [] | [bigint]],

@@ -22,7 +22,6 @@ actor ServiceCanister {
     type DayOfWeek = Types.DayOfWeek;
     type DayAvailability = Types.DayAvailability;
     type TimeSlot = Types.TimeSlot;
-    type VacationPeriod = Types.VacationPeriod;
     type AvailableSlot = Types.AvailableSlot;
     type ServicePackage = Types.ServicePackage;
 
@@ -34,8 +33,8 @@ actor ServiceCanister {
     private var categories = HashMap.HashMap<Text, ServiceCategory>(10, Text.equal, Text.hash);
 
     // Availability state variables
-    private stable var availabilityEntries : [(Principal, ProviderAvailability)] = [];
-    private var providerAvailabilities = HashMap.HashMap<Principal, ProviderAvailability>(10, Principal.equal, Principal.hash);
+    private stable var availabilityEntries : [(Text, ProviderAvailability)] = [];
+    private var serviceAvailabilities = HashMap.HashMap<Text, ProviderAvailability>(10, Text.equal, Text.hash);
     
     // Service package state variables
     private stable var packageEntries : [(Text, ServicePackage)] = [];
@@ -161,7 +160,7 @@ actor ServiceCanister {
     system func preupgrade() {
         serviceEntries := Iter.toArray(services.entries());
         categoryEntries := Iter.toArray(categories.entries());
-        availabilityEntries := Iter.toArray(providerAvailabilities.entries());
+        availabilityEntries := Iter.toArray(serviceAvailabilities.entries());
         packageEntries := Iter.toArray(servicePackages.entries());
     };
 
@@ -172,7 +171,7 @@ actor ServiceCanister {
         categories := HashMap.fromIter<Text, ServiceCategory>(categoryEntries.vals(), 10, Text.equal, Text.hash);
         categoryEntries := [];
         
-        providerAvailabilities := HashMap.fromIter<Principal, ProviderAvailability>(availabilityEntries.vals(), 10, Principal.equal, Principal.hash);
+        serviceAvailabilities := HashMap.fromIter<Text, ProviderAvailability>(availabilityEntries.vals(), 10, Text.equal, Text.hash);
         availabilityEntries := [];
         
         servicePackages := HashMap.fromIter<Text, ServicePackage>(packageEntries.vals(), 10, Text.equal, Text.hash);
@@ -458,6 +457,121 @@ actor ServiceCanister {
         };
     };
     
+    // Update service details (comprehensive update function)
+    public shared(msg) func updateService(
+        serviceId : Text,
+        title : ?Text,
+        description : ?Text,
+        price : ?Nat
+    ) : async Result<Service> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to update this service");
+                };
+                
+                // Validate updated fields
+                let updatedTitle = switch (title) {
+                    case (?t) {
+                        if (not validateTitle(t)) {
+                            return #err("Title must be between " # Nat.toText(MIN_TITLE_LENGTH) # " and " # Nat.toText(MAX_TITLE_LENGTH) # " characters");
+                        };
+                        t;
+                    };
+                    case (null) existingService.title;
+                };
+                
+                let updatedDescription = switch (description) {
+                    case (?d) {
+                        if (not validateDescription(d)) {
+                            return #err("Description must be between " # Nat.toText(MIN_DESCRIPTION_LENGTH) # " and " # Nat.toText(MAX_DESCRIPTION_LENGTH) # " characters");
+                        };
+                        d;
+                    };
+                    case (null) existingService.description;
+                };
+                
+                let updatedPrice = switch (price) {
+                    case (?p) {
+                        if (not validatePrice(p)) {
+                            return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+                        };
+                        p;
+                    };
+                    case (null) existingService.price;
+                };
+                
+                let updatedService : Service = {
+                    id = existingService.id;
+                    providerId = existingService.providerId;
+                    title = updatedTitle;
+                    description = updatedDescription;
+                    category = existingService.category;
+                    price = updatedPrice;
+                    location = existingService.location;
+                    status = existingService.status;
+                    createdAt = existingService.createdAt;
+                    updatedAt = Time.now();
+                    rating = existingService.rating;
+                    reviewCount = existingService.reviewCount;
+                    // Preserve availability information
+                    weeklySchedule = existingService.weeklySchedule;
+                    instantBookingEnabled = existingService.instantBookingEnabled;
+                    bookingNoticeHours = existingService.bookingNoticeHours;
+                    maxBookingsPerDay = existingService.maxBookingsPerDay;
+                };
+                
+                services.put(serviceId, updatedService);
+                return #ok(updatedService);
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+    
+    // Delete a service
+    public shared(msg) func deleteService(serviceId : Text) : async Result<Text> {
+        let caller = msg.caller;
+        
+        if (Principal.isAnonymous(caller)) {
+            return #err("Anonymous principal not allowed");
+        };
+        
+        switch (services.get(serviceId)) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
+                    return #err("Not authorized to delete this service");
+                };
+                
+                // Remove the service from the HashMap
+                services.delete(serviceId);
+                
+                // Also remove associated availability data if it exists
+                serviceAvailabilities.delete(serviceId);
+                
+                // Remove associated packages
+                let allPackages = Iter.toArray(servicePackages.entries());
+                for ((packageId, package) in allPackages.vals()) {
+                    if (package.serviceId == serviceId) {
+                        servicePackages.delete(packageId);
+                    };
+                };
+                
+                return #ok("Service deleted successfully");
+            };
+            case (null) {
+                return #err("Service not found");
+            };
+        };
+    };
+    
     // Add a new category
     public shared(msg) func addCategory(
         name : Text,
@@ -512,8 +626,9 @@ actor ServiceCanister {
 
     // AVAILABILITY MANAGEMENT FUNCTIONS
 
-    // Set provider availability
-    public shared(msg) func setProviderAvailability(
+    // Set service availability
+    public shared(msg) func setServiceAvailability(
+        serviceId : Text,
         weeklySchedule : [(DayOfWeek, DayAvailability)],
         instantBookingEnabled : Bool,
         bookingNoticeHours : Nat,
@@ -523,6 +638,18 @@ actor ServiceCanister {
         
         if (Principal.isAnonymous(caller)) {
             return #err("Anonymous principal not allowed");
+        };
+
+        // Validate that the service exists and caller owns it
+        switch (services.get(serviceId)) {
+            case (?service) {
+                if (service.providerId != caller) {
+                    return #err("Not authorized to set availability for this service");
+                };
+            };
+            case (null) {
+                return #err("Service not found");
+            };
         };
 
         // Validate provider
@@ -544,16 +671,11 @@ actor ServiceCanister {
         };
 
         // Get existing availability or create new one
-        let currentAvailability = providerAvailabilities.get(caller);
-        let existingVacationDates = switch (currentAvailability) {
-            case (?availability) availability.vacationDates;
-            case (null) [];
-        };
+        let currentAvailability = serviceAvailabilities.get(serviceId);
 
         let newAvailability : ProviderAvailability = {
             providerId = caller;
             weeklySchedule = weeklySchedule;
-            vacationDates = existingVacationDates;
             instantBookingEnabled = instantBookingEnabled;
             bookingNoticeHours = bookingNoticeHours;
             maxBookingsPerDay = maxBookingsPerDay;
@@ -565,13 +687,37 @@ actor ServiceCanister {
             updatedAt = Time.now();
         };
 
-        providerAvailabilities.put(caller, newAvailability);
+        serviceAvailabilities.put(serviceId, newAvailability);
         return #ok(newAvailability);
     };
+    // Get service availability
+    public query func getServiceAvailability(serviceId : Text) : async Result<ProviderAvailability> {
+        switch (serviceAvailabilities.get(serviceId)) {
+            case (?availability) {
+                return #ok(availability);
+            };
+            case (null) {
+                return #err("Service availability not found");
+            };
+        };
+    };
 
-    // Get provider availability
+    // Get provider availability (backward compatibility - deprecated)
     public query func getProviderAvailability(providerId : Principal) : async Result<ProviderAvailability> {
-        switch (providerAvailabilities.get(providerId)) {
+        // Find first service by this provider and return its availability
+        let providerServices = Array.filter<Service>(
+            Iter.toArray(services.vals()),
+            func (service : Service) : Bool {
+                return service.providerId == providerId;
+            }
+        );
+        
+        if (providerServices.size() == 0) {
+            return #err("No services found for this provider");
+        };
+        
+        // Return availability of first service (for backward compatibility)
+        switch (serviceAvailabilities.get(providerServices[0].id)) {
             case (?availability) {
                 return #ok(availability);
             };
@@ -581,133 +727,24 @@ actor ServiceCanister {
         };
     };
 
-    // Add vacation dates
-    public shared(msg) func addVacationDates(
-        startDate : Time.Time,
-        endDate : Time.Time,
-        reason : ?Text
-    ) : async Result<ProviderAvailability> {
-        let caller = msg.caller;
-        
-        if (Principal.isAnonymous(caller)) {
-            return #err("Anonymous principal not allowed");
-        };
 
-        // Validate dates
-        if (startDate >= endDate) {
-            return #err("Start date must be before end date");
-        };
 
-        if (startDate < Time.now()) {
-            return #err("Cannot set vacation dates in the past");
-        };
-
-        // Get existing availability
-        switch (providerAvailabilities.get(caller)) {
-            case (?availability) {
-                let vacationId = generateId();
-                let newVacation : VacationPeriod = {
-                    id = vacationId;
-                    startDate = startDate;
-                    endDate = endDate;
-                    reason = reason;
-                    createdAt = Time.now();
-                };
-
-                let updatedVacationDates = Array.append<VacationPeriod>(availability.vacationDates, [newVacation]);
-
-                let updatedAvailability : ProviderAvailability = {
-                    providerId = availability.providerId;
-                    weeklySchedule = availability.weeklySchedule;
-                    vacationDates = updatedVacationDates;
-                    instantBookingEnabled = availability.instantBookingEnabled;
-                    bookingNoticeHours = availability.bookingNoticeHours;
-                    maxBookingsPerDay = availability.maxBookingsPerDay;
-                    isActive = availability.isActive;
-                    createdAt = availability.createdAt;
-                    updatedAt = Time.now();
-                };
-
-                providerAvailabilities.put(caller, updatedAvailability);
-                return #ok(updatedAvailability);
-            };
-            case (null) {
-                return #err("Provider availability not found. Please set availability first.");
-            };
-        };
-    };
-
-    // Remove vacation dates
-    public shared(msg) func removeVacationDates(vacationId : Text) : async Result<ProviderAvailability> {
-        let caller = msg.caller;
-        
-        if (Principal.isAnonymous(caller)) {
-            return #err("Anonymous principal not allowed");
-        };
-
-        // Get existing availability
-        switch (providerAvailabilities.get(caller)) {
-            case (?availability) {
-                let updatedVacationDates = Array.filter<VacationPeriod>(
-                    availability.vacationDates,
-                    func (vacation : VacationPeriod) : Bool {
-                        vacation.id != vacationId
-                    }
-                );
-
-                if (updatedVacationDates.size() == availability.vacationDates.size()) {
-                    return #err("Vacation period not found");
-                };
-
-                let updatedAvailability : ProviderAvailability = {
-                    providerId = availability.providerId;
-                    weeklySchedule = availability.weeklySchedule;
-                    vacationDates = updatedVacationDates;
-                    instantBookingEnabled = availability.instantBookingEnabled;
-                    bookingNoticeHours = availability.bookingNoticeHours;
-                    maxBookingsPerDay = availability.maxBookingsPerDay;
-                    isActive = availability.isActive;
-                    createdAt = availability.createdAt;
-                    updatedAt = Time.now();
-                };
-
-                providerAvailabilities.put(caller, updatedAvailability);
-                return #ok(updatedAvailability);
-            };
-            case (null) {
-                return #err("Provider availability not found");
-            };
-        };
-    };
-
-    // Get available time slots for a specific date and provider
+    // Get available time slots for a specific date and service
     public func getAvailableTimeSlots(
-        providerId : Principal,
+        serviceId : Text,
         date : Time.Time
     ) : async Result<[AvailableSlot]> {
         
-        // Get provider availability
-        let availability = switch (providerAvailabilities.get(providerId)) {
+        // Get service availability
+        let availability = switch (serviceAvailabilities.get(serviceId)) {
             case (?avail) avail;
             case (null) {
-                return #err("Provider availability not found");
+                return #err("Service availability not found");
             };
         };
 
         if (not availability.isActive) {
-            return #err("Provider is not currently accepting bookings");
-        };
-
-        // Check if date is in vacation period
-        let isVacation = Array.find<VacationPeriod>(
-            availability.vacationDates,
-            func (vacation : VacationPeriod) : Bool {
-                date >= vacation.startDate and date <= vacation.endDate
-            }
-        );
-
-        if (isVacation != null) {
-            return #ok([]);
+            return #err("Service is not currently accepting bookings");
         };
 
         // Get day of week for the requested date
@@ -728,7 +765,13 @@ actor ServiceCanister {
                 };
 
                 // Get conflicting bookings for this date
-                let conflictingBookings = await getBookingsForDate(providerId, date);
+                let serviceObj = switch (services.get(serviceId)) {
+                    case (?service) service;
+                    case (null) {
+                        return #err("Service not found");
+                    };
+                };
+                let conflictingBookings = await getBookingsForDate(serviceObj.providerId, date);
 
                 // Create available slots
                 let availableSlots = Array.map<TimeSlot, AvailableSlot>(
@@ -752,16 +795,16 @@ actor ServiceCanister {
         };
     };
 
-    // Check if provider is available at specific date and time
-    public func isProviderAvailable(
-        providerId : Principal,
+    // Check if service is available at specific date and time
+    public func isServiceAvailable(
+        serviceId : Text,
         requestedDateTime : Time.Time
     ) : async Result<Bool> {
         
-        let availability = switch (providerAvailabilities.get(providerId)) {
+        let availability = switch (serviceAvailabilities.get(serviceId)) {
             case (?avail) avail;
             case (null) {
-                return #err("Provider availability not found");
+                return #err("Service availability not found");
             };
         };
 
@@ -774,18 +817,6 @@ actor ServiceCanister {
         let requiredNoticeNanos = availability.bookingNoticeHours * 3600_000_000_000; // Convert hours to nanoseconds
         
         if (requestedDateTime < (currentTime + requiredNoticeNanos)) {
-            return #ok(false);
-        };
-
-        // Check if date is in vacation period
-        let isVacation = Array.find<VacationPeriod>(
-            availability.vacationDates,
-            func (vacation : VacationPeriod) : Bool {
-                requestedDateTime >= vacation.startDate and requestedDateTime <= vacation.endDate
-            }
-        );
-
-        if (isVacation != null) {
             return #ok(false);
         };
 
@@ -818,7 +849,13 @@ actor ServiceCanister {
                 };
 
                 // Check daily booking limit
-                let dailyBookingCount = await getDailyBookingCount(providerId, requestedDateTime);
+                let service = switch (services.get(serviceId)) {
+                    case (?s) s;
+                    case (null) {
+                        return #err("Service not found");
+                    };
+                };
+                let dailyBookingCount = await getDailyBookingCount(service.providerId, requestedDateTime);
                 if (dailyBookingCount >= availability.maxBookingsPerDay) {
                     return #ok(false);
                 };
@@ -829,6 +866,27 @@ actor ServiceCanister {
                 return #ok(false);
             };
         };
+    };
+
+    // Check if provider is available at specific date and time (backward compatibility - deprecated)
+    public func isProviderAvailable(
+        providerId : Principal,
+        requestedDateTime : Time.Time
+    ) : async Result<Bool> {
+        // Find first service by this provider
+        let providerServices = Array.filter<Service>(
+            Iter.toArray(services.vals()),
+            func (service : Service) : Bool {
+                return service.providerId == providerId;
+            }
+        );
+        
+        if (providerServices.size() == 0) {
+            return #err("No services found for this provider");
+        };
+        
+        // Check first service's availability (for backward compatibility)
+        return await isServiceAvailable(providerServices[0].id, requestedDateTime);
     };
 
     // HELPER FUNCTIONS FOR AVAILABILITY

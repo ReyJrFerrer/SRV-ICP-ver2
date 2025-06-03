@@ -8,13 +8,14 @@ export const idlFactory = ({ IDL }) => {
     'parentId' : IDL.Opt(IDL.Text),
   });
   const Result_7 = IDL.Variant({ 'ok' : ServiceCategory, 'err' : IDL.Text });
-  const Time = IDL.Int;
-  const VacationPeriod = IDL.Record({
-    'id' : IDL.Text,
-    'endDate' : Time,
-    'createdAt' : Time,
-    'startDate' : Time,
-    'reason' : IDL.Opt(IDL.Text),
+  const Location = IDL.Record({
+    'latitude' : IDL.Float64,
+    'country' : IDL.Text,
+    'city' : IDL.Text,
+    'postalCode' : IDL.Text,
+    'state' : IDL.Text,
+    'longitude' : IDL.Float64,
+    'address' : IDL.Text,
   });
   const DayOfWeek = IDL.Variant({
     'Saturday' : IDL.Null,
@@ -30,35 +31,12 @@ export const idlFactory = ({ IDL }) => {
     'isAvailable' : IDL.Bool,
     'slots' : IDL.Vec(TimeSlot),
   });
-  const ProviderAvailability = IDL.Record({
-    'vacationDates' : IDL.Vec(VacationPeriod),
-    'weeklySchedule' : IDL.Vec(IDL.Tuple(DayOfWeek, DayAvailability)),
-    'createdAt' : Time,
-    'instantBookingEnabled' : IDL.Bool,
-    'isActive' : IDL.Bool,
-    'maxBookingsPerDay' : IDL.Nat,
-    'updatedAt' : Time,
-    'bookingNoticeHours' : IDL.Nat,
-    'providerId' : IDL.Principal,
-  });
-  const Result_2 = IDL.Variant({
-    'ok' : ProviderAvailability,
-    'err' : IDL.Text,
-  });
-  const Location = IDL.Record({
-    'latitude' : IDL.Float64,
-    'country' : IDL.Text,
-    'city' : IDL.Text,
-    'postalCode' : IDL.Text,
-    'state' : IDL.Text,
-    'longitude' : IDL.Float64,
-    'address' : IDL.Text,
-  });
   const ServiceStatus = IDL.Variant({
     'Available' : IDL.Null,
     'Suspended' : IDL.Null,
     'Unavailable' : IDL.Null,
   });
+  const Time = IDL.Int;
   const Service = IDL.Record({
     'id' : IDL.Text,
     'status' : ServiceStatus,
@@ -99,6 +77,20 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(AvailableSlot),
     'err' : IDL.Text,
   });
+  const ProviderAvailability = IDL.Record({
+    'weeklySchedule' : IDL.Vec(IDL.Tuple(DayOfWeek, DayAvailability)),
+    'createdAt' : Time,
+    'instantBookingEnabled' : IDL.Bool,
+    'isActive' : IDL.Bool,
+    'maxBookingsPerDay' : IDL.Nat,
+    'updatedAt' : Time,
+    'bookingNoticeHours' : IDL.Nat,
+    'providerId' : IDL.Principal,
+  });
+  const Result_2 = IDL.Variant({
+    'ok' : ProviderAvailability,
+    'err' : IDL.Text,
+  });
   const Result_5 = IDL.Variant({
     'ok' : IDL.Vec(ServicePackage),
     'err' : IDL.Text,
@@ -108,11 +100,6 @@ export const idlFactory = ({ IDL }) => {
     'addCategory' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
         [Result_7],
-        [],
-      ),
-    'addVacationDates' : IDL.Func(
-        [Time, Time, IDL.Opt(IDL.Text)],
-        [Result_2],
         [],
       ),
     'createService' : IDL.Func(
@@ -135,10 +122,11 @@ export const idlFactory = ({ IDL }) => {
         [Result_1],
         [],
       ),
+    'deleteService' : IDL.Func([IDL.Text], [Result_3], []),
     'deleteServicePackage' : IDL.Func([IDL.Text], [Result_3], []),
     'getAllCategories' : IDL.Func([], [IDL.Vec(ServiceCategory)], ['query']),
     'getAllServices' : IDL.Func([], [IDL.Vec(Service)], ['query']),
-    'getAvailableTimeSlots' : IDL.Func([IDL.Principal, Time], [Result_6], []),
+    'getAvailableTimeSlots' : IDL.Func([IDL.Text, Time], [Result_6], []),
     'getPackage' : IDL.Func([IDL.Text], [Result_1], ['query']),
     'getProviderAvailability' : IDL.Func(
         [IDL.Principal],
@@ -146,6 +134,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getService' : IDL.Func([IDL.Text], [Result], ['query']),
+    'getServiceAvailability' : IDL.Func([IDL.Text], [Result_2], ['query']),
     'getServicePackages' : IDL.Func([IDL.Text], [Result_5], ['query']),
     'getServicesByCategory' : IDL.Func(
         [IDL.Text],
@@ -158,7 +147,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isProviderAvailable' : IDL.Func([IDL.Principal, Time], [Result_4], []),
-    'removeVacationDates' : IDL.Func([IDL.Text], [Result_2], []),
+    'isServiceAvailable' : IDL.Func([IDL.Text, Time], [Result_4], []),
     'searchServicesByLocation' : IDL.Func(
         [Location, IDL.Float64, IDL.Opt(IDL.Text)],
         [IDL.Vec(Service)],
@@ -179,14 +168,20 @@ export const idlFactory = ({ IDL }) => {
         [Result_3],
         [],
       ),
-    'setProviderAvailability' : IDL.Func(
+    'setServiceAvailability' : IDL.Func(
         [
+          IDL.Text,
           IDL.Vec(IDL.Tuple(DayOfWeek, DayAvailability)),
           IDL.Bool,
           IDL.Nat,
           IDL.Nat,
         ],
         [Result_2],
+        [],
+      ),
+    'updateService' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Text), IDL.Opt(IDL.Text), IDL.Opt(IDL.Nat)],
+        [Result],
         [],
       ),
     'updateServicePackage' : IDL.Func(

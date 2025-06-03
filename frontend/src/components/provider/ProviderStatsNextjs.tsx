@@ -7,28 +7,7 @@ import {
   ChartBarIcon,
   BanknotesIcon
 } from '@heroicons/react/24/solid';
-
-// Define local interfaces
-interface EarningSummary {
-  totalEarningsThisMonth: number;
-  totalEarningsLastMonth: number;
-  pendingPayouts: number;
-  completionRate: number;
-  totalEarnings?: number;
-}
-
-interface ServiceProvider {
-  id: string;
-  totalCompletedJobs?: number;
-  totalJobs?: number;
-  totalReviews?: number;
-  averageRating?: number;
-  rating?: number;
-  totalEarnings?: number;
-  earningSummary: EarningSummary;
-  // Other properties are not needed for this component
-  [key: string]: any;
-}
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
 
 interface ProviderStatsProps {
   provider: ServiceProvider;
@@ -36,26 +15,20 @@ interface ProviderStatsProps {
 }
 
 const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({ provider, className = '' }) => {
-  const { earningSummary } = provider;
-  const totalCompletedJobs = provider.totalCompletedJobs || provider.totalJobs || 0;
-  const totalReviews = provider.totalReviews || 0;
-  const averageRating = provider.averageRating || provider.rating || 0;
-  
-  // Get the total earnings value from either earningSummary.totalEarnings or provider.totalEarnings
-  const totalEarnings = earningSummary.totalEarnings || provider.totalEarnings || 0;
+  const { earningSummary, totalCompletedJobs, totalReviews, averageRating } = provider;
   
   // Stats data structure
   const stats = [
     {
       title: 'Earnings This Month',
-      value: `₱${(earningSummary.totalEarningsThisMonth || 0).toFixed(2)}`,
+      value: `₱${earningSummary.totalEarningsThisMonth.toFixed(2)}`,
       icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
       borderColor: 'border-green-500',
       bgColor: 'bg-green-500'
     },
     {
       title: 'Pending Payout',
-      value: `₱${(earningSummary.pendingPayouts || 0).toFixed(2)}`,
+      value: `₱${earningSummary.pendingPayouts.toFixed(2)}`,
       icon: <ClockIcon className="h-6 w-6 text-white" />,
       borderColor: 'border-orange-500',
       bgColor: 'bg-orange-500'
@@ -76,14 +49,14 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({ provider, className
     },
     {
       title: 'Completion Rate',
-      value: `${earningSummary.completionRate || 0}%`,
+      value: `${earningSummary.completionRate}%`,
       icon: <ChartBarIcon className="h-6 w-6 text-white" />,
       borderColor: 'border-purple-500',
       bgColor: 'bg-purple-500'
     },
     {
       title: 'Total Earnings',
-      value: `₱${totalEarnings.toFixed(2)}`,
+      value: `₱${earningSummary.totalEarnings.toFixed(2)}`,
       icon: <BanknotesIcon className="h-6 w-6 text-white" />,
       borderColor: 'border-teal-500',
       bgColor: 'bg-teal-500'

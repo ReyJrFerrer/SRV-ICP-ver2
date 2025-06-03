@@ -1,37 +1,7 @@
 import React from 'react';
 import { PencilIcon, SunIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
-
-// Define local interfaces for component
-interface AvailabilitySlot {
-  startTime: string;
-  endTime: string;
-}
-
-interface DaySchedule {
-  isAvailable: boolean;
-  slots: AvailabilitySlot[];
-}
-
-interface WeeklySchedule {
-  [key: string]: DaySchedule;
-}
-
-interface Availability {
-  id: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-}
-
-interface ServiceProvider {
-  id: string;
-  name: string;
-  availability: Availability[];
-  // Other properties are not used in this component
-  [key: string]: any;
-}
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
 
 interface AvailabilityManagementProps {
   provider: ServiceProvider;
@@ -40,6 +10,7 @@ interface AvailabilityManagementProps {
 
 const AvailabilityManagementNextjs: React.FC<AvailabilityManagementProps> = ({ provider, className = '' }) => {
   const { availability } = provider;
+  const { weeklySchedule } = availability;
   
   // Format time string (from 24h to 12h format)
   const formatTime = (timeString: string): string => {
@@ -50,30 +21,12 @@ const AvailabilityManagementNextjs: React.FC<AvailabilityManagementProps> = ({ p
     return `${formattedHour}:${minutes} ${period}`;
   };
   
-  // Convert the availability array to the structure expected by the component
+  // Convert the weeklySchedule object to an array for easier mapping
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  
-  // Group availabilities by day
-  const availabilityByDay: { [key: string]: Availability[] } = {};
-  availability.forEach(slot => {
-    if (!availabilityByDay[slot.day]) {
-      availabilityByDay[slot.day] = [];
-    }
-    availabilityByDay[slot.day].push(slot);
-  });
-  
-  // Convert to the format needed for rendering
-  const scheduleDays = daysOfWeek.map(day => {
-    const daySlots = availabilityByDay[day] || [];
-    return {
-      day,
-      isAvailable: daySlots.some(slot => slot.isAvailable),
-      slots: daySlots.filter(slot => slot.isAvailable).map(slot => ({
-        startTime: slot.startTime,
-        endTime: slot.endTime
-      }))
-    };
-  });
+  const scheduleDays = daysOfWeek.map(day => ({
+    day,
+    ...weeklySchedule[day]
+  }));
 
   return (
     <div className={`availability-section ${className}`}>

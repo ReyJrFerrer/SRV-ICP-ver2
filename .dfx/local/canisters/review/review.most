@@ -1,6 +1,6 @@
 // Version: 1.0.0
-type ReviewStatus__984278635 = {#Flagged; #Hidden; #Visible};
-type Review__192700470 =
+type ReviewStatus__258668173 = {#Flagged; #Hidden; #Visible};
+type Review__154551843 =
   {
     bookingId : Text;
     clientId : Principal;
@@ -11,11 +11,11 @@ type Review__192700470 =
     qualityScore : ?Float;
     rating : Nat;
     serviceId : Text;
-    status : ReviewStatus__984278635;
+    status : ReviewStatus__258668173;
     updatedAt : Time__593356169
   };
-type Review__911237909 = Review__192700470;
+type Review__673131583 = Review__154551843;
 type Time__593356169 = Int;
 actor {
-  stable var reviewEntries : [(Text, Review__911237909)]
+  stable var reviewEntries : [(Text, Review__673131583)]
 };

@@ -7,30 +7,7 @@ import {
   AcademicCapIcon
 } from '@heroicons/react/24/solid';
 import Link from 'next/link';
-
-// Define local interfaces
-interface ProviderCredential {
-  id: string;
-  title?: string;
-  name?: string;
-  issuingAuthority?: string;
-  issueDate?: Date | string;
-  expiryDate?: Date | string;
-  verificationStatus?: string;
-  isVerified?: boolean;
-  dateVerified?: string;
-  documentUrl?: string;
-}
-
-interface ServiceProvider {
-  id: string;
-  credentials: ProviderCredential[];
-  identityVerified?: boolean;
-  backgroundCheckPassed?: boolean;
-  verificationStatus?: string;
-  // Other properties are not needed for this component
-  [key: string]: any;
-}
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
 
 interface CredentialsDisplayProps {
   provider: ServiceProvider;
@@ -38,27 +15,15 @@ interface CredentialsDisplayProps {
 }
 
 const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider, className = '' }) => {
-  // Adapt credentials to expected format
-  const adaptedCredentials = provider.credentials.map(cred => ({
-    id: cred.id,
-    title: cred.title || cred.name || 'Credential',
-    issuingAuthority: cred.issuingAuthority || 'Issuing Authority',
-    issueDate: cred.issueDate || cred.dateVerified || new Date(),
-    expiryDate: cred.expiryDate,
-    verificationStatus: cred.verificationStatus || (cred.isVerified ? 'VERIFIED' : 'PENDING')
-  }));
-  
-  const identityVerified = provider.identityVerified === undefined ? true : provider.identityVerified;
-  const backgroundCheckPassed = provider.backgroundCheckPassed === undefined ? true : provider.backgroundCheckPassed;
-  const verificationStatus = provider.verificationStatus || 'VERIFIED';
+  const { credentials, identityVerified, backgroundCheckPassed, verificationStatus } = provider;
   
   // Format date
-  const formatDate = (date: Date | string): string => {
+  const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric'
-    }).format(typeof date === 'string' ? new Date(date) : date);
+    }).format(new Date(date));
   };
 
   return (
@@ -95,9 +60,9 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
         )}
       </div>
       
-      {adaptedCredentials.length > 0 ? (
+      {credentials.length > 0 ? (
         <div className="space-y-4">
-          {adaptedCredentials.map((credential) => (
+          {credentials.map((credential) => (
             <div key={credential.id} className="credential-card">
               <div className="flex items-start justify-between">
                 <div className="flex">

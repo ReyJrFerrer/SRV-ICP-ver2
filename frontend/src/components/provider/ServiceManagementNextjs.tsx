@@ -1,92 +1,126 @@
+// SRV-ICP-ver2-jdMain/frontend/src/components/provider/ServiceManagementNextjs.tsx
 import React from 'react';
-import { PlusIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
-import { PaintBrushIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CurrencyDollarIcon, StarIcon, ArrowRightIcon, ScissorsIcon } from '@heroicons/react/24/solid'; // Removed PencilIcon
+import { PaintBrushIcon, WrenchScrewdriverIcon, ComputerDesktopIcon, CameraIcon, SparklesIcon, AcademicCapIcon, TruckIcon, HomeIcon, EllipsisHorizontalCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+import { Service } from '../../../assets/types/service/service';
+
+const iconMap: { [key: string]: React.ElementType } = { /* ... same as before ... */ 
+    home: HomeIcon, broom: PaintBrushIcon, car: TruckIcon, laptop: ComputerDesktopIcon, cut: ScissorsIcon,
+    'shipping-fast': TruckIcon, spa: SparklesIcon, 'chalkboard-teacher': AcademicCapIcon, camera: CameraIcon,
+    tools: WrenchScrewdriverIcon, wrench: WrenchScrewdriverIcon, default: EllipsisHorizontalCircleIcon,
+};
+
 
 interface ServiceManagementProps {
-  provider: ServiceProvider;
+  provider: ServiceProvider | null;
   className?: string;
+  maxItemsToShow?: number;
 }
 
-const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({ provider, className = '' }) => {
-  const { servicesOffered } = provider;
-  
-  // Example service status (in production, this would come from your data)
+const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
+  provider,
+  className = '',
+  maxItemsToShow = 3
+}) => {
+  if (!provider) { /* ... loading state same as before ... */ 
+    return (
+      <div className={`services-section bg-white p-6 rounded-xl shadow-lg ${className}`}>
+        <div className="section-header flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">My Services</h2>
+        </div>
+        <p className="text-gray-500 text-center py-5">Loading provider services...</p>
+      </div>
+    );
+  }
+
+  const servicesOffered = (provider.servicesOffered || []) as Service[];
   const servicesWithStatus = servicesOffered.map((service, index) => ({
     ...service,
-    isActive: index === 0 // First service is active, others are inactive for demo
+    isActive: typeof service.isActive === 'boolean' ? service.isActive : (index % 2 === 0),
   }));
+  const displayedServices = servicesWithStatus.slice(0, maxItemsToShow);
+  const renderIcon = (iconKey: string | undefined) => { /* ... same as before ... */ 
+    if (!iconKey) return <EllipsisHorizontalCircleIcon className="h-8 w-8 text-gray-400" />;
+    const IconComponent = iconMap[iconKey.toLowerCase()] || iconMap.default;
+    return <IconComponent className="h-8 w-8 text-blue-600" />;
+  };
 
   return (
-    <div className={`services-section ${className}`}>
-      <div className="section-header">
+    <div className={`services-section bg-white p-6 rounded-xl shadow-lg ${className}`}>
+      <div className="section-header flex flex-wrap justify-between items-center mb-4 gap-2">
+        {/* ... header content same as before (title, view all, add button) ... */ }
         <h2 className="text-xl font-bold text-gray-800">My Services</h2>
-        <Link href="/provider/services/add">
-          <button className="add-button">
+        {servicesOffered && servicesOffered.length > maxItemsToShow && (
+          <Link href="/provider/services" legacyBehavior>
+            <a className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-colors">
+              View All ({servicesOffered.length})
+              <ArrowRightIcon className="h-4 w-4 ml-1" />
+            </a>
+          </Link>
+        )}
+        <Link href="/provider/services/add" legacyBehavior>
+          <a
+            className="add-button p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors ml-auto sm:ml-0"
+            aria-label="Add new service"
+          >
             <PlusIcon className="h-5 w-5" />
-          </button>
+          </a>
         </Link>
       </div>
-      
-      {servicesWithStatus.length > 0 ? (
-        <div className="space-y-3">
-          {servicesWithStatus.map((service) => (
-            <div key={service.id} className="service-card">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center">
-                  {service.category.name.toLowerCase().includes('cleaning') ? (
-                    <PaintBrushIcon className="h-10 w-10 text-blue-600 mr-3" />
-                  ) : (
-                    <WrenchScrewdriverIcon className="h-10 w-10 text-blue-600 mr-3" />
-                  )}
-                  
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{service.name}</h3>
-                    <p className="text-sm text-gray-500">{service.category.name}</p>
+
+      {displayedServices && displayedServices.length > 0 ? (
+        <div className="mt-4 space-y-4">
+          {displayedServices.map((service) => (
+            // MODIFICATION: Wrap the card content in a Link, remove absolute edit icon
+            <Link key={service.id} href={`/provider/service-details/${service.slug || service.id}`} legacyBehavior>
+              <a className="block service-card-item bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex flex-col md:flex-row md:items-start md:space-x-4"> {/* Removed 'relative' */}
+                  {/* Service Icon */}
+                  <div className="flex-shrink-0 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-3 md:mb-0">
+                    {renderIcon(service.category?.icon)}
+                  </div>
+
+                  {/* Service Details */}
+                  <div className="flex-grow">
+                    <div className="flex flex-col md:flex-row justify-between md:items-start">
+                      <div className="flex-grow"> {/* Removed pr-8/pr-10 */}
+                        <h4 className="font-semibold text-gray-900 text-base md:text-lg">{service.category?.name}</h4>
+                        <p className="text-xs md:text-sm text-gray-500">{service.title}</p>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full mt-2 md:mt-0 w-fit ${service.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                      >
+                        {service.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center text-xs md:text-sm text-gray-600 mt-2 space-x-3">
+                      <div className="flex items-center">
+                        <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" />
+                        <span>{service.price?.amount ? `₱${service.price.amount.toFixed(2)} ${service.price.unit}` : 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <StarIcon className="h-4 w-4 text-yellow-400 mr-1" />
+                        <span>{service.rating?.average || 'N/A'} ({service.rating?.count || 0} reviews)</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="service-status">
-                  <span className={`status-dot ${service.isActive ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                  <span className={`text-sm ${service.isActive ? 'text-green-600' : 'text-orange-600'}`}>
-                    {service.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="mt-3 flex justify-between">
-                <div>
-                  <span className="text-lg font-bold text-gray-800">₱{service.price.amount.toFixed(2)}</span>
-                  <span className="text-gray-600">/{service.price.unit}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <div className="flex items-center mr-2 text-yellow-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="ml-1 text-sm">{service.rating?.average || 0}</span>
-                  </div>
-                  <span className="text-sm text-gray-500">({service.rating?.count || 0} reviews)</span>
-                </div>
-              </div>
-              
-              <div className="mt-3">
-                <Link href={`/provider/services/edit/${service.id}`} className="text-blue-600 text-sm hover:underline">
-                  Edit Service
-                </Link>
-              </div>
-            </div>
+              </a>
+            </Link>
           ))}
         </div>
       ) : (
-        <div className="bg-gray-50 p-6 rounded-lg text-center">
-          <p className="text-gray-500">You haven't added any services yet</p>
-          <Link href="/provider/services/add">
-            <button className="mt-3 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors">
-              Add Your First Service
-            </button>
+        // ... Empty state same as before ...
+        <div className="text-center py-10 text-gray-500">
+          <WrenchScrewdriverIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+          <p className="mb-1">You haven't listed any services yet.</p>
+          <Link href="/provider/services/add" legacyBehavior>
+            <a className="text-sm text-blue-600 hover:text-blue-700 font-semibold">
+              Add your first service
+            </a>
           </Link>
         </div>
       )}

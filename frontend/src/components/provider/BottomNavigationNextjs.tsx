@@ -14,23 +14,10 @@ interface BottomNavigationProps {
 const BottomNavigationNextjs: React.FC<BottomNavigationProps> = ({ className = '' }) => {
   const router = useRouter();
   
-  const navItems = [
-    {
-      label: 'Dashboard',
-      icon: <HomeIcon className="h-5 w-5 sm:h-6 sm:w-6" />, 
-      href: '/provider/home'
-    },
-    {
-      label: 'My Bookings', // Changed from Chat
-      icon: <CalendarDaysIcon className="h-5 w-5 sm:h-6 sm:w-6" />, // New Icon
-      href: '/provider/bookings' // New Route
-    },
-    {
-      label: 'Services',
-      icon: <WrenchScrewdriverIcon className="h-5 w-5 sm:h-6 sm:w-6" />,
-      href: '/provider/services' // Assuming this page exists or will be created
-    }
-    // Add other items like "Earnings", "Profile/Settings" if needed
+   const navItems = [
+    { label: 'Dashboard', icon: <HomeIcon />, href: '/provider/home' },
+    { label: 'My Bookings', icon: <CalendarDaysIcon />, href: '/provider/bookings' },
+    { label: 'Services', icon: <WrenchScrewdriverIcon />, href: '/provider/services' } // THIS IS THE LINK
   ];
   
   return (

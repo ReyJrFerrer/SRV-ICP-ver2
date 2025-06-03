@@ -6,6 +6,8 @@ import Link from 'next/link';
 import SearchBar from './SearchBarNextjs';
 import BottomSheet from './BottomSheetNextjs';
 import ServiceLocationMap from './ServiceLocationMapNextjs';
+// Import the hook
+import { useAllServicesWithProviders } from '../../hooks/serviceInformation';
 
 interface HeaderProps {
   className?: string;
@@ -14,6 +16,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ className = '' }) => {
   const router = useRouter();
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  // Use the hook to fetch all services
+  const { services, loading, error } = useAllServicesWithProviders();
 
   const handleLocationClick = () => {
     setLocationSheetOpen(true);
@@ -62,6 +66,7 @@ const Header: React.FC<HeaderProps> = ({ className = '' }) => {
         <SearchBar 
           placeholder="Search for service"
           redirectToSearchResultsPage={true}
+          servicesList={services} // Pass the services data here
         />
       </div>
 

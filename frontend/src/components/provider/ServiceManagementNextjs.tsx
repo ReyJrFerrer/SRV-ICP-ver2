@@ -1,4 +1,5 @@
 // SRV-ICP-ver2-jdMain/frontend/src/components/provider/ServiceManagementNextjs.tsx
+// ...existing imports...
 import React from 'react';
 import { PlusIcon, CurrencyDollarIcon, StarIcon, ArrowRightIcon, ScissorsIcon } from '@heroicons/react/24/solid';
 import { PaintBrushIcon, WrenchScrewdriverIcon, ComputerDesktopIcon, CameraIcon, SparklesIcon, AcademicCapIcon, TruckIcon, HomeIcon, EllipsisHorizontalCircleIcon } from '@heroicons/react/24/outline';

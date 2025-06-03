@@ -1,0 +1,86 @@
+import React from 'react';
+import { 
+  CurrencyDollarIcon, 
+  ClockIcon, 
+  CheckCircleIcon, 
+  StarIcon,
+  ChartBarIcon,
+  BanknotesIcon
+} from '@heroicons/react/24/solid';
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+
+interface ProviderStatsProps {
+  provider: ServiceProvider;
+  className?: string;
+}
+
+const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({ provider, className = '' }) => {
+  const { earningSummary, totalCompletedJobs, totalReviews, averageRating } = provider;
+  
+  // Stats data structure
+  const stats = [
+  {
+    title: 'Earnings This Month',
+    value: `₱${earningSummary.totalEarningsThisMonth.toFixed(2)}`,
+    icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
+    borderColor: 'border-blue-600',
+    bgColor: 'bg-blue-600'
+  },
+  {
+    title: 'Pending Payout',
+    value: `₱${earningSummary.pendingPayouts.toFixed(2)}`,
+    icon: <ClockIcon className="h-6 w-6 text-black" />,
+    borderColor: 'border-yellow-400',
+    bgColor: 'bg-yellow-400'
+  },
+  {
+    title: 'Completed Jobs',
+    value: totalCompletedJobs,
+    icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
+    borderColor: 'border-black',
+    bgColor: 'bg-black'
+  },
+  {
+    title: 'Customer Rating',
+    value: `${averageRating} (${totalReviews})`,
+    icon: <StarIcon className="h-6 w-6 text-yellow-400" />,
+    borderColor: 'border-blue-600',
+    bgColor: 'bg-white'
+  },
+  {
+    title: 'Completion Rate',
+    value: `${earningSummary.completionRate}%`,
+    icon: <ChartBarIcon className="h-6 w-6 text-blue-600" />,
+    borderColor: 'border-yellow-400',
+    bgColor: 'bg-yellow-100'
+  },
+  {
+    title: 'Total Earnings',
+    value: `₱${earningSummary.totalEarnings.toFixed(2)}`,
+    icon: <BanknotesIcon className="h-6 w-6 text-white" />,
+    borderColor: 'border-blue-600',
+    bgColor: 'bg-blue-600'
+  }
+];
+
+  return (
+    <div className={`stats-grid ${className}`}>
+      {stats.map((stat, index) => (
+        <div 
+          key={index} 
+          className={`stat-card ${stat.borderColor} border-l-4`}
+        >
+          <div className={`stat-icon ${stat.bgColor}`}>
+            {stat.icon}
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">{stat.title}</p>
+            <p className="text-xl font-bold text-gray-800">{stat.value}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default ProviderStatsNextjs;

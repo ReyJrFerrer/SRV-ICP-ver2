@@ -4,14 +4,15 @@ import { useRouter } from 'next/router';
 import { enrichServiceWithProvider } from '@app/utils/serviceHelpers';
 import { FrontendProfile } from '@app/services/authCanisterService';
 import { Service } from '@app/services/serviceCanisterService';
+import { FormattedServiceDetail } from '@app/hooks/serviceDetail';
 
 interface ServiceDetailPageComponentProps {
-  service: any; // Using any temporarily to handle different service formats
+  service: FormattedServiceDetail | null; 
   provider?: FrontendProfile | null;
 }
 
 // Service Hero Image Component
-const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
+const ServiceHeroImage: React.FC<{ service: any, provider?: FrontendProfile | null }> = ({ service, provider }) => (
   <div className="w-full h-48 md:h-64 lg:h-96 overflow-hidden relative">
     <Image 
       src={service.heroImage || '/images/default-service.png'} 
@@ -30,7 +31,7 @@ const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
       <div className="flex items-center">
         <p className="text-lg opacity-90 mr-4">{service.category.name}</p>
         <div className="flex items-center text-white/90 bg-black/30 px-3 py-1 rounded-full">
-          <span className="text-sm">By {service.providerName}</span>
+          <span className="text-sm">By {provider?.name || service.providerName || 'Service Provider'}</span>
         </div>
       </div>
     </div>
@@ -38,7 +39,7 @@ const ServiceHeroImage: React.FC<{ service: any }> = ({ service }) => (
 );
 
 // Service Info Section Component
-const ServiceInfoSection: React.FC<{ service: any }> = ({ service }) => (
+const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | null }> = ({ service, provider }) => (
   <div className="card mb-6">
     {/* Title only shown on mobile/tablet, hidden on desktop due to hero overlay */}
     <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1 lg:hidden">{service.title || service.name}</h2>
@@ -46,7 +47,7 @@ const ServiceInfoSection: React.FC<{ service: any }> = ({ service }) => (
     {/* Provider name for mobile display */}
     <div className="flex items-center mb-3 lg:hidden">
       <div className="text-sm text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
-        By {service.providerName}
+        By {provider?.name || service.providerName || 'Service Provider'}
       </div>
       <div className="text-sm text-gray-600 ml-2 bg-blue-50 px-3 py-1 rounded-full">
         {service.category.name}
@@ -157,40 +158,40 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => (
   </div>
 );
 
-// Service Requirements Section Component
-const ServiceRequirementsSection: React.FC<{ service: any }> = ({ service }) => (
-  <div className="card mb-6">
-    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-      <span className="text-xl mr-2">📋</span>
-      Requirements
-    </h3>
-    {service.requirements && service.requirements.length > 0 ? (
-      <ul className="space-y-2">
-        {service.requirements.map((req: string, index: number) => (
-          <li key={index} className="flex items-start">
-            <span className="text-green-500 mr-2 mt-0.5">•</span>
-            <span className="text-sm md:text-base text-gray-600">{req}</span>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <ul className="space-y-2">
-        <li className="flex items-start">
-          <span className="text-green-500 mr-2 mt-0.5">•</span>
-          <span className="text-sm md:text-base text-gray-600">Service provider will discuss requirements during booking</span>
-        </li>
-        <li className="flex items-start">
-          <span className="text-green-500 mr-2 mt-0.5">•</span>
-          <span className="text-sm md:text-base text-gray-600">Please provide detailed description of your needs</span>
-        </li>
-        <li className="flex items-start">
-          <span className="text-green-500 mr-2 mt-0.5">•</span>
-          <span className="text-sm md:text-base text-gray-600">Ensure availability at scheduled time</span>
-        </li>
-      </ul>
-    )}
-  </div>
-);
+// // Service Requirements Section Component
+// const ServiceRequirementsSection: React.FC<{ service: any }> = ({ service }) => (
+//   <div className="card mb-6">
+//     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+//       <span className="text-xl mr-2">📋</span>
+//       Requirements
+//     </h3>
+//     {service.requirements && service.requirements.length > 0 ? (
+//       <ul className="space-y-2">
+//         {service.requirements.map((req: string, index: number) => (
+//           <li key={index} className="flex items-start">
+//             <span className="text-green-500 mr-2 mt-0.5">•</span>
+//             <span className="text-sm md:text-base text-gray-600">{req}</span>
+//           </li>
+//         ))}
+//       </ul>
+//     ) : (
+//       <ul className="space-y-2">
+//         <li className="flex items-start">
+//           <span className="text-green-500 mr-2 mt-0.5">•</span>
+//           <span className="text-sm md:text-base text-gray-600">Service provider will discuss requirements during booking</span>
+//         </li>
+//         <li className="flex items-start">
+//           <span className="text-green-500 mr-2 mt-0.5">•</span>
+//           <span className="text-sm md:text-base text-gray-600">Please provide detailed description of your needs</span>
+//         </li>
+//         <li className="flex items-start">
+//           <span className="text-green-500 mr-2 mt-0.5">•</span>
+//           <span className="text-sm md:text-base text-gray-600">Ensure availability at scheduled time</span>
+//         </li>
+//       </ul>
+//     )}
+//   </div>
+// );
 
 // Service Verification Section Component
 const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerified }) => (
@@ -220,36 +221,36 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
   </div>
 );
 
-// Service Images Section Component
-const ServiceImagesSection: React.FC<{ service: any }> = ({ service }) => (
-  <div className="card mb-6">
-    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-      <span className="text-xl mr-2">🖼️</span>
-      Service Gallery
-    </h3>
-    {service.media && service.media.length > 0 ? (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {service.media.map((mediaItem: {url: string, type: string}, index: number) => (
-          <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
-            <Image
-              src={mediaItem.url}
-              alt={`${service.title} gallery image ${index + 1}`}
-              width={120}
-              height={120}
-              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-            />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-        <span className="text-4xl mb-2 block">📷</span>
-        <p className="text-sm">No additional images available.</p>
-        <p className="text-xs text-gray-400 mt-1">Images will be added by the service provider</p>
-      </div>
-    )}
-  </div>
-);
+// // Service Images Section Component
+// const ServiceImagesSection: React.FC<{ service: any }> = ({ service }) => (
+//   <div className="card mb-6">
+//     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+//       <span className="text-xl mr-2">🖼️</span>
+//       Service Gallery
+//     </h3>
+//     {service.media && service.media.length > 0 ? (
+//       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+//         {service.media.map((mediaItem: {url: string, type: string}, index: number) => (
+//           <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+//             <Image
+//               src={mediaItem.url}
+//               alt={`${service.title} gallery image ${index + 1}`}
+//               width={120}
+//               height={120}
+//               className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+//             />
+//           </div>
+//         ))}
+//       </div>
+//     ) : (
+//       <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+//         <span className="text-4xl mb-2 block">📷</span>
+//         <p className="text-sm">No additional images available.</p>
+//         <p className="text-xs text-gray-400 mt-1">Images will be added by the service provider</p>
+//       </div>
+//     )}
+//   </div>
+// );
 
 // Placeholder Service Data
 const createPlaceholderService = (): any => ({
@@ -317,33 +318,28 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
   // Use placeholder service if no service is provided
   const placeholderService = createPlaceholderService();
   
-  // Enrich service with provider data if available
-  const enrichedService = service 
-    ? enrichServiceWithProvider(service as Service, provider || null) 
-    : placeholderService;
-
-  // Use the enriched service for display
-  const displayService = enrichedService;
+  // Use the service directly if provided, otherwise use placeholder
+  const displayService = service || placeholderService;
 
   const handleBookingRequest = () => {
     // Navigate to booking page with the service slug (works for both real and placeholder data)
-    router.push(`/client/book/${displayService.slug}`);
+    router.push(`/client/book/${displayService.id}`);
   };
 
   return (
     <div className="bg-gray-50">
-      <ServiceHeroImage service={displayService} />
+      <ServiceHeroImage service={displayService} provider={provider} />
       
       {/* Content Layout - Full width like home.tsx */}
       <div className="px-4 pt-4 pb-16 lg:px-8 lg:pt-8">
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
           {/* Main Content - 2/3 width on desktop */}
           <div className="lg:col-span-2">
-            <ServiceInfoSection service={displayService} />
+            <ServiceInfoSection service={displayService} provider={provider} />
             <ServiceAvailabilitySection service={displayService} />
             <ServiceRatingSection service={displayService} />
-            <ServiceRequirementsSection service={displayService} />
-            <ServiceImagesSection service={displayService} />
+            {/* <ServiceRequirementsSection service={displayService} />
+            <ServiceImagesSection service={displayService} /> */}
           </div>
           
           {/* Sidebar - 1/3 width on desktop */}
@@ -354,10 +350,10 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                 <div className="mb-4">
                   <p className="text-gray-600 text-sm mb-2">Provider</p>
                   <div className="flex items-center">
-                    {displayService.providerAvatar ? (
+                    {provider?.profilePicture?.imageUrl || displayService.providerAvatar ? (
                       <Image
-                        src={displayService.providerAvatar}
-                        alt={displayService.providerName || 'Service Provider'}
+                        src={provider?.profilePicture?.imageUrl || displayService.providerAvatar || '/images/default-avatar.png'}
+                        alt={provider?.name || displayService.providerName || 'Service Provider'}
                         width={40}
                         height={40}
                         className="rounded-full mr-3"
@@ -369,7 +365,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                     )}
                     <div>
                       <span className="font-medium text-gray-800 block">
-                        {displayService.providerName}
+                        {provider?.name || displayService.providerName || 'Service Provider'}
                       </span>
                       <span className="text-xs text-gray-500">Member since {new Date(displayService.createdAt).getFullYear()}</span>
                     </div>

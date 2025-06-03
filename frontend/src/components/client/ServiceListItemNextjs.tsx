@@ -41,7 +41,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
   const locationMarginClass = !retainMobileLayout ? "mt-0.5 sm:mt-0" : "";
 
   return (
-    <Link href={`/client/service/${service.slug}`} legacyBehavior>
+    <Link href={`/client/service/${service.id}`} legacyBehavior>
       <a className={`service-card block ${itemWidthClass} group overflow-hidden flex flex-col`}>
         <div className="relative"> {/* Image container */}
           <div className="aspect-video w-full">

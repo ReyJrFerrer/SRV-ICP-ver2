@@ -1,7 +1,6 @@
 import { ServiceProvider, ProviderVerificationStatus, ProviderAccountStatus } from './types/provider/service-provider';
 import { SERVICES } from './services';
 
-// Service Provider sample data
 export const SERVICE_PROVIDERS: ServiceProvider[] = [
   {
     id: "prov-001",
@@ -84,7 +83,8 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
       businessType: "SOLE_PROPRIETOR",
       taxDocumentsSubmitted: true,
       vatRegistered: false
-    }
+    },
+    userId: ''
   },
   {
     id: "prov-002",
@@ -162,7 +162,8 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
       taxDocumentsSubmitted: true,
       vatRegistered: true,
       vatNumber: "VAT123456789"
-    }
+    },
+    userId: ''
   },
   {
     id: "prov-003",
@@ -232,6 +233,7 @@ export const SERVICE_PROVIDERS: ServiceProvider[] = [
         verificationStatus: "VERIFIED" as ProviderVerificationStatus,
         documentUrl: "https://example.com/certificates/appliance-cert.pdf"
       }
-    ]
+    ],
+    userId: ''
   }
 ];

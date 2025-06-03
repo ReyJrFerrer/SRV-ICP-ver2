@@ -7,6 +7,7 @@ export type ProviderVerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 export type ProviderAccountStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'BANNED';
 
 export interface ServiceProvider extends BaseEntity {
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;

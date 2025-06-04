@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; 
 import { UserIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
 
 export default function Hero() {
@@ -12,7 +13,6 @@ export default function Hero() {
               Here in SRV, <span className="text-yellow-300">Serbisyo, Rito, Valued!</span>
             </h1>
             <p className="text-lg md:text-xl text-blue-100 mb-10">
-              {/* Content from PDF */}
               Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -23,18 +23,24 @@ export default function Hero() {
                 </a>
               </Link>
               <Link href="/provider" legacyBehavior>
-                <a className="flex items-center justify-center bg-slate-800 text-yellow-300 hover:bg-slate-700 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg border-2 border-yellow-300 transform hover:scale-105 text-center text-base">
+                <a className="flex items-center justify-center bg-blue-700 text-yellow-300 hover:bg-blue-800 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg border-2 border-yellow-300 transform hover:scale-105 text-center text-base">
                   <WrenchScrewdriverIcon className="h-5 w-5 mr-2" />
                   I Provide Services
                 </a>
               </Link>
             </div>
           </div>
-          <div className="md:w-1/2 flex justify-center mt-10 md:mt-0">
-            <div className="w-72 h-72 lg:w-80 lg:h-80 bg-yellow-300 p-3 rounded-full shadow-2xl flex items-center justify-center">
-              <div className="w-full h-full bg-blue-700 rounded-full flex items-center justify-center border-4 border-slate-800">
-                 <span className="text-6xl font-bold text-yellow-300">SRV</span>
-              </div>
+          <div className="md:w-1/2 flex justify-center items-center mt-10 md:mt-0 px-4">
+            <div className="w-full max-w-sm md:max-w-md lg:max-w-lg"> 
+              <Image
+                src="/logo.svg" 
+                alt="SRV Platform Logo"
+                width={1000}
+                height={760} 
+                layout="responsive"
+                objectFit="contain" 
+                priority
+              />
             </div>
           </div>
         </div>

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth, useClient } from "@bundly/ares-react";
+import { useAuth, useClient, InternetIdentityButton } from "@bundly/ares-react"; // InternetIdentityButton might be needed here if Hero doesn't show it when authenticated
 import Head from 'next/head';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory as authIdlFactory } from '../declarations/auth/auth.did.js';
 import type { Profile as UserProfile } from '../declarations/auth/auth.did.js';
-import Header from "@app/components/header";
 import Hero from "@app/components/shared/Hero";
 import Features from "@app/components/shared/Features";
-import WhyChooseSRV from "@app/components/shared/WhyChooseSRV"; 
+import WhyChooseSRV from "@app/components/shared/WhyChooseSRV";
 import AboutUs from "@app/components/shared/AboutUs";
 import Footer from "@app/components/shared/Footer";
+import Header from "@app/components/header";
 
 type Result<T> = {
   ok?: T;
@@ -21,7 +21,7 @@ export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
   const client = useClient();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [error, setError] = useState('');
 
@@ -63,20 +63,6 @@ export default function HomePage() {
     checkProfileAndRedirect();
   }, [isAuthenticated, currentIdentity, router]);
   
-  const handleIILogin = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      const provider = client.getProvider("internet-identity");
-      if (!provider) throw new Error('Internet Identity provider not found');
-      await provider.connect();
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
-    } finally {
-      setIsLoading(false);
-    }
-  };
   
   if (isCheckingProfile && isAuthenticated) {
     return (
@@ -95,47 +81,32 @@ export default function HomePage() {
         <link rel="icon" href="/logo.jpeg" /> 
       </Head>
       
-      <Header />
+      <Header /> 
       <main className="bg-gray-50">
         <Hero />
         <Features />
-        <WhyChooseSRV /> {/* Added new section */}
+        <WhyChooseSRV />
         
-        {(!isAuthenticated || error) && (
-          <section className="py-16 lg:py-24 bg-yellow-100"> {/* Paler yellow background */}
+        {(!isAuthenticated && error) && (
+          <section className="py-16 lg:py-24 bg-yellow-100">
             <div className="container mx-auto px-6 text-center">
               <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-6">
-                Ready to Get Started?
+                Login to Continue
               </h2>
               {error && (
                 <div className="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-md mx-auto">
                   Error: {error}
                 </div>
               )}
-              {!isAuthenticated && (
-                <button
-                  onClick={handleIILogin}
-                  disabled={isLoading}
-                  className={`bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg
-                              ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                      Connecting...
-                    </div>
-                  ) : (
-                    'Login with Internet Identity'
-                  )}
-                </button>
-              )}
+    
+              <InternetIdentityButton />  
             </div>
           </section>
         )}
         
         <AboutUs />
       </main>
-      <Footer />
+      <Footer/>
     </>
   );
 }

@@ -1,5 +1,4 @@
 import { Actor, HttpAgent } from '@dfinity/agent';
-import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
 import { 
   idlFactory, 
@@ -15,18 +14,42 @@ import type {
   Result_3
 } from '../declarations/review/review.did';
 
-// Initialize agent
-const agent = new HttpAgent({
-  host: process.env.DFX_NETWORK === 'local' ? 'http://localhost:4943' : 'https://ic0.app',
-});
+// Canister configuration
+const REVIEW_CANISTER_ID = canisterId || process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID || 'rkp4c-7iaaa-aaaaa-aaaca-cai';
 
-// Fetch root key for local development
-if (process.env.DFX_NETWORK === 'local') {
-  agent.fetchRootKey().catch(err => {
-    console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
-    console.error(err);
-  });
-}
+// Create agent and actor
+let agent: HttpAgent | null = null;
+let reviewActor: ReviewService | null = null;
+
+const initializeAgent = async (): Promise<HttpAgent> => {
+  if (!agent) {
+    agent = new HttpAgent({
+      host: process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943',
+    });
+
+    // Fetch root key for certificate validation during development
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        await agent.fetchRootKey();
+      } catch (err) {
+        console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
+        console.error(err);
+      }
+    }
+  }
+  return agent;
+};
+
+const getReviewActor = async (): Promise<ReviewService> => {
+  if (!reviewActor) {
+    const agentInstance = await initializeAgent();
+    reviewActor = Actor.createActor(idlFactory, {
+      agent: agentInstance,
+      canisterId: REVIEW_CANISTER_ID,
+    }) as ReviewService;
+  }
+  return reviewActor;
+};
 
 // Frontend-compatible Review interface
 export interface Review {
@@ -92,21 +115,11 @@ const convertFrontendReviewToCanister = (review: Partial<Review>): Partial<Canis
 
 // Create actor instance
 const createActor = async (): Promise<ReviewService> => {
-  const authClient = await AuthClient.create();
-  const identity = authClient.getIdentity();
+  const agentInstance = await initializeAgent();
   
-  const authenticatedAgent = new HttpAgent({
-    host: process.env.DFX_NETWORK === 'local' ? 'http://localhost:4943' : 'https://ic0.app',
-    identity,
-  });
-
-  if (process.env.DFX_NETWORK === 'local') {
-    await authenticatedAgent.fetchRootKey();
-  }
-
   return Actor.createActor(idlFactory, {
-    agent: authenticatedAgent,
-    canisterId,
+    agent: agentInstance,
+    canisterId: REVIEW_CANISTER_ID,
   }) as ReviewService;
 };
 
@@ -115,7 +128,7 @@ class ReviewCanisterService {
 
   private async getActor(): Promise<ReviewService> {
     if (!this.actor) {
-      this.actor = await createActor();
+      this.actor = await getReviewActor();
     }
     return this.actor;
   }
@@ -431,9 +444,175 @@ class ReviewCanisterService {
   }
 }
 
-// Export singleton instance
-const reviewCanisterService = new ReviewCanisterService();
-export default reviewCanisterService;
+// Review Canister Service Functions (consistent with other services)
+export const reviewCanisterService = {
+  /**
+   * Submit a review for a booking
+   */
+  async submitReview(
+    bookingId: string,
+    rating: number,
+    comment: string
+  ): Promise<Review> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.submitReview(bookingId, BigInt(rating), comment);
+      
+      if ('ok' in result) {
+        return convertCanisterReviewToFrontend(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      throw error;
+    }
+  },
 
-// Export the class for cases where multiple instances are needed
-export { ReviewCanisterService };
+  /**
+   * Get review by ID
+   */
+  async getReview(reviewId: string): Promise<Review> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.getReview(reviewId);
+      
+      if ('ok' in result) {
+        return convertCanisterReviewToFrontend(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error getting review:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get reviews for a booking
+   */
+  async getBookingReviews(bookingId: string): Promise<Review[]> {
+    try {
+      const actor = await getReviewActor();
+      const canisterReviews = await actor.getBookingReviews(bookingId);
+      
+      return canisterReviews.map(convertCanisterReviewToFrontend);
+    } catch (error) {
+      console.error('Error getting booking reviews:', error);
+      throw error;
+    }
+  },
+
+
+  /**
+   * Get all reviews
+   */
+  async getAllReviews(): Promise<Review[]> {
+    try {
+      const actor = await getReviewActor();
+      const canisterReviews = await actor.getAllReviews();
+      
+      return canisterReviews.map(convertCanisterReviewToFrontend);
+    } catch (error) {
+      console.error('Error getting all reviews:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get review statistics
+   */
+  async getReviewStatistics(): Promise<ReviewStatistics> {
+    try {
+      const actor = await getReviewActor();
+      const stats = await actor.getReviewStatistics();
+      
+      return {
+        totalReviews: Number(stats.totalReviews),
+        activeReviews: Number(stats.activeReviews),
+        hiddenReviews: Number(stats.hiddenReviews),
+        flaggedReviews: Number(stats.flaggedReviews),
+      };
+    } catch (error) {
+      console.error('Error getting review statistics:', error);
+      throw error;
+    }
+  },
+
+
+  /**
+   * Set canister references (admin function)
+   */
+  async setCanisterReferences(
+    booking: string,
+    service: string,
+    reputation: string,
+    auth: string
+  ): Promise<string | null> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.setCanisterReferences(
+        Principal.fromText(booking),
+        Principal.fromText(service),
+        Principal.fromText(reputation),
+        Principal.fromText(auth)
+      );
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error setting canister references:', result.err);
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error setting canister references:', error);
+      throw new Error(`Failed to set canister references: ${error}`);
+    }
+  },
+
+  /**
+   * Get recent reviews
+   */
+  async getRecentReviews(limit: number = 10): Promise<Review[]> {
+    try {
+      const allReviews = await this.getAllReviews();
+      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
+      
+      // Sort by creation date (most recent first)
+      visibleReviews.sort((a, b) => b.createdAt - a.createdAt);
+      
+      return visibleReviews.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting recent reviews:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get top rated reviews
+   */
+  async getTopRatedReviews(limit: number = 10): Promise<Review[]> {
+    try {
+      const allReviews = await this.getAllReviews();
+      const visibleReviews = allReviews.filter(review => review.status === 'Visible');
+      
+      // Sort by rating (highest first) and then by quality score
+      visibleReviews.sort((a, b) => {
+        if (a.rating !== b.rating) {
+          return b.rating - a.rating;
+        }
+        // If ratings are equal, sort by quality score
+        const scoreA = a.qualityScore || 0;
+        const scoreB = b.qualityScore || 0;
+        return scoreB - scoreA;
+      });
+      
+      return visibleReviews.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting top rated reviews:', error);
+      throw error;
+    }
+  }
+};
+
+export default reviewCanisterService;

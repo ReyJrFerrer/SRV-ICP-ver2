@@ -160,7 +160,12 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
     fetchServices();
   }, [fetchServices]);
   
-  return { services, loading, error, refetch: fetchServices };
+  return { 
+    services, 
+    loading, 
+    error, 
+    refetch: fetchServices 
+  };
 };
 
 /**
@@ -224,7 +229,12 @@ export const useServicesByCategory = (categoryId: string): UseServicesResult => 
     fetchServices();
   }, [fetchServices, categoryId]);
   
-  return { services, loading, error, refetch: fetchServices };
+  return { 
+    services, 
+    loading, 
+    error, 
+    refetch: fetchServices 
+  };
 };
 
 /**

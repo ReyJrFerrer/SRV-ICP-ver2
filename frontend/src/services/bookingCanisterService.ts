@@ -867,18 +867,18 @@ export const bookingCanisterService = {
    * Set canister references (admin function)
    */
   async setCanisterReferences(
-    auth?: Principal,
-    service?: Principal,
-    review?: Principal,
-    reputation?: Principal
+    auth: string,
+    service: string,
+    review: string,
+    reputation: string
   ): Promise<string | null> {
     try {
       const actor = await getBookingActor();
       const result = await actor.setCanisterReferences(
-        auth ? [auth] : [],
-        service ? [service] : [],
-        review ? [review] : [],
-        reputation ? [reputation] : []
+        [Principal.fromText(auth)],
+        [Principal.fromText(service)],
+        [Principal.fromText(review)],
+        [Principal.fromText(reputation)]
       );
       
       if ('ok' in result) {

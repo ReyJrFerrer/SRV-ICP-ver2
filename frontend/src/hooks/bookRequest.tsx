@@ -64,27 +64,27 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const [isSameDayAvailable, setIsSameDayAvailable] = useState(false);
 
   // Load service and package data
-  const loadServiceData = useCallback(async (serviceSlug: string) => {
+  const loadServiceData = useCallback(async (serviceId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      console.log('Loading service data for:', serviceSlug);
+      console.log('Loading service data for:', serviceId);
       
       // Get service details
-      const serviceData = await serviceCanisterService.getService(serviceSlug);
+      const serviceData = await serviceCanisterService.getService(serviceId);
       if (!serviceData) {
         throw new Error('Service not found');
       }
       
       // Get service packages
-      const servicePackages = await serviceCanisterService.getServicePackages(serviceSlug);
+      const servicePackages = await serviceCanisterService.getServicePackages(serviceId);
       
       setService(serviceData);
       setPackages(servicePackages || []);
       
       // Check same-day availability
-      const sameDayAvailable = await checkSameDayAvailability(serviceSlug);
+      const sameDayAvailable = await checkSameDayAvailability(serviceId);
       setIsSameDayAvailable(sameDayAvailable);
       
       console.log('Service data loaded successfully:', {

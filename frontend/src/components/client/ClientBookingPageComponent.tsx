@@ -10,6 +10,7 @@ import serviceCanisterService, {
   DayOfWeek,
   AvailableSlot
 } from '../../services/serviceCanisterService';
+import useBookRequest, { BookingRequest } from '../../hooks/bookRequest';
 
 // Helper functions
 const dayIndexToName = (dayIndex: number): string => {
@@ -67,20 +68,30 @@ interface ClientBookingPageComponentProps {
 
 const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({ serviceSlug }) => {
   const router = useRouter();
+  
+  // Use the booking hook
+  const {
+    service: hookService,
+    packages: hookPackages,
+    loading: hookLoading,
+    error: hookError,
+    availableSlots: hookAvailableSlots,
+    isSameDayAvailable,
+    loadServiceData,
+    getAvailableSlots,
+    createBookingRequest,
+    validateBookingRequest,
+    calculateTotalPrice,
+    formatLocationForBooking
+  } = useBookRequest();
 
-  // Service data
-  const [service, setService] = useState<ExtendedService | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Form state
+  // Local state for form management
   const [packages, setPackages] = useState<SelectablePackage[]>([]);
   const [concerns, setConcerns] = useState<string>('');
   const [bookingOption, setBookingOption] = useState<'sameday' | 'scheduled'>('sameday');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [isSameDayPossible, setIsSameDayPossible] = useState(true);
-  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Location state
   const [houseNumber, setHouseNumber] = useState('');
@@ -91,128 +102,43 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [currentLocationStatus, setCurrentLocationStatus] = useState('');
   const [useGpsLocation, setUseGpsLocation] = useState(false);
   const [showManualAddress, setShowManualAddress] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
-  // Load service data from canister
+  // Load service data when component mounts
   useEffect(() => {
-    const loadService = async () => {
-      if (!serviceSlug) return;
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Get service details
-        const serviceData = await serviceCanisterService.getService(serviceSlug);
-        if (!serviceData) {
-          setError('Service not found');
-          return;
-        }
+    if (serviceSlug) {
+      loadServiceData(serviceSlug);
+    }
+  }, [serviceSlug, loadServiceData]);
 
-        // Get service packages
-        const servicePackages = await serviceCanisterService.getServicePackages(serviceSlug);
-
-        console.log('Service Data:', serviceData); // Debug log
-
-        // Create extended service object
-        const extendedService: ExtendedService = {
-          ...serviceData,
-          packages: servicePackages,
-        };
-
-        setService(extendedService);
-        
-        // Set packages for selection
-        setPackages(servicePackages.map(pkg => ({ 
-          id: pkg.id, 
-          title: pkg.title, 
-          description: pkg.description, 
-          price: pkg.price, 
-          checked: false 
-        })));
-
-      } catch (error) {
-        console.error('Error loading service:', error);
-        setError('Failed to load service data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadService();
-  }, [serviceSlug]);
-
-  // Calculate same-day availability
+  // Update local packages state when hook packages change
   useEffect(() => {
-    if (!service) return;
-    
-    const calculateSameDay = () => {
-      // Check if service has instant booking enabled
-      if (!service.instantBookingEnabled) return false;
-      
-      // Check if weeklySchedule exists and has data
-      if (!service.weeklySchedule || service.weeklySchedule.length === 0) {
-        return false;
-      }
-      
-      const today = new Date();
-      const currentDayIndex = today.getDay();
-      const currentDayName = dayIndexToName(currentDayIndex);
-      
-      // Find today's availability in weekly schedule
-      const todayAvailability = service.weeklySchedule.find(
-        (scheduleItem) => scheduleItem.day === currentDayName as DayOfWeek
-      );
-      
-      if (!todayAvailability?.availability?.isAvailable) return false;
+    if (hookPackages.length > 0) {
+      setPackages(hookPackages.map(pkg => ({
+        id: pkg.id,
+        title: pkg.title,
+        description: pkg.description,
+        price: pkg.price,
+        checked: false
+      })));
+    }
+  }, [hookPackages]);
 
-      const currentHour = today.getHours();
-      const currentMinute = today.getMinutes();
-      const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
-      
-      // Check if current time falls within any available slot
-      if (!todayAvailability.availability.slots || todayAvailability.availability.slots.length === 0) {
-        return false;
-      }
-      
-      for (const slot of todayAvailability.availability.slots) {
-        if (currentTimeStr >= slot.startTime && currentTimeStr < slot.endTime) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    const sameDayPossible = calculateSameDay();
-    setIsSameDayPossible(sameDayPossible);
-    
-    if (!sameDayPossible && bookingOption === 'sameday') {
+  // Update booking option based on same-day availability
+  useEffect(() => {
+    if (!isSameDayAvailable && bookingOption === 'sameday') {
       setBookingOption('scheduled');
     }
-  }, [service, bookingOption]);
+  }, [isSameDayAvailable, bookingOption]);
 
   // Load available slots when date is selected
   useEffect(() => {
-    const loadAvailableSlots = async () => {
-      if (!service || !selectedDate) {
-        setAvailableSlots([]);
-        return;
-      }
-
-      try {
-        const slots = await serviceCanisterService.getAvailableTimeSlots(
-          service.providerId.toString(),
-          selectedDate
-        );
-        setAvailableSlots(slots);
-      } catch (error) {
-        console.error('Error loading available slots:', error);
-        setAvailableSlots([]);
+    const loadSlots = async () => {
+      if (hookService && selectedDate) {
+        await getAvailableSlots(hookService.id, selectedDate);
       }
     };
-
-    loadAvailableSlots();
-  }, [service, selectedDate]);
+    loadSlots();
+  }, [hookService, selectedDate, getAvailableSlots]);
 
   // Event handlers
   const handlePackageChange = (packageId: string) => {
@@ -225,7 +151,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   };
 
   const handleBookingOptionChange = (option: 'sameday' | 'scheduled') => {
-    if (option === 'sameday' && !isSameDayPossible) return;
+    if (option === 'sameday' && !isSameDayAvailable) return;
     setFormError(null);
     setBookingOption(option);
     if (option === 'sameday') {
@@ -284,7 +210,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     }
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     setFormError(null);
 
     // Validate package selection
@@ -304,7 +230,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         setFormError("Please select a time for your scheduled booking.");
         return;
       }
-    } else if (!isSameDayPossible) {
+    } else if (!isSameDayAvailable) {
       setFormError("Same day booking is currently not possible.");
       return;
     }
@@ -323,26 +249,38 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
     // Prepare booking data
     const selectedPackageIds = packages.filter(pkg => pkg.checked).map(pkg => pkg.id);
-    const totalPrice = packages.filter(pkg => pkg.checked).reduce((sum, pkg) => sum + pkg.price, 0);
+    const totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
 
-    const bookingData = {
-      serviceId: service!.id,
-      serviceName: service!.title,
-      providerId: service!.providerId.toString(),
+    const bookingData: BookingRequest = {
+      serviceId: hookService!.id,
+      serviceName: hookService!.title,
+      providerId: hookService!.providerId.toString(),
       packages: packages.filter(pkg => pkg.checked),
       totalPrice,
       bookingType: bookingOption,
-      scheduledDate: bookingOption === 'scheduled' ? selectedDate : null,
-      scheduledTime: bookingOption === 'scheduled' ? selectedTime : null,
+      scheduledDate: bookingOption === 'scheduled' ? selectedDate || undefined : undefined,
+      scheduledTime: bookingOption === 'scheduled' ? selectedTime : undefined,
       location: finalAddress,
       concerns: concerns.trim() || 'No specific concerns mentioned.',
     };
 
     console.log('Booking Data:', bookingData);
-    alert(`Booking request prepared!\n\nService: ${bookingData.serviceName}\nPackages: ${bookingData.packages.map(p => p.title).join(', ')}\nTotal: ₱${bookingData.totalPrice}\nType: ${bookingData.bookingType}\nLocation: ${bookingData.location}`);
+
+    try {
+      const booking = await createBookingRequest(bookingData);
+      if (booking) {
+        alert(`Booking created successfully!\n\nBooking ID: ${booking.id}\nService: ${bookingData.serviceName}\nTotal: ₱${bookingData.totalPrice}`);
+        router.back(); // Navigate back or to a success page
+      } else {
+        setFormError("Failed to create booking. Please try again.");
+      }
+    } catch (error) {
+      console.error('Booking creation error:', error);
+      setFormError("An error occurred while creating the booking. Please try again.");
+    }
   };
 
-  if (loading) {
+  if (hookLoading) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -353,11 +291,11 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     );
   }
 
-  if (error) {
+  if (hookError) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600">{hookError}</p>
           <button 
             onClick={() => router.back()}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -369,7 +307,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     );
   }
 
-  if (!service) {
+  if (!hookService) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -387,7 +325,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
 
   const isConfirmDisabled = 
     !packages.some(pkg => pkg.checked) ||
-    (bookingOption === 'sameday' && !isSameDayPossible) ||
+    (bookingOption === 'sameday' && !isSameDayAvailable) ||
     (bookingOption === 'scheduled' && (!selectedDate || !selectedTime.trim()));
 
   return (
@@ -413,11 +351,11 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                     <div className="text-sm font-medium text-green-600">₱{pkg.price}</div>
                   </div>
                 </label>
-              ))}
+              ))} 
             </div>
             
             {/* Concerns Section */}
-            <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
+            {/* <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Concerns</h3>
               <textarea
                 className="w-full p-3 border border-gray-300 rounded-lg resize-none min-h-[80px] focus:ring-blue-500 focus:border-blue-500"
@@ -425,7 +363,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                 value={concerns}
                 onChange={(e) => setConcerns(e.target.value)}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Right Column Wrapper */}
@@ -434,17 +372,17 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-t-xl md:border md:shadow-sm md:border-b-0">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Schedule *</h3>
               
-              {service.weeklySchedule && service.weeklySchedule.length > 0 && (
+              {hookService.weeklySchedule && hookService.weeklySchedule.length > 0 && (
                 <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
-                  Available: {service.weeklySchedule
+                  Available: {hookService.weeklySchedule
                     .filter(s => s.availability.isAvailable)
                     .map(s => s.day)
                     .join(', ')} | 
-                  {service.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
+                  {hookService.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
                 </div>
               )}
 
-              {(!service.weeklySchedule || service.weeklySchedule.length === 0) && (
+              {(!hookService.weeklySchedule || hookService.weeklySchedule.length === 0) && (
                 <div className="mb-4 p-2 bg-yellow-50 rounded text-sm text-yellow-700 text-center">
                   No availability schedule set for this provider.
                 </div>
@@ -456,12 +394,12 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                     bookingOption === 'sameday' 
                       ? 'bg-blue-600 text-white border-blue-600' 
                       : 'bg-gray-50 text-gray-700 border-gray-300'
-                  } ${!isSameDayPossible ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500 hover:text-white'}`}
+                  } ${!isSameDayAvailable ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500 hover:text-white'}`}
                   onClick={() => handleBookingOptionChange('sameday')}
-                  disabled={!isSameDayPossible}
+                  disabled={!isSameDayAvailable}
                 >
                   <div className="font-medium text-sm">Same Day</div>
-                  {isSameDayPossible && <div className="text-xs opacity-75">Arrive within 20-45 mins</div>}
+                  {isSameDayAvailable && <div className="text-xs opacity-75">Arrive within 20-45 mins</div>}
                 </button>
                 <button
                   className={`flex-1 p-3 border rounded-lg text-center ${
@@ -487,16 +425,16 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                       dateFormat="MMMM d, yyyy"
                       minDate={new Date()}
                       filterDate={(date) => {
-                        if (!service.weeklySchedule) return false;
+                        if (!hookService.weeklySchedule) return false;
                         const dayName = dayIndexToName(date.getDay());
-                        return service.weeklySchedule.some(scheduleItem => 
+                        return hookService.weeklySchedule.some(scheduleItem => 
                           scheduleItem.day === dayName as DayOfWeek && scheduleItem.availability.isAvailable
                         );
                       }}
                     />
                   </div>
                   
-                  {selectedDate && availableSlots.length > 0 && (
+                  {selectedDate && hookAvailableSlots.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Select Time:</label>
                       <select
@@ -505,7 +443,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                         onChange={(e) => handleTimeChange(e.target.value)}
                       >
                         <option value="">Choose a time</option>
-                        {availableSlots
+                        {hookAvailableSlots
                           .filter(slot => slot.isAvailable)
                           .map((slot, index) => (
                             <option key={index} value={slot.timeSlot.startTime}>

@@ -41,7 +41,7 @@ const BookingPage: React.FC<BookingPageProps> = ({ serviceSlug }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const serviceSlug = params?.slug as string;
+  const serviceSlug = params?.id as string;
   
   if (!serviceSlug) {
     return {

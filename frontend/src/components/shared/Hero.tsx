@@ -48,7 +48,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             ) : (
               <>
                 <FingerPrintIcon className="h-5 w-5 mr-2" />
-                Login with Interenet Identity
+                Login with Internet Identity
               </>
             )}
           </button>

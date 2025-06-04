@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,7 +22,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             <Image
               src="/logo.svg" 
               alt="SRV Logo"
-              width={90} 
+              width={90}  
               height={Math.round(90 * (760 / 1000))} 
               priority
             />
@@ -47,7 +48,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             ) : (
               <>
                 <FingerPrintIcon className="h-5 w-5 mr-2" />
-                Login with II
+                Login with Interenet Identity
               </>
             )}
           </button>
@@ -81,7 +82,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
           <div className="md:w-1/2 flex justify-center items-center mt-10 md:mt-0 px-4">
             <div className="w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
               <Image
-                src="/HeroPlacerImage.svg" 
+                src="/HeroPlacerImage.svg"
                 alt="Laptop and phone showcasing srv"
                 width={1000}
                 height={760}

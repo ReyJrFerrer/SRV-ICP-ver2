@@ -298,8 +298,37 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     try {
       const booking = await createBookingRequest(bookingData);
       if (booking) {
-        alert(`Booking created successfully!\n\nBooking ID: ${booking.id}\nService: ${bookingData.serviceName}\nTotal: ₱${bookingData.totalPrice}`);
-        router.back(); // Navigate back or to a success page
+        // Prepare booking details for confirmation page
+        const confirmationDetails = {
+          serviceName: bookingData.serviceName,
+          providerName: hookService!.providerName , // Add provider name from service
+          selectedPackages: bookingData.packages.map(pkg => ({
+            id: pkg.id,
+            name: pkg.title
+          })),
+          concerns: bookingData.concerns || 'No specific concerns mentioned',
+          bookingType: bookingData.bookingType === 'sameday' ? 'Same Day' : 'Scheduled',
+          date: bookingData.bookingType === 'scheduled' && bookingData.scheduledDate 
+            ? bookingData.scheduledDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })
+            : 'Same Day',
+          time: bookingData.bookingType === 'scheduled' && bookingData.scheduledTime
+            ? bookingData.scheduledTime
+            : 'As soon as possible',
+          location: bookingData.location
+        };
+
+        console.log("These are the confirmation details",confirmationDetails);
+        
+        // Navigate to confirmation page with details
+        router.push({
+          pathname: '/client/booking/confirmation',
+          query: { details: JSON.stringify(confirmationDetails) }
+        });
       } else {
         setFormError("Failed to create booking. Please try again.");
       }

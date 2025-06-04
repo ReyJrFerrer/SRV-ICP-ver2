@@ -83,11 +83,7 @@ const BookingConfirmationPage: React.FC = () => {
                     </ul>
                   </div>
                 )}
-                
-                <p>
-                  <span className="font-medium text-gray-700">Concerns:</span>{' '}
-                  {bookingDetails.concerns}
-                </p>
+              
                 <p>
                   <span className="font-medium text-gray-700">Type:</span>{' '}
                   {bookingDetails.bookingType === 'sameday' ? 'Same Day' : 'Scheduled'}

@@ -3,8 +3,11 @@ import { NextPage } from 'next';
 import Head from 'next/head';
 import BottomNavigationNextjs from '../../../components/client/BottomNavigationNextjs';
 import MyBookingsComponent from '../../../components/client/bookings/MyBookingsComponent';
+import { useBookingManagement } from '../../../hooks/bookingManagement';
 
 const MyBookingsPage: NextPage = () => {
+  const bookingManagement = useBookingManagement();
+
   return (
     <>
       <Head>
@@ -23,7 +26,7 @@ const MyBookingsPage: NextPage = () => {
 
         {/* Main Content */}
         <div className="pb-20">
-          <MyBookingsComponent />
+          <MyBookingsComponent bookingManagement={bookingManagement} />
         </div>
 
         {/* Bottom Navigation */}

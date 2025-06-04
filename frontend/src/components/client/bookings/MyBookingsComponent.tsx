@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import { Booking, BookingStatus } from '../../../services/bookingCanisterService';
 import BookingItemCard from './BookingItemCard';
+import { useBookingManagement } from '../../../hooks/bookingManagement';
+
+// Define the props interface for the component
+interface MyBookingsComponentProps {
+  bookingManagement?: ReturnType<typeof useBookingManagement>;
+}
 
 const bookingStatuses: BookingStatus[] = ['Requested', 'Accepted', 'Completed', 'Cancelled'];
 
@@ -113,67 +120,55 @@ const EmptyBookingState: React.FC<EmptyBookingStateProps> = ({ status, onBrowseS
   );
 };
 
-const MyBookingsComponent: React.FC = () => {
+const MyBookingsComponent: React.FC<MyBookingsComponentProps> = ({ bookingManagement }) => {
   const [activeStatusTab, setActiveStatusTab] = useState<BookingStatus>('Accepted');
-  const [userBookings, setUserBookings] = useState<Booking[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Use the booking management hook or fallback to internal hook
+  const internalBookingManagement = useBookingManagement();
+  const {
+    bookings,
+    loading,
+    error,
+    refreshing,
+    bookingsByStatus,
+    updateBookingStatus,
+    getBookingCount,
+    getStatusColor,
+    clearError
+  } = bookingManagement || internalBookingManagement;
 
-  // Simulate loading user bookings (replace with actual API call)
-  useEffect(() => {
-    const loadUserBookings = async () => {
-      setIsLoading(true);
-      // TODO: Replace with actual API call to fetch user bookings
-      // For now, simulate empty state
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUserBookings([]);
-      setIsLoading(false);
-    };
-
-    loadUserBookings();
-  }, []);
-
-  const handleUpdateBookingStatus = useCallback((bookingId: string, newStatus: BookingStatus) => {
-    setUserBookings(currentBookings =>
-      currentBookings.map(booking =>
-        booking.id === bookingId 
-          ? { ...booking, status: newStatus, updatedAt: new Date().toISOString() } 
-          : booking
-      )
-    );
-  }, []);
-
-  useEffect(() => {
-    setFilteredBookings(userBookings.filter(booking => booking.status === activeStatusTab));
-  }, [activeStatusTab, userBookings]);
-
-  const getStatusColor = (status: BookingStatus) => {
-    switch (status) {
-      case 'Requested':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Accepted':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Completed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'InProgress':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Declined':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'Disputed':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getBookingCount = (status: BookingStatus) => {
-    return userBookings.filter(booking => booking.status === status).length;
-  };
+  // Get filtered bookings for the active tab
+  const filteredBookings = bookingsByStatus(activeStatusTab);
 
   return (
     <div className="w-full">
+      {/* Error Display */}
+      {error && (
+        <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-red-600 text-sm">{error}</span>
+            </div>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800 text-sm font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Refresh indicator */}
+      {refreshing && (
+        <div className="mx-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+            <span className="text-blue-600 text-sm">Refreshing bookings...</span>
+          </div>
+        </div>
+      )}
+
       {/* Status Tabs */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-4 py-3">
@@ -206,7 +201,7 @@ const MyBookingsComponent: React.FC = () => {
 
       {/* Booking List */}
       <div className="px-4 py-4 space-y-4">
-        {isLoading ? (
+        {loading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, index) => (
               <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -226,7 +221,7 @@ const MyBookingsComponent: React.FC = () => {
             <BookingItemCard
               key={booking.id}
               booking={booking}
-              onUpdateBookingStatus={handleUpdateBookingStatus}
+              onUpdateBookingStatus={updateBookingStatus}
             />
           ))
         ) : (

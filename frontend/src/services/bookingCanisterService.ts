@@ -2,7 +2,7 @@
 import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '../declarations/booking/booking.did.js';
-import { getHttpAgent } from '../utils/icpClient';
+import { getHttpAgent, getAdminHttpAgent } from '../utils/icpClient';
 import type { 
   _SERVICE as BookingService,
   Booking as CanisterBooking,
@@ -861,7 +861,13 @@ export const bookingCanisterService = {
     reputation: string
   ): Promise<string | null> {
     try {
-      const actor = await getBookingActor();
+      // Use admin agent for setup operations
+      const agent = await getAdminHttpAgent();
+      const actor = Actor.createActor(idlFactory, {
+        agent: agent,
+        canisterId: BOOKING_CANISTER_ID,
+      }) as BookingService;
+
       const result = await actor.setCanisterReferences(
         [Principal.fromText(auth)],
         [Principal.fromText(service)],

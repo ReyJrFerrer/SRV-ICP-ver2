@@ -1,41 +1,22 @@
 // Auth Canister Service
-import { Actor, HttpAgent } from '@dfinity/agent';
+import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '../declarations/auth/auth.did.js';
+import { getHttpAgent, getAdminHttpAgent } from '../utils/icpClient';
 import type { _SERVICE as AuthService, Profile, UserRole } from '../declarations/auth/auth.did';
 import { adaptBackendProfile } from '../utils/assetResolver';
 
 // Canister configuration
 const AUTH_CANISTER_ID = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID || 'be2us-64aaa-aaaaa-qaabq-cai';
 
-// Create agent and actor
-let agent: HttpAgent | null = null;
+// Create actor
 let authActor: AuthService | null = null;
-
-const initializeAgent = async (): Promise<HttpAgent> => {
-  if (!agent) {
-    agent = new HttpAgent({
-      host: process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943',
-    });
-
-    // Fetch root key for certificate validation during development
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        await agent.fetchRootKey();
-      } catch (err) {
-        console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
-        console.error(err);
-      }
-    }
-  }
-  return agent;
-};
 
 const getAuthActor = async (): Promise<AuthService> => {
   if (!authActor) {
-    const agentInstance = await initializeAgent();
+    const agent = await getHttpAgent();
     authActor = Actor.createActor(idlFactory, {
-      agent: agentInstance,
+      agent: agent,
       canisterId: AUTH_CANISTER_ID,
     }) as AuthService;
   }
@@ -183,9 +164,6 @@ export const authCanisterService = {
   /**
    * Verify a user
    */
-  /**
-   * Verify a user
-   */
   async verifyUser(userId: string): Promise<boolean> {
     try {
       const actor = await getAuthActor();
@@ -207,11 +185,17 @@ export const authCanisterService = {
   },
 
   /**
-   * Set canister references for auth canister
+   * Set canister references for auth canister (ADMIN FUNCTION)
    */
   async setCanisterReferences(reputationCanisterId?: string): Promise<string | null> {
     try {
-      const actor = await getAuthActor();
+      // Use admin agent for setup operations
+      const agent = await getAdminHttpAgent();
+      const actor = Actor.createActor(idlFactory, {
+        agent: agent,
+        canisterId: AUTH_CANISTER_ID,
+      }) as AuthService;
+
       const result = await actor.setCanisterReferences(
         reputationCanisterId ? [Principal.fromText(reputationCanisterId)] : []
       );
@@ -227,6 +211,16 @@ export const authCanisterService = {
       throw new Error(`Failed to set canister references: ${error}`);
     }
   }
+};
+
+// Reset functions for authentication state changes
+export const resetAuthActor = () => {
+  authActor = null;
+};
+
+export const refreshAuthActor = async () => {
+  authActor = null;
+  return await getAuthActor();
 };
 
 export default authCanisterService;

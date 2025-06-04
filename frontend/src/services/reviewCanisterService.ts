@@ -5,7 +5,7 @@ import {
   idlFactory, 
   canisterId
 } from '../declarations/review';
-import { getHttpAgent } from '../utils/icpClient';
+import { getHttpAgent, getAdminHttpAgent } from '../utils/icpClient';
 import type { 
   _SERVICE as ReviewService,
   Review as CanisterReview,
@@ -306,9 +306,21 @@ class ReviewCanisterService {
     service: string,
     reputation: string,
     auth: string
-  ): Promise<string> {
+  ): Promise<string | null> {
     try {
-      const actor = await this.getActor();
+      // Use admin agent for setup operations
+      const agent = await getAdminHttpAgent();
+      
+      // Create a fresh actor instance with proper error handling
+      const actor = Actor.createActor(idlFactory, {
+        agent: agent,
+        canisterId: REVIEW_CANISTER_ID,
+      }) as ReviewService;
+      
+      if (!actor) {
+        throw new Error('Failed to create actor instance');
+      }
+      
       const result = await actor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
@@ -319,11 +331,14 @@ class ReviewCanisterService {
       if ('ok' in result) {
         return result.ok;
       } else {
+        console.error('Error setting canister references:', result.err);
         throw new Error(result.err);
       }
     } catch (error) {
       console.error('Error setting canister references:', error);
-      throw error;
+      // Reset the actor to force recreation on next call
+      reviewActor = null;
+      throw new Error(`Failed to set canister references: ${error}`);
     }
   }
 
@@ -532,7 +547,22 @@ export const reviewCanisterService = {
     auth: string
   ): Promise<string | null> {
     try {
-      const actor = await getReviewActor();
+      // Add agent validation
+      const agent = await getHttpAgent();
+      if (!agent) {
+        throw new Error('Failed to get HTTP agent - agent is undefined');
+      }
+      
+      // Create a fresh actor instance with proper error handling
+      const actor = Actor.createActor(idlFactory, {
+        agent: agent,
+        canisterId: REVIEW_CANISTER_ID,
+      }) as ReviewService;
+      
+      if (!actor) {
+        throw new Error('Failed to create actor instance');
+      }
+      
       const result = await actor.setCanisterReferences(
         Principal.fromText(booking),
         Principal.fromText(service),
@@ -548,6 +578,8 @@ export const reviewCanisterService = {
       }
     } catch (error) {
       console.error('Error setting canister references:', error);
+      // Reset the actor to force recreation on next call
+      reviewActor = null;
       throw new Error(`Failed to set canister references: ${error}`);
     }
   },

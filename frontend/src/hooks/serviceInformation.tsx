@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from "@bundly/ares-react";
 import authCanisterService, { FrontendProfile } from '../services/authCanisterService';
 import serviceCanisterService, { Service, ServiceCategory } from '../services/serviceCanisterService';
 
@@ -375,10 +376,76 @@ export const useServiceById = (serviceId: string): {
   return { service, loading, error, refetch: fetchService };
 };
 
+/**
+ * Hook to fetch all categories
+ */
+export const useCategories = (): {
+  categories: ServiceCategory[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+} => {
+  const { isAuthenticated, currentIdentity } = useAuth();
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [initialized, setInitialized] = useState<boolean>(false);
+  
+  const fetchCategories = useCallback(async () => {
+    // Don't fetch if we're still initializing the auth context
+    if (!initialized) {
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Fetching categories from service canister...');
+      // Add a small delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canisterCategories = await serviceCanisterService.getAllCategories();
+      console.log('Fetched categories from canister:', canisterCategories);
+      
+      setCategories(canisterCategories || []);
+      console.log('Successfully loaded categories from service canister');
+    } catch (err) {
+      console.error('Failed to load categories from service canister:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch categories'));
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [initialized]);
+  
+  // Wait for auth context to be ready before attempting to fetch
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialized(true);
+    }, 500); // Give auth context time to initialize
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    if (initialized) {
+      fetchCategories();
+    }
+  }, [initialized, fetchCategories]);
+  
+  return {
+    categories,
+    loading,
+    error,
+    refetch: fetchCategories
+  };
+};
+
 // Default export with all hooks for convenience
 export default {
   useAllServicesWithProviders,
   useServicesByCategory,
   useTopPickServices,
-  useServiceById
+  useServiceById,
+  useCategories
 };

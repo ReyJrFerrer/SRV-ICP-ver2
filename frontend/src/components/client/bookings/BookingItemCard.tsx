@@ -3,31 +3,32 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Principal } from '@dfinity/principal';
 import { Booking, BookingStatus } from '../../../services/bookingCanisterService';
+import { EnhancedBooking } from '../../../hooks/bookingManagement';
 import { 
   CalendarIcon, 
   ClockIcon, 
   MapPinIcon, 
   CurrencyDollarIcon,
-  PhoneIcon,
   ChatBubbleLeftRightIcon,
   XMarkIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 
 interface BookingItemCardProps {
-  booking?: Booking;
+  booking?: EnhancedBooking;
   onUpdateBookingStatus?: (bookingId: string, newStatus: BookingStatus) => void;
 }
-// To Remove
-// Placeholder Booking Data
-const createPlaceholderBooking = (): Booking => ({
+
+// Placeholder for development/testing
+const createPlaceholderBooking = (): EnhancedBooking => ({
   id: 'placeholder-booking',
   clientId: Principal.fromText('rdmx6-jaaaa-aaaah-qcaiq-cai'),
   providerId: Principal.fromText('rrkah-fqaaa-aaaah-qcaiq-cai'),
   serviceId: 'placeholder-service',
   status: 'Accepted',
   requestedDate: new Date().toISOString(),
-  scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+  scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   price: 150,
   location: {
     latitude: 16.4095,
@@ -47,13 +48,15 @@ const createPlaceholderBooking = (): Booking => ({
   bookingTime: '2:00 PM',
   duration: '3 hours',
   priceDisplay: '$150',
-  serviceSlug: 'house-cleaning'
+  serviceSlug: 'house-cleaning',
+  formattedLocation: '123 Session Road, Baguio City, Benguet',
+  isProviderDataLoaded: true
 });
 
 const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking, onUpdateBookingStatus }) => {
   const router = useRouter();
   
-  // Use placeholder booking if no booking is provided
+  // Use provided booking or placeholder
   const displayBooking = booking || createPlaceholderBooking();
 
   const handleViewBooking = () => {
@@ -71,8 +74,8 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking, onUpdateBook
   };
 
   const handleContactProvider = () => {
-    // In a real app, this would open a chat or show contact details
-    alert(`Contact ${displayBooking.providerName} through the app's messaging system.`);
+    const providerName = displayBooking.providerProfile?.name || displayBooking.providerName || 'the provider';
+    alert(`Contact ${providerName} through the app's messaging system.`);
   };
 
   const getStatusColor = (status: BookingStatus) => {
@@ -114,24 +117,59 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking, onUpdateBook
     });
   };
 
+  // Get provider image source
+  const getProviderImageSource = () => {
+    if (displayBooking.providerProfile?.profilePicture?.imageUrl) {
+      return displayBooking.providerProfile.profilePicture.imageUrl;
+    }
+    return null;
+  };
+
+  const providerImageSrc = getProviderImageSource();
+  const providerName = displayBooking.providerProfile?.name || displayBooking.providerName || 'Unknown Provider';
+  const locationDisplay = displayBooking.formattedLocation || 'Location not specified';
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="p-4 flex items-start space-x-3">
+        {/* Provider Profile Picture */}
         <div className="flex-shrink-0">
-          <Image
-            src={displayBooking.serviceImage || '/images/default-placeholder.png'}
-            alt={displayBooking.serviceName || 'Service'}
-            width={60}
-            height={60}
-            className="rounded-lg object-cover"
-          />
+          {providerImageSrc ? (
+            <Image
+              src={providerImageSrc}
+              alt={`${providerName} profile`}
+              width={64}
+              height={64}
+              className="rounded-full object-cover border-2 border-gray-200"
+              onError={(e) => {
+                console.log('Error loading provider image, using fallback');
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-300">
+              <UserCircleIcon className="w-8 h-8 text-gray-400" />
+            </div>
+          )}
+          
+          {/* Loading indicator for provider data */}
+          {!displayBooking.isProviderDataLoaded && (
+            <div className="absolute top-0 right-0 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+          )}
         </div>
+        
+        {/* Booking Info */}
         <div className="flex-grow min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 truncate">
             {displayBooking.serviceName}
           </h3>
-          <p className="text-sm text-gray-600 mb-2">by {displayBooking.providerName}</p>
+          <p className="text-sm text-gray-600 mb-2">
+            by {providerName}
+            {displayBooking.providerProfile?.isVerified && (
+              <span className="ml-1 text-blue-500">✓</span>
+            )}
+          </p>
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(displayBooking.status)}`}>
             {displayBooking.status}
           </span>
@@ -149,9 +187,11 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking, onUpdateBook
             <ClockIcon className="h-4 w-4 mr-2 flex-shrink-0" />
             <span className="truncate">{formatTime(displayBooking.scheduledDate || displayBooking.requestedDate)}</span>
           </div>
-          <div className="flex items-center text-gray-600">
+          <div className="flex items-center text-gray-600 col-span-2">
             <MapPinIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="truncate">{displayBooking.location.city}, {displayBooking.location.state}</span>
+            <span className="truncate" title={locationDisplay}>
+              {locationDisplay}
+            </span>
           </div>
           <div className="flex items-center text-gray-600">
             <CurrencyDollarIcon className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -163,6 +203,24 @@ const BookingItemCard: React.FC<BookingItemCardProps> = ({ booking, onUpdateBook
           <div className="flex items-center text-sm text-gray-600">
             <ClockIcon className="h-4 w-4 mr-2 flex-shrink-0" />
             <span>Duration: {displayBooking.duration}</span>
+          </div>
+        )}
+
+        {/* Provider Info Section */}
+        {displayBooking.providerProfile && (
+          <div className="pt-2 border-t border-gray-100">
+            <div className="flex items-center text-sm text-gray-600">
+              <span className="font-medium">Provider:</span>
+              <span className="ml-2">{displayBooking.providerProfile.name}</span>
+              {displayBooking.providerProfile.phone && (
+                <span className="ml-2 text-gray-400">• {displayBooking.providerProfile.phone}</span>
+              )}
+            </div>
+            {displayBooking.providerProfile.biography && (
+              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                {displayBooking.providerProfile.biography}
+              </p>
+            )}
           </div>
         )}
       </div>

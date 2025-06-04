@@ -73,6 +73,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const {
     service: hookService,
     packages: hookPackages,
+    providerProfile: hookProviderProfile, // Add this
     loading: hookLoading,
     error: hookError,
     availableSlots: hookAvailableSlots,
@@ -276,9 +277,34 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       return;
     }
 
-    // Prepare booking data
+    // Prepare booking data with debugging
     const selectedPackageIds = packages.filter(pkg => pkg.checked).map(pkg => pkg.id);
-    const totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
+    
+    // Debug the time value specifically
+    console.log('🕒 Time debugging:', {
+      bookingOption,
+      selectedTime,
+      selectedTimeType: typeof selectedTime,
+      selectedTimeLength: selectedTime?.length,
+      selectedDate: selectedDate?.toISOString(),
+      timeSlotParsed: selectedTime ? parseTimeSlotString(selectedTime) : null
+    });
+
+    let totalPrice = 0;
+    try {
+      totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
+      console.log('💰 Calculated total price:', totalPrice);
+      
+      if (isNaN(totalPrice) || totalPrice < 0) {
+        console.error('❌ Invalid total price:', totalPrice);
+        setFormError("Error calculating total price. Please try again.");
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Price calculation error:', error);
+      setFormError("Error calculating total price. Please try again.");
+      return;
+    }
 
     const bookingData: BookingRequest = {
       serviceId: hookService!.id,
@@ -293,7 +319,12 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       concerns: concerns.trim() || 'No specific concerns mentioned.',
     };
 
-    console.log('Booking Data:', bookingData);
+    console.log('📋 Final Booking Data before submission:', {
+      ...bookingData,
+      scheduledDate: bookingData.scheduledDate?.toISOString(),
+      totalPrice: bookingData.totalPrice,
+      providerId: bookingData.providerId
+    });
 
     try {
       const booking = await createBookingRequest(bookingData);
@@ -301,7 +332,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         // Prepare booking details for confirmation page
         const confirmationDetails = {
           serviceName: bookingData.serviceName,
-          providerName: hookService!.providerName , // Add provider name from service
+          providerName: hookProviderProfile?.name || 'Unknown Provider',
           selectedPackages: bookingData.packages.map(pkg => ({
             id: pkg.id,
             name: pkg.title
@@ -322,7 +353,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
           location: bookingData.location
         };
 
-        console.log("These are the confirmation details",confirmationDetails);
+        console.log("✅ Confirmation details prepared:", confirmationDetails);
         
         // Navigate to confirmation page with details
         router.push({
@@ -333,7 +364,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         setFormError("Failed to create booking. Please try again.");
       }
     } catch (error) {
-      console.error('Booking creation error:', error);
+      console.error('❌ Booking creation error:', error);
       setFormError("An error occurred while creating the booking. Please try again.");
     }
   };
@@ -503,11 +534,14 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                         <option value="">Choose a time</option>
                         {hookAvailableSlots
                           .filter(slot => slot.isAvailable)
-                          .map((slot, index) => (
-                            <option key={index} value={slot.timeSlot.startTime}>
-                              {slot.timeSlot.startTime} - {slot.timeSlot.endTime}
-                            </option>
-                          ))
+                          .map((slot, index) => {
+                            const timeSlotValue = `${slot.timeSlot.startTime}-${slot.timeSlot.endTime}`;
+                            return (
+                              <option key={index} value={timeSlotValue}>
+                                {slot.timeSlot.startTime} - {slot.timeSlot.endTime}
+                              </option>
+                            );
+                          })
                         }
                       </select>
                     </div>

@@ -23,11 +23,20 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     ],
   });
 
-  // Initialize canisters on app startup
+  // Initialize canisters on app startup with a small delay
   useEffect(() => {
-    initializeCanisterNetwork().catch((error) => {
-      console.error('Failed to initialize canister network at startup:', error);
-    });
+    const initializeWithDelay = async () => {
+      try {
+        // Small delay to ensure auth context is ready
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        await initializeCanisterNetwork();
+        console.log("Canister network initialized successfully");
+      } catch (error) {
+        console.error("Failed to initialize canister network at startup:", error);
+      }
+    };
+
+    initializeWithDelay();
   }, []);
 
   return (

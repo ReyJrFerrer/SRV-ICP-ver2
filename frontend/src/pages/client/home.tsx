@@ -10,10 +10,13 @@ import TopPicks from '@app/components/client/TopPicksNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
 
 // Services
-import serviceCanisterService, { ServiceCategory } from '@app/services/serviceCanisterService';
+import { ServiceCategory } from '@app/services/serviceCanisterService';
 
 // Utilities
 import { getCategoryIcon } from '@app/utils/serviceHelpers';
+
+// Hooks
+import { useCategories } from '@app/hooks/serviceInformation';
 
 // Define the adapted category type that matches the Categories component requirements
 interface AdaptedCategory {
@@ -25,52 +28,25 @@ interface AdaptedCategory {
 
 const ClientHomePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
-  const [categories, setCategories] = useState<AdaptedCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [adaptedCategories, setAdaptedCategories] = useState<AdaptedCategory[]>([]);
+  
+  // Use the categories hook
+  const { categories, loading, error } = useCategories();
 
+  // Transform categories when they change
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setError(null);
-        
-        // Load categories from service canister
-        try {
-          console.log('Fetching categories from service canister...');
-          const canisterCategories = await serviceCanisterService.getAllCategories();
-          console.log('Fetched categories from canister:', canisterCategories);
-
- 
-          if (canisterCategories && canisterCategories.length > 0) {
-            // Convert ServiceCategory to AdaptedCategory format
-            const adaptedCategories: AdaptedCategory[] = canisterCategories.map(category => ({
-              id: category.id,
-              name: category.name,
-              icon: getCategoryIcon(category.name), // Map category name to Heroicon
-              slug: category.slug
-            }));
-            setCategories(adaptedCategories);
-            console.log('Successfully loaded categories from service canister');
-          } else {
-            console.warn('No categories found in service canister');
-            setCategories([]);
-          }
-        } catch (canisterError) {
-          console.error('Failed to load categories from service canister:', canisterError);
-          setCategories([]);
-        }
-        
-      } catch (error) {
-        console.error('Failed to load data:', error);
-        setError('Failed to load category data');
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+    if (categories && categories.length > 0) {
+      const transformed: AdaptedCategory[] = categories.map(category => ({
+        id: category.id,
+        name: category.name,
+        icon: getCategoryIcon(category.name),
+        slug: category.slug
+      }));
+      setAdaptedCategories(transformed);
+    } else {
+      setAdaptedCategories([]);
+    }
+  }, [categories]);
 
   if (loading) {
     return (
@@ -91,7 +67,9 @@ const ClientHomePage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 pb-20">
         {error && (
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mx-4 mt-4">
-            <span className="block sm:inline">{error}</span>
+            <span className="block sm:inline">
+              Failed to load categories: {error.message}
+            </span>
           </div>
         )}
 
@@ -99,7 +77,7 @@ const ClientHomePage: React.FC = () => {
           <Header className="mb-6" />
 
           <Categories 
-            categories={categories} 
+            categories={adaptedCategories} 
             className="mb-8"
             initialItemCount={4}
           />

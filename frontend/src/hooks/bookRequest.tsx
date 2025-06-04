@@ -10,6 +10,7 @@ import bookingCanisterService, {
   Booking, 
   BookingStatus 
 } from '../services/bookingCanisterService';
+import authCanisterService, { FrontendProfile } from '../services/authCanisterService'; 
 
 // TypeScript Interfaces
 export interface BookingRequest {
@@ -34,6 +35,7 @@ export interface UseBookRequestReturn {
   // Service data
   service: Service | null;
   packages: ServicePackage[];
+  providerProfile: FrontendProfile | null; // Add this
   loading: boolean;
   error: string | null;
   
@@ -58,6 +60,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
   // State management
   const [service, setService] = useState<Service | null>(null);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [providerProfile, setProviderProfile] = useState<FrontendProfile | null>(null); // Add this
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
@@ -80,8 +83,18 @@ export const useBookRequest = (): UseBookRequestReturn => {
       // Get service packages
       const servicePackages = await serviceCanisterService.getServicePackages(serviceId);
       
+      // Get provider profile
+      let providerData: FrontendProfile | null = null;
+      try {
+        providerData = await authCanisterService.getProfile(serviceData.providerId.toString());
+        console.log('Provider profile loaded:', providerData);
+      } catch (providerError) {
+        console.warn('Could not load provider profile:', providerError);
+      }
+      
       setService(serviceData);
       setPackages(servicePackages || []);
+      setProviderProfile(providerData);
       
       // Check same-day availability
       const sameDayAvailable = await checkSameDayAvailability(serviceId);
@@ -89,6 +102,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
       
       console.log('Service data loaded successfully:', {
         service: serviceData.title,
+        provider: providerData?.name || 'Unknown',
         packages: servicePackages?.length || 0,
         sameDayAvailable
       });
@@ -202,49 +216,104 @@ export const useBookRequest = (): UseBookRequestReturn => {
       setLoading(true);
       setError(null);
       
-      console.log('Creating booking request:', bookingData);
+      console.log('🔄 Creating booking request:', bookingData);
       
       // Validate booking data
       const validation = validateBookingRequest(bookingData);
       if (!validation.isValid) {
-        throw new Error(validation.errors.join(', '));
+        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
       }
       
       // Format location
       const location = formatLocationForBooking(bookingData.location);
       
-      // Determine requested date
+      // Determine requested date with enhanced debugging
       let requestedDate: Date;
       if (bookingData.bookingType === 'sameday') {
         requestedDate = new Date();
+        console.log('📅 Same day booking - using current date:', requestedDate.toISOString());
       } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
-        const [hours, minutes] = bookingData.scheduledTime.split(':').map(Number);
+        console.log('🕒 Processing scheduled time:', {
+          scheduledDate: bookingData.scheduledDate.toISOString(),
+          scheduledTime: bookingData.scheduledTime,
+          scheduledTimeType: typeof bookingData.scheduledTime
+        });
+        
+        // Parse the time string (format: "HH:MM-HH:MM" or "HH:MM")
+        let startHour = 9; // default
+        let startMinute = 0; // default
+        
+        try {
+          if (bookingData.scheduledTime.includes('-')) {
+            // Time range format: "09:00-10:00"
+            const [startTime] = bookingData.scheduledTime.split('-');
+            const [hour, minute] = startTime.split(':').map(Number);
+            
+            if (!isNaN(hour) && !isNaN(minute)) {
+              startHour = hour;
+              startMinute = minute;
+            }
+          } else {
+            // Single time format: "09:00"
+            const [hour, minute] = bookingData.scheduledTime.split(':').map(Number);
+            
+            if (!isNaN(hour) && !isNaN(minute)) {
+              startHour = hour;
+              startMinute = minute;
+            }
+          }
+          
+          console.log('⏰ Parsed time components:', { startHour, startMinute });
+          
+        } catch (timeParseError) {
+          console.error('❌ Error parsing time:', timeParseError);
+          throw new Error('Invalid time format');
+        }
+        
         requestedDate = new Date(bookingData.scheduledDate);
-        requestedDate.setHours(hours, minutes, 0, 0);
+        requestedDate.setHours(startHour, startMinute, 0, 0);
+        
+        console.log('📅 Scheduled booking date created:', requestedDate.toISOString());
+        
       } else {
-        throw new Error('Invalid booking date/time');
+        throw new Error('Invalid booking data: missing date or time for scheduled booking');
       }
+      
+      // Validate that totalPrice is a valid number
+      const totalPrice = Number(bookingData.totalPrice);
+      if (isNaN(totalPrice) || totalPrice < 0) {
+        console.error('❌ Invalid total price for BigInt conversion:', {
+          originalPrice: bookingData.totalPrice,
+          convertedPrice: totalPrice,
+          type: typeof bookingData.totalPrice
+        });
+        throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
+      }
+      
+      console.log('💰 Total price validation passed:', totalPrice);
       
       // Get the first package ID (you might want to modify this based on your business logic)
       const firstPackageId = bookingData.packages.length > 0 ? bookingData.packages[0].id : undefined;
+      
+      console.log('📦 Using package ID:', firstPackageId);
       
       // Create booking through canister
       const booking = await bookingCanisterService.createBooking(
         bookingData.serviceId,
         Principal.fromText(bookingData.providerId),
-        bookingData.totalPrice,
+        totalPrice, // This should now be a valid number
         location,
         requestedDate,
         firstPackageId
       );
       
-      console.log('Booking created successfully:', booking);
+      console.log('✅ Booking created successfully:', booking);
       return booking;
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create booking';
       setError(errorMessage);
-      console.error('Error creating booking:', err);
+      console.error('❌ Error creating booking:', err);
       return null;
     } finally {
       setLoading(false);
@@ -348,6 +417,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
     // Service data
     service,
     packages,
+    providerProfile, // Add this
     loading,
     error,
     

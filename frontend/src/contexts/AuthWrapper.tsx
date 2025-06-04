@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from "@bundly/ares-react";
 import { resetBookingActor } from '@app/services/bookingCanisterService';
 import { resetServiceActor } from '@app/services/serviceCanisterService';
+import { resetAuthActor } from '@app/services/authCanisterService'; // Add this import
 import { setCurrentIdentity, resetAgent } from '@app/utils/icpClient';
 
 interface AuthWrapperProps {
@@ -19,6 +20,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     resetAgent();
     resetBookingActor();
     resetServiceActor();
+    resetAuthActor(); // Add this line
     
     if (isAuthenticated && currentIdentity) {
       console.log('User authenticated, actors will be recreated with identity:', currentIdentity.getPrincipal().toString());

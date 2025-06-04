@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import { UserIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
 
 export default function Hero() {
@@ -31,11 +31,11 @@ export default function Hero() {
             </div>
           </div>
           <div className="md:w-1/2 flex justify-center items-center mt-10 md:mt-0 px-4">
-            <div className="w-full max-w-sm md:max-w-md lg:max-w-lg"> 
+            <div className="w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl"> 
               <Image
-                src="/logo.svg" 
-                alt="SRV Platform Logo"
-                width={1000}
+                src="/HeroPlacerImage.svg" 
+                alt="Laptop and phone showcasing srv"
+                width={1000} 
                 height={760} 
                 layout="responsive"
                 objectFit="contain" 

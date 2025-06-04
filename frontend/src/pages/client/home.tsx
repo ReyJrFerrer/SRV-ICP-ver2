@@ -39,7 +39,8 @@ const ClientHomePage: React.FC = () => {
           console.log('Fetching categories from service canister...');
           const canisterCategories = await serviceCanisterService.getAllCategories();
           console.log('Fetched categories from canister:', canisterCategories);
-          
+
+ 
           if (canisterCategories && canisterCategories.length > 0) {
             // Convert ServiceCategory to AdaptedCategory format
             const adaptedCategories: AdaptedCategory[] = canisterCategories.map(category => ({

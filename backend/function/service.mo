@@ -144,6 +144,26 @@ actor ServiceCanister {
         // Initialize services from shared static data
         for ((id, service) in StaticData.getStaticServices().vals()) {
             services.put(id, service);
+            
+            // Also initialize availability data if it exists in the service
+            switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+                case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                    let availability : ProviderAvailability = {
+                        providerId = service.providerId;
+                        weeklySchedule = schedule;
+                        instantBookingEnabled = instantBooking;
+                        bookingNoticeHours = noticeHours;
+                        maxBookingsPerDay = maxBookings;
+                        isActive = true;
+                        createdAt = service.createdAt;
+                        updatedAt = service.updatedAt;
+                    };
+                    serviceAvailabilities.put(id, availability);
+                };
+                case (_, _, _, _) {
+                    // Service doesn't have complete availability data
+                };
+            };
         };
         
         // Initialize service packages from shared static data
@@ -259,6 +279,27 @@ actor ServiceCanister {
         };
         
         services.put(serviceId, newService);
+        
+        // Also add availability to serviceAvailabilities if provided
+        switch (weeklySchedule, instantBookingEnabled, bookingNoticeHours, maxBookingsPerDay) {
+            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                let availability : ProviderAvailability = {
+                    providerId = caller;
+                    weeklySchedule = schedule;
+                    instantBookingEnabled = instantBooking;
+                    bookingNoticeHours = noticeHours;
+                    maxBookingsPerDay = maxBookings;
+                    isActive = true;
+                    createdAt = Time.now();
+                    updatedAt = Time.now();
+                };
+                serviceAvailabilities.put(serviceId, availability);
+            };
+            case (_, _, _, _) {
+                // Availability not fully specified
+            };
+        };
+
         return #ok(newService);
     };
     
@@ -692,14 +733,40 @@ actor ServiceCanister {
     };
     // Get service availability
     public query func getServiceAvailability(serviceId : Text) : async Result<ProviderAvailability> {
+        // First check the separate availability HashMap (for services that used setServiceAvailability)
         switch (serviceAvailabilities.get(serviceId)) {
             case (?availability) {
                 return #ok(availability);
             };
             case (null) {
-                return #err("Service availability not found");
+                // If not found, try to construct from service data (for newly created services)
+                switch (services.get(serviceId)) {
+                    case (?service) {
+                        switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+                            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                                let availability : ProviderAvailability = {
+                                    providerId = service.providerId;
+                                    weeklySchedule = schedule;
+                                    instantBookingEnabled = instantBooking;
+                                    bookingNoticeHours = noticeHours;
+                                    maxBookingsPerDay = maxBookings;
+                                    isActive = true;
+                                    createdAt = service.createdAt;
+                                    updatedAt = service.updatedAt;
+                            };
+                            return #ok(availability);
+                        };
+                        case (_, _, _, _) {
+                            return #err("Service availability not properly configured");
+                        };
+                    };
+                };
+                case (null) {
+                    return #err("Service not found");
+                };
             };
         };
+     };
     };
 
     // Get provider availability (backward compatibility - deprecated)
@@ -734,13 +801,37 @@ actor ServiceCanister {
         serviceId : Text,
         date : Time.Time
     ) : async Result<[AvailableSlot]> {
-        
-        // Get service availability
+    
+        // Get service availability (using the same logic as getServiceAvailability)
         let availability = switch (serviceAvailabilities.get(serviceId)) {
             case (?avail) avail;
             case (null) {
-                return #err("Service availability not found");
+                // If not found in serviceAvailabilities, try to construct from service data
+                switch (services.get(serviceId)) {
+                    case (?service) {
+                        switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+                            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                                {
+                                    providerId = service.providerId;
+                                    weeklySchedule = schedule;
+                                    instantBookingEnabled = instantBooking;
+                                    bookingNoticeHours = noticeHours;
+                                    maxBookingsPerDay = maxBookings;
+                                    isActive = true;
+                                    createdAt = service.createdAt;
+                                    updatedAt = service.updatedAt;
+                            }
+                        };
+                        case (_, _, _, _) {
+                            return #err("Service availability not properly configured");
+                        };
+                    };
+                };
+                case (null) {
+                    return #err("Service not found");
+                };
             };
+        };
         };
 
         if (not availability.isActive) {
@@ -804,8 +895,32 @@ actor ServiceCanister {
         let availability = switch (serviceAvailabilities.get(serviceId)) {
             case (?avail) avail;
             case (null) {
-                return #err("Service availability not found");
+                // If not found in serviceAvailabilities, try to construct from service data
+                switch (services.get(serviceId)) {
+                    case (?service) {
+                        switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+                            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                                {
+                                    providerId = service.providerId;
+                                    weeklySchedule = schedule;
+                                    instantBookingEnabled = instantBooking;
+                                    bookingNoticeHours = noticeHours;
+                                    maxBookingsPerDay = maxBookings;
+                                    isActive = true;
+                                    createdAt = service.createdAt;
+                                    updatedAt = service.updatedAt;
+                            }
+                        };
+                        case (_, _, _, _) {
+                            return #err("Service availability not properly configured");
+                        };
+                    };
+                };
+                case (null) {
+                    return #err("Service not found");
+                };
             };
+        };
         };
 
         if (not availability.isActive) {

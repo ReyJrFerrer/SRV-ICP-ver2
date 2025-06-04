@@ -1,7 +1,8 @@
 // Service Canister Service
-import { Actor, HttpAgent } from '@dfinity/agent';
+import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '../declarations/service/service.did.js';
+import { getHttpAgent } from '../utils/icpClient';
 import type { 
   _SERVICE as ServiceService,
   Service as CanisterService,
@@ -28,34 +29,14 @@ import type {
 // Canister configuration
 const SERVICE_CANISTER_ID = process.env.NEXT_PUBLIC_SERVICE_CANISTER_ID || 'rdmx6-jaaaa-aaaaa-aaadq-cai';
 
-// Create agent and actor
-let agent: HttpAgent | null = null;
+// Create actor
 let serviceActor: ServiceService | null = null;
-
-const initializeAgent = async (): Promise<HttpAgent> => {
-  if (!agent) {
-    agent = new HttpAgent({
-      host: process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943',
-    });
-
-    // Fetch root key for certificate validation during development
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        await agent.fetchRootKey();
-      } catch (err) {
-        console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
-        console.error(err);
-      }
-    }
-  }
-  return agent;
-};
 
 const getServiceActor = async (): Promise<ServiceService> => {
   if (!serviceActor) {
-    const agentInstance = await initializeAgent();
+    const agent = await getHttpAgent();
     serviceActor = Actor.createActor(idlFactory, {
-      agent: agentInstance,
+      agent: agent,
       canisterId: SERVICE_CANISTER_ID,
     }) as ServiceService;
   }
@@ -901,6 +882,17 @@ export const serviceCanisterService = {
       throw new Error(`Failed to delete service: ${error}`);
     }
   },
+};
+
+// Reset functions for authentication state changes
+export const resetServiceActor = () => {
+  serviceActor = null;
+  console.log('Service actor reset - will be recreated with new identity');
+};
+
+export const refreshServiceActor = async () => {
+  resetServiceActor();
+  return await getServiceActor();
 };
 
 export default serviceCanisterService;

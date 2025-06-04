@@ -1,7 +1,8 @@
 // Booking Canister Service
-import { Actor, HttpAgent } from '@dfinity/agent';
+import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '../declarations/booking/booking.did.js';
+import { getHttpAgent } from '../utils/icpClient';
 import type { 
   _SERVICE as BookingService,
   Booking as CanisterBooking,
@@ -20,34 +21,14 @@ import type {
 // Canister configuration
 const BOOKING_CANISTER_ID = process.env.NEXT_PUBLIC_BOOKING_CANISTER_ID || 'bkyz2-fmaaa-aaaaa-qaaaq-cai';
 
-// Create agent and actor
-let agent: HttpAgent | null = null;
+// Create actor
 let bookingActor: BookingService | null = null;
-
-const initializeAgent = async (): Promise<HttpAgent> => {
-  if (!agent) {
-    agent = new HttpAgent({
-      host: process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943',
-    });
-
-    // Fetch root key for certificate validation during development
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        await agent.fetchRootKey();
-      } catch (err) {
-        console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
-        console.error(err);
-      }
-    }
-  }
-  return agent;
-};
 
 const getBookingActor = async (): Promise<BookingService> => {
   if (!bookingActor) {
-    const agentInstance = await initializeAgent();
+    const agent = await getHttpAgent();
     bookingActor = Actor.createActor(idlFactory, {
-      agent: agentInstance,
+      agent: agent,
       canisterId: BOOKING_CANISTER_ID,
     }) as BookingService;
   }
@@ -312,6 +293,11 @@ export const bookingCanisterService = {
       const actor = await getBookingActor();
       const canisterLocation = convertToCanisterLocation(location);
       const requestedTimestamp = BigInt(requestedDate.getTime() * 1000000); // Convert to nanoseconds
+      
+      // Get the agent to check the principal being used
+      const agent = await getHttpAgent();
+      const principal = await agent.getPrincipal();
+      console.log('Calling createBooking with principal:', principal.toString());
       
       const result = await actor.createBooking(
         serviceId,
@@ -732,6 +718,8 @@ export const bookingCanisterService = {
     try {
       const actor = await getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
+
+      console.log("This is the datetimestamp in the bookingCanisterService", dateTimestamp );
       
       const result = await actor.getServiceAvailableSlots(serviceId, dateTimestamp);
       
@@ -1014,6 +1002,17 @@ export const bookingCanisterService = {
       throw new Error(`Failed to fetch package analytics: ${error}`);
     }
   }
+};
+
+// Reset functions for authentication state changes
+export const resetBookingActor = () => {
+  bookingActor = null;
+  console.log('Booking actor reset - will be recreated with new identity');
+};
+
+export const refreshBookingActor = async () => {
+  resetBookingActor();
+  return await getBookingActor();
 };
 
 export default bookingCanisterService;

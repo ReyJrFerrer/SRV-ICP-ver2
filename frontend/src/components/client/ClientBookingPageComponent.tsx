@@ -150,6 +150,9 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         });
         
         try {
+          console.log("These are the data for getting the available slots: ")
+          console.log(hookService.id);
+          console.log(selectedDate);
           const slots = await getAvailableSlots(hookService.id, selectedDate);
           console.log('📋 Fetched available slots:', slots);
           console.log('📊 Hook available slots after fetch:', hookAvailableSlots);

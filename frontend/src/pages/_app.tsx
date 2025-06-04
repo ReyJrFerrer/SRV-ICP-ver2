@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Client, InternetIdentity } from "@bundly/ares-core";
 import { IcpConnectContextProvider } from "@bundly/ares-react";
 import { initializeCanisterNetwork } from "../utils/canisterStartup";
+import { AuthWrapper } from "../contexts/AuthWrapper";
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const client = Client.create({
@@ -31,7 +32,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <IcpConnectContextProvider client={client}>
-      <Component {...pageProps} />
+      <AuthWrapper>
+        <Component {...pageProps} />
+      </AuthWrapper>
     </IcpConnectContextProvider>
   );
 }

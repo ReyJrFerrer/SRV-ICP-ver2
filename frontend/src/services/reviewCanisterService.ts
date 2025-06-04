@@ -1,9 +1,11 @@
-import { Actor, HttpAgent } from '@dfinity/agent';
+// Review Canister Service
+import { Actor } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { 
   idlFactory, 
   canisterId
 } from '../declarations/review';
+import { getHttpAgent } from '../utils/icpClient';
 import type { 
   _SERVICE as ReviewService,
   Review as CanisterReview,
@@ -17,34 +19,14 @@ import type {
 // Canister configuration
 const REVIEW_CANISTER_ID = canisterId || process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID || 'rkp4c-7iaaa-aaaaa-aaaca-cai';
 
-// Create agent and actor
-let agent: HttpAgent | null = null;
+// Create actor
 let reviewActor: ReviewService | null = null;
-
-const initializeAgent = async (): Promise<HttpAgent> => {
-  if (!agent) {
-    agent = new HttpAgent({
-      host: process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943',
-    });
-
-    // Fetch root key for certificate validation during development
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        await agent.fetchRootKey();
-      } catch (err) {
-        console.warn('Unable to fetch root key. Check to ensure that your local replica is running');
-        console.error(err);
-      }
-    }
-  }
-  return agent;
-};
 
 const getReviewActor = async (): Promise<ReviewService> => {
   if (!reviewActor) {
-    const agentInstance = await initializeAgent();
+    const agent = await getHttpAgent();
     reviewActor = Actor.createActor(idlFactory, {
-      agent: agentInstance,
+      agent: agent,
       canisterId: REVIEW_CANISTER_ID,
     }) as ReviewService;
   }
@@ -115,10 +97,10 @@ const convertFrontendReviewToCanister = (review: Partial<Review>): Partial<Canis
 
 // Create actor instance
 const createActor = async (): Promise<ReviewService> => {
-  const agentInstance = await initializeAgent();
+  const agent = await getHttpAgent();
   
   return Actor.createActor(idlFactory, {
-    agent: agentInstance,
+    agent: agent,
     canisterId: REVIEW_CANISTER_ID,
   }) as ReviewService;
 };
@@ -613,6 +595,17 @@ export const reviewCanisterService = {
       throw error;
     }
   }
+};
+
+// Reset functions for authentication state changes
+export const resetReviewActor = () => {
+  reviewActor = null;
+  console.log('Review actor reset - will be recreated with new identity');
+};
+
+export const refreshReviewActor = async () => {
+  resetReviewActor();
+  return await getReviewActor();
 };
 
 export default reviewCanisterService;

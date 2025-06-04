@@ -11,6 +11,7 @@ import WhyChooseSRV from "@app/components/shared/WhyChooseSRV";
 import AboutUs from "@app/components/shared/AboutUs";
 import Footer from "@app/components/shared/Footer";
 import Header from "@app/components/header";
+import SDGSection from "@app/components/shared/SDGSection";
 
 type Result<T> = {
   ok?: T;
@@ -86,6 +87,7 @@ export default function HomePage() {
         <Hero />
         <Features />
         <WhyChooseSRV />
+         <SDGSection />
         
         {(!isAuthenticated && error) && (
           <section className="py-16 lg:py-24 bg-yellow-100">

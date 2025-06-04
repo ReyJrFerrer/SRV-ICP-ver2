@@ -82,9 +82,10 @@ export default function HomePage() {
         <link rel="icon" href="/logo.jpeg" /> 
       </Head>
       
-      <Header /> 
       <main className="bg-gray-50">
-        <Hero />
+        <Hero onLoginClick={function (): void {
+          throw new Error("Function not implemented.");
+        } } isLoginLoading={false} />
         <Features />
         <WhyChooseSRV />
          <SDGSection />

@@ -22,20 +22,10 @@ export default function Footer() {
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="text-gray-400 hover:text-yellow-300 transition-colors">Home</Link></li>
-              <li><Link href="/about" className="text-gray-400 hover:text-yellow-300 transition-colors">About</Link></li>
-              <li><Link href="/services" className="text-gray-400 hover:text-yellow-300 transition-colors">Services</Link></li>
-            </ul>
-          </div>
-          
-          <div>
             <h3 className="text-lg font-semibold text-white mb-4">For Users</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/client" className="text-gray-400 hover:text-yellow-300 transition-colors">Client Portal</Link></li>
               <li><Link href="/provider" className="text-gray-400 hover:text-yellow-300 transition-colors">Provider Portal</Link></li>
-              <li><Link href="/faq" className="text-gray-400 hover:text-yellow-300 transition-colors">FAQ</Link></li>
             </ul>
           </div>
           
@@ -43,6 +33,8 @@ export default function Footer() {
             <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li className="text-gray-400">revitalizers2024@gmail.com</li>
+              <li><Link href="https://www.facebook.com/revitalizer2024" className="text-gray-400 hover:text-yellow-300 transition-colors">Facebook: SRV</Link></li>
+
             </ul>
           </div>
         </div>

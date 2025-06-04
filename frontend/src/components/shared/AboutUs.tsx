@@ -14,10 +14,10 @@ const AboutUs: React.FC = () => {
     <section className="py-16 lg:py-24 bg-yellow-50">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-3xl lg:text-4xl font-bold text-blue-600 mb-4">
-          Meet The Revitalizers
+          Meet The Team
         </h2>
         <p className="text-gray-700 max-w-2xl mx-auto mb-12 lg:mb-16 text-lg">
-          SRV is a project developed by "Revitalizers," a passionate team dedicated to building innovative solutions on the Internet Computer. [cite: 2]
+          SRV is a project developed by a passionate team dedicated to building innovative solutions on the Internet Computer.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
           {teamMembers.map((member) => (

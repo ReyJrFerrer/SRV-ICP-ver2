@@ -1,20 +1,19 @@
-// frontend/src/components/shared/Footer.tsx
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // For using the logo
+import Image from 'next/image'; 
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-800 text-gray-300"> {/* Dark gray background */}
+    <footer className="bg-slate-800 text-gray-300"> 
       <div className="container mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-1">
             <Link href="/" className="inline-block mb-2">
               <Image 
-                  src="/logo.jpeg" // Assuming logo.jpeg is in the 'public' folder
+                  src="/logo.svg"
                   alt="SRV Logo"
-                  width={100} // Adjust size as needed
-                  height={50}  // Adjust size as needed
+                  width={100} 
+                  height={50}  
               />
             </Link>
             <p className="text-sm text-gray-400">
@@ -43,8 +42,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
-              <li className="text-gray-400">support@srv.icp</li>
-              {/* Add social links here if desired, with hover:text-yellow-300 */}
+              <li className="text-gray-400">revitalizers2024@gmail.com</li>
             </ul>
           </div>
         </div>

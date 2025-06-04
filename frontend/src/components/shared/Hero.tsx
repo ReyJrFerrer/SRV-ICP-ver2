@@ -9,11 +9,11 @@ export default function Hero() {
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-12 md:mb-0 text-center md:text-left">
             <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-tight mb-6">
-              Your Local Service Connection <span className="text-yellow-300">in Baguio</span>
+              Here in SRV, <span className="text-yellow-300">Serbisyo, Rito, Valued!</span>
             </h1>
             <p className="text-lg md:text-xl text-blue-100 mb-10">
               {/* Content from PDF */}
-              Finding reliable help for everyday tasks can be a challenge. [cite: 3] SRV is your user-friendly platform to easily discover, compare, and book a wide range of local freelance service providers. [cite: 8]
+              Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Link href="/client" legacyBehavior>

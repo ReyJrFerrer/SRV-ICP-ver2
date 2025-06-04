@@ -20,7 +20,7 @@ import { adaptServiceData } from 'frontend/src/utils/serviceDataAdapter';
 
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData { id: string; startHour: string; startMinute: string; startPeriod: 'AM' | 'PM'; endHour: string; endMinute: string; endPeriod: 'AM' | 'PM'; }
-interface ServicePackageUIData { id: string; name: string; description: string; price: string; currency: string; features: string; isPopular: boolean; }
+interface ServicePackageUIData { id: string; name: string; description: string; price: string; currency: string; isPopular: boolean; }
 
 const initialServiceFormState = {
   serviceOfferingTitle: '',
@@ -33,7 +33,7 @@ const initialServiceFormState = {
   commonTimeSlots: [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM' as 'AM' | 'PM', endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }] as TimeSlotUIData[],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
   requirements: '',
-  servicePackages: [{ id: nanoid(), name: '', description: '', price: '', currency: 'PHP', features: '', isPopular: false }] as ServicePackageUIData[],
+  servicePackages: [{ id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }] as ServicePackageUIData[],
   existingHeroImage: '',
   existingMediaItems: [] as { type: 'IMAGE' | 'VIDEO', url: string, name?: string }[],
   termsTitle: '',
@@ -104,7 +104,6 @@ const EditServicePage: React.FC = () => {
             description: pkg.description,
             price: String(pkg.price),
             currency: pkg.currency,
-            features: pkg.features.join(', '),
             isPopular: pkg.isPopular || false,
           })),
           existingHeroImage: typeof adaptedService.heroImage === 'string' ? adaptedService.heroImage : (adaptedService.heroImage as any)?.src || '',
@@ -152,7 +151,7 @@ const EditServicePage: React.FC = () => {
   const addPerDayTimeSlot = (day: DayOfWeek) => { /* ... same as add.tsx ... */ setFormData(prev => { const daySlots = prev.perDayTimeSlots[day] || []; return { ...prev, perDayTimeSlots: { ...prev.perDayTimeSlots, [day]: [...daySlots, { id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM', endHour: '05', endMinute: '00', endPeriod: 'PM' }] } }; }); };
   const removePerDayTimeSlot = (day: DayOfWeek, idToRemove: string) => { /* ... same as add.tsx ... */ setFormData(prev => ({ ...prev, perDayTimeSlots: { ...prev.perDayTimeSlots, [day]: (prev.perDayTimeSlots[day] || []).filter(slot => slot.id !== idToRemove) } })); };
   const handlePackageChange = (index: number, field: keyof ServicePackageUIData, value: string | boolean) => { /* ... same as add.tsx ... */ setFormData(prev => { const updatedPackages = prev.servicePackages.map((pkg, i) => i === index ? { ...pkg, [field]: value } : pkg ); return { ...prev, servicePackages: updatedPackages }; }); };
-  const addPackage = () => { /* ... same as add.tsx ... */ setFormData(prev => ({ ...prev, servicePackages: [...prev.servicePackages, { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', features: '', isPopular: false }] })); };
+  const addPackage = () => { /* ... same as add.tsx ... */ setFormData(prev => ({ ...prev, servicePackages: [...prev.servicePackages, { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }] })); };
   const removePackage = (idToRemove: string) => { /* ... same as add.tsx ... */ setFormData(prev => ({ ...prev, servicePackages: prev.servicePackages.filter(pkg => pkg.id !== idToRemove) })); };
   const formatSlotTo24HourString = (slot: TimeSlotUIData): string | null => { /* ... same as add.tsx ... */ if (!slot.startHour || !slot.startMinute || !slot.startPeriod || !slot.endHour || !slot.endMinute || !slot.endPeriod) return null; const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => { let hour = parseInt(hourStr, 10); if (period === 'PM' && hour !== 12) hour += 12; else if (period === 'AM' && hour === 12) hour = 0; return `${String(hour).padStart(2, '0')}:${minuteStr}`; }; const startTime24 = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod); const endTime24 = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod); const startDateForCompare = new Date(`1970/01/01 ${startTime24}`); const endDateForCompare = new Date(`1970/01/01 ${endTime24}`); if (endDateForCompare <= startDateForCompare) return null;  return `${startTime24}-${endTime24}`; };
 
@@ -177,7 +176,6 @@ const EditServicePage: React.FC = () => {
         id: pkgUI.id.startsWith('pkg-') || serviceToEdit.packages?.find(p => p.id === pkgUI.id) ? pkgUI.id : nanoid(), // Preserve existing IDs
         name: pkgUI.name, description: pkgUI.description, price: parseFloat(pkgUI.price) || 0,
         currency: pkgUI.currency || "PHP",
-        features: pkgUI.features.split(',').map(f => f.trim()).filter(f => f),
         isPopular: pkgUI.isPopular, isActive: true,
         createdAt: serviceToEdit.packages?.find(p => p.id === pkgUI.id)?.createdAt || new Date(), // Preserve original createdAt
         updatedAt: new Date(),
@@ -282,8 +280,6 @@ const EditServicePage: React.FC = () => {
                   <div><label htmlFor={`pkgName-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Package Name*</label><input type="text" name="name" id={`pkgName-${pkg.id}`} value={pkg.name} onChange={(e) => handlePackageChange(index, 'name', e.target.value)} required={index === 0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
                   <div><label htmlFor={`pkgDesc-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Description*</label><textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"></textarea></div>
                   <div><label htmlFor={`pkgPrice-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Price (PHP)*</label><input type="number" name="price" id={`pkgPrice-${pkg.id}`} value={pkg.price} onChange={(e) => handlePackageChange(index, 'price', e.target.value)} required={index === 0} step="0.01" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div><label htmlFor={`pkgFeatures-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Features (comma-separated)</label><input type="text" name="features" id={`pkgFeatures-${pkg.id}`} value={pkg.features} onChange={(e) => handlePackageChange(index, 'features', e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div className="flex items-center"><input type="checkbox" name="isPopular" id={`pkgIsPopular-${pkg.id}`} checked={pkg.isPopular} onChange={(e) => handlePackageChange(index, 'isPopular', e.target.checked)} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" /><label htmlFor={`pkgIsPopular-${pkg.id}`} className="ml-2 block text-sm text-gray-900">Mark as Popular</label></div>
                   {formData.servicePackages.length > 1 && (<button type="button" onClick={() => removePackage(pkg.id)} className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700" aria-label="Remove package"><TrashIcon className="h-4 w-4"/></button>)}
                 </div>
               ))}
@@ -375,12 +371,6 @@ const EditServicePage: React.FC = () => {
                     </div>
                 </div>
             </fieldset>
-
-            {/* Client Requirements */}
-            <div>
-                <label htmlFor="requirements" className="block text-sm font-medium text-gray-700 mb-1">Client Requirements (comma-separated)</label>
-                <input type="text" name="requirements" id="requirements" value={formData.requirements} onChange={handleChange} placeholder="e.g., Parking space, Access to water" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-            </div>
             
             {/* Image Upload Section */}
             <div>
@@ -418,50 +408,6 @@ const EditServicePage: React.FC = () => {
                 )}
                  {serviceImageFiles.length === 0 && !formData.existingHeroImage && <p className="mt-1 text-xs text-red-500">At least one image (hero image) is required.</p>}
             </div>
-
-            {/* Terms & Conditions Section */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-              <legend className="text-sm font-medium text-gray-700 px-1">Terms & Conditions (Optional)</legend>
-              <div className="space-y-3 mt-2">
-                <div>
-                  <label htmlFor="termsTitle" className="block text-xs font-medium text-gray-600 mb-1">Terms Title</label>
-                  <input
-                    type="text"
-                    name="termsTitle"
-                    id="termsTitle"
-                    value={formData.termsTitle}
-                    onChange={handleChange}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., My Service Cancellation Policy"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="termsContent" className="block text-xs font-medium text-gray-600 mb-1">Terms Content</label>
-                  <textarea
-                    name="termsContent"
-                    id="termsContent"
-                    value={formData.termsContent}
-                    onChange={handleChange}
-                    rows={5}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Describe your terms and conditions..."
-                  ></textarea>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="termsAcceptanceRequired"
-                    id="termsAcceptanceRequired"
-                    checked={formData.termsAcceptanceRequired}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="termsAcceptanceRequired" className="ml-2 block text-sm text-gray-900">
-                    Require client to accept these terms before booking
-                  </label>
-                </div>
-              </div>
-            </fieldset>
 
             {/* Image Upload Section */}
             <div>

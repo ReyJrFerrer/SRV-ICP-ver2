@@ -172,15 +172,6 @@ const ProviderServiceDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {service.requirements && service.requirements.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-gray-500"/>Client Requirements</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 pl-2">
-                {service.requirements.map((req, index) => <li key={index}>{req}</li>)}
-              </ul>
-            </div>
-          )}
-
           {service.packages && service.packages.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center"><BriefcaseIcon className="h-5 w-5 mr-2 text-gray-500"/>Service Packages</h3>
@@ -221,18 +212,6 @@ const ProviderServiceDetailPage: React.FC = () => {
                         ) : null;
                     })}
                 </div>
-            </div>
-          )}
-
-          {service.terms && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center"><DocumentTextIcon className="h-5 w-5 mr-2 text-gray-500"/>Terms & Conditions</h3>
-              <div className="prose prose-sm max-w-none text-gray-600"> {/* Ensure prose styles are available or use custom styling */}
-                <h4 className="font-medium text-gray-700">{service.terms.title} (v{service.terms.version})</h4>
-                <p className="text-xs text-gray-400">Last Updated: {new Date(service.terms.lastUpdated).toLocaleDateString()}</p>
-                <div className="whitespace-pre-line text-sm" dangerouslySetInnerHTML={{ __html: service.terms.content.replace(/\n/g, '<br />') }} />
-                {service.terms.acceptanceRequired && <p className="mt-2 text-xs italic text-red-500">Client acceptance of these terms is required.</p>}
-              </div>
             </div>
           )}
 

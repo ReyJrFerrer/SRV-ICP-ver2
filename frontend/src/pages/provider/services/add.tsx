@@ -35,7 +35,6 @@ interface ServicePackageUIData {
   description: string;
   price: string;
   currency: string;
-  features: string;
   isPopular: boolean;
 }
 
@@ -54,7 +53,7 @@ const initialServiceState = {
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
   requirements: '',
   servicePackages: [
-    { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', features: '', isPopular: false }
+    { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }
   ] as ServicePackageUIData[],
   // NEW: Terms and Conditions fields
   termsTitle: '',
@@ -168,7 +167,6 @@ const AddServicePage: React.FC = () => {
         id: nanoid(), // Generate new ID for each package
         name: pkgUI.name, description: pkgUI.description, price: parseFloat(pkgUI.price) || 0,
         currency: pkgUI.currency || "PHP",
-        features: pkgUI.features.split(',').map(f => f.trim()).filter(f => f),
         isPopular: pkgUI.isPopular, isActive: true, createdAt: new Date(), updatedAt: new Date()
     } as Omit<ServicePackageTypeDefinition, 'duration'> & { duration?: string }));
 
@@ -268,8 +266,6 @@ const AddServicePage: React.FC = () => {
                   <div><label htmlFor={`pkgName-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Package Name*</label><input type="text" name="name" id={`pkgName-${pkg.id}`} value={pkg.name} onChange={(e) => handlePackageChange(index, 'name', e.target.value)} required={index === 0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
                   <div><label htmlFor={`pkgDesc-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Description*</label><textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"></textarea></div>
                   <div><label htmlFor={`pkgPrice-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Price (PHP)*</label><input type="number" name="price" id={`pkgPrice-${pkg.id}`} value={pkg.price} onChange={(e) => handlePackageChange(index, 'price', e.target.value)} required={index === 0} step="0.01" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div><label htmlFor={`pkgFeatures-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Features (comma-separated)</label><input type="text" name="features" id={`pkgFeatures-${pkg.id}`} value={pkg.features} onChange={(e) => handlePackageChange(index, 'features', e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div className="flex items-center"><input type="checkbox" name="isPopular" id={`pkgIsPopular-${pkg.id}`} checked={pkg.isPopular} onChange={(e) => handlePackageChange(index, 'isPopular', e.target.checked)} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" /><label htmlFor={`pkgIsPopular-${pkg.id}`} className="ml-2 block text-sm text-gray-900">Mark as Popular</label></div>
                   {formData.servicePackages.length > 1 && (<button type="button" onClick={() => removePackage(pkg.id)} className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700" aria-label="Remove package"><TrashIcon className="h-4 w-4"/></button>)}
                 </div>
               ))}
@@ -286,56 +282,6 @@ const AddServicePage: React.FC = () => {
             <fieldset className="border p-4 rounded-md border-gray-300">
                 <legend className="text-sm font-medium text-gray-700 px-1">Service Location*</legend>
                  {/* ... location content ... */}
-            </fieldset>
-
-            {/* Client Requirements */}
-            <div>
-                <label htmlFor="requirements" className="block text-sm font-medium text-gray-700 mb-1">Client Requirements (comma-separated)</label>
-                <input type="text" name="requirements" id="requirements" value={formData.requirements} onChange={handleChange} placeholder="e.g., Parking space, Access to water" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-            </div>
-
-            {/* NEW: Terms & Conditions Section */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-              <legend className="text-sm font-medium text-gray-700 px-1">Terms & Conditions (Optional)</legend>
-              <div className="space-y-3 mt-2">
-                <div>
-                  <label htmlFor="termsTitle" className="block text-xs font-medium text-gray-600 mb-1">Terms Title</label>
-                  <input
-                    type="text"
-                    name="termsTitle"
-                    id="termsTitle"
-                    value={formData.termsTitle}
-                    onChange={handleChange}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., My Service Cancellation Policy"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="termsContent" className="block text-xs font-medium text-gray-600 mb-1">Terms Content</label>
-                  <textarea
-                    name="termsContent"
-                    id="termsContent"
-                    value={formData.termsContent}
-                    onChange={handleChange}
-                    rows={5}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Describe your terms and conditions..."
-                  ></textarea>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="termsAcceptanceRequired"
-                    id="termsAcceptanceRequired"
-                    checked={formData.termsAcceptanceRequired}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="termsAcceptanceRequired" className="ml-2 block text-sm text-gray-900">
-                    Require client to accept these terms before booking
-                  </label>
-                </div>
-              </div>
             </fieldset>
 
             {/* Image Upload Section */}

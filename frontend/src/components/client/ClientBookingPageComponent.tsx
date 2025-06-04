@@ -130,11 +130,37 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     }
   }, [isSameDayAvailable, bookingOption]);
 
+  // Debug: Log available slots changes
+  useEffect(() => {
+    console.log('🕒 Available slots updated:', {
+      count: hookAvailableSlots.length,
+      slots: hookAvailableSlots,
+      selectedDate: selectedDate?.toISOString()
+    });
+  }, [hookAvailableSlots, selectedDate]);
+
   // Load available slots when date is selected
   useEffect(() => {
     const loadSlots = async () => {
       if (hookService && selectedDate) {
-        await getAvailableSlots(hookService.id, selectedDate);
+        console.log('🔍 Loading slots for service:', hookService.id, 'on date:', selectedDate);
+        console.log('📅 Selected date details:', {
+          date: selectedDate.toISOString(),
+          dayOfWeek: dayIndexToName(selectedDate.getDay())
+        });
+        
+        try {
+          const slots = await getAvailableSlots(hookService.id, selectedDate);
+          console.log('📋 Fetched available slots:', slots);
+          console.log('📊 Hook available slots after fetch:', hookAvailableSlots);
+        } catch (error) {
+          console.error('❌ Error loading slots:', error);
+        }
+      } else {
+        console.log('⚠️ Cannot load slots - missing requirements:', {
+          hasService: !!hookService,
+          hasSelectedDate: !!selectedDate
+        });
       }
     };
     loadSlots();
@@ -452,6 +478,18 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                           ))
                         }
                       </select>
+                    </div>
+                  )}
+                  
+                  {selectedDate && hookAvailableSlots.length === 0 && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+                      ⏰ No available time slots for this date. Please try another date.
+                    </div>
+                  )}
+                  
+                  {!selectedDate && (
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+                      📅 Please select a date first to see available time slots.
                     </div>
                   )}
                 </div>

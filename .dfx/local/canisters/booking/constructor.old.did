@@ -1,11 +1,3 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
 type TimeSlot = 
  record {
    endTime: text;
@@ -56,7 +48,6 @@ type ProviderAvailability =
    maxBookingsPerDay: nat;
    providerId: principal;
    updatedAt: Time;
-   vacationDates: vec VacationPeriod;
    weeklySchedule: vec record {
                          DayOfWeek;
                          DayAvailability;

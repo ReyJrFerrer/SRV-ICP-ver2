@@ -72,7 +72,6 @@ export interface ProviderAnalytics {
   'startDate' : [] | [Time],
 }
 export interface ProviderAvailability {
-  'vacationDates' : Array<VacationPeriod>,
   'weeklySchedule' : Array<[DayOfWeek, DayAvailability]>,
   'createdAt' : Time,
   'instantBookingEnabled' : boolean,
@@ -90,25 +89,19 @@ export type Result_2 = { 'ok' : string } |
   { 'err' : string };
 export type Result_3 = { 'ok' : boolean } |
   { 'err' : string };
-export type Result_4 = { 'ok' : ProviderAnalytics } |
+export type Result_4 = { 'ok' : Array<AvailableSlot> } |
   { 'err' : string };
-export type Result_5 = { 'ok' : Array<AvailableSlot> } |
+export type Result_5 = { 'ok' : ProviderAvailability } |
   { 'err' : string };
-export type Result_6 = { 'ok' : ProviderAvailability } |
+export type Result_6 = { 'ok' : ProviderAnalytics } |
   { 'err' : string };
 export type Time = bigint;
 export interface TimeSlot { 'startTime' : string, 'endTime' : string }
-export interface VacationPeriod {
-  'id' : string,
-  'endDate' : Time,
-  'createdAt' : Time,
-  'startDate' : Time,
-  'reason' : [] | [string],
-}
 export interface _SERVICE {
   'acceptBooking' : ActorMethod<[string, Time], Result_1>,
   'cancelBooking' : ActorMethod<[string], Result_1>,
   'checkProviderAvailability' : ActorMethod<[Principal, Time], Result_3>,
+  'checkServiceAvailability' : ActorMethod<[string, Time], Result_3>,
   'completeBooking' : ActorMethod<[string], Result_1>,
   'createBooking' : ActorMethod<
     [string, Principal, bigint, Location, Time, [] | [string]],
@@ -123,7 +116,7 @@ export interface _SERVICE {
   'getClientActiveBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getClientAnalytics' : ActorMethod<
     [Principal, [] | [Time], [] | [Time]],
-    Result_4
+    Result_6
   >,
   'getClientBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getClientCompletedBookings' : ActorMethod<[Principal], Array<Booking>>,
@@ -131,15 +124,15 @@ export interface _SERVICE {
   'getDisputedBookings' : ActorMethod<[], Array<Booking>>,
   'getPackageAnalytics' : ActorMethod<
     [string, [] | [Time], [] | [Time]],
-    Result_4
+    Result_6
   >,
   'getProviderActiveBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getProviderAnalytics' : ActorMethod<
     [Principal, [] | [Time], [] | [Time]],
-    Result_4
+    Result_6
   >,
-  'getProviderAvailabilitySettings' : ActorMethod<[Principal], Result_6>,
-  'getProviderAvailableSlots' : ActorMethod<[Principal, Time], Result_5>,
+  'getProviderAvailabilitySettings' : ActorMethod<[Principal], Result_5>,
+  'getProviderAvailableSlots' : ActorMethod<[Principal, Time], Result_4>,
   'getProviderBookingConflicts' : ActorMethod<
     [Principal, Time, Time],
     Array<Booking>
@@ -148,8 +141,15 @@ export interface _SERVICE {
   'getProviderCompletedBookings' : ActorMethod<[Principal], Array<Booking>>,
   'getServiceAnalytics' : ActorMethod<
     [string, [] | [Time], [] | [Time]],
-    Result_4
+    Result_6
   >,
+  'getServiceAvailabilitySettings' : ActorMethod<[string], Result_5>,
+  'getServiceAvailableSlots' : ActorMethod<[string, Time], Result_4>,
+  'getServiceBookingConflicts' : ActorMethod<
+    [string, Time, Time],
+    Array<Booking>
+  >,
+  'getServiceDailyBookingCount' : ActorMethod<[string, Time], bigint>,
   'isEligibleForReview' : ActorMethod<[string, Principal], Result_3>,
   'setCanisterReferences' : ActorMethod<
     [[] | [Principal], [] | [Principal], [] | [Principal], [] | [Principal]],

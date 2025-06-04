@@ -50,8 +50,6 @@ actor BookingCanister {
     private func isBookingEligibleForReview(booking : Booking) : Bool {
         return booking.status == #Completed and 
                Option.isSome(booking.completedDate) and
-               (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000); 
-               Option.isSome(booking.completedDate) and
                (Time.now() - Option.unwrap(booking.completedDate)) <= (30 * 24 * 60 * 60 * 1_000_000_000);
     };
 
@@ -187,7 +185,35 @@ actor BookingCanister {
         };
     };
 
-    // Helper function to validate provider availability
+    // NEW: Service-based availability validation function
+    private func validateServiceAvailability(serviceId : Text, requestedDateTime : Time.Time) : async Result<Bool> {
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    isServiceAvailable : (Text, Time.Time) -> async Types.Result<Bool>;
+                };
+                
+                switch (await serviceCanister.isServiceAvailable(serviceId, requestedDateTime)) {
+                    case (#ok(isAvailable)) {
+                        if (isAvailable) {
+                            return #ok(true);
+                        } else {
+                            return #err("Service is not available at the requested date and time");
+                        };
+                    };
+                    case (#err(msg)) {
+                        return #err("Service availability check failed: " # msg);
+                    };
+                };
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
+    // DEPRECATED: Helper function to validate provider availability
+    // Use validateServiceAvailability instead for new implementations
     private func validateProviderAvailability(providerId : Principal, requestedDateTime : Time.Time) : async Result<Bool> {
         switch (serviceCanisterId) {
             case (?serviceId) {
@@ -293,8 +319,8 @@ actor BookingCanister {
             return #err("Requested date must be between 1 hour and 30 days from now");
         };
 
-        // Validate provider availability
-        switch (await validateProviderAvailability(providerId, requestedDate)) {
+        // Validate service availability using new service-based approach
+        switch (await validateServiceAvailability(serviceId, requestedDate)) {
             case (#err(msg)) {
                 return #err(msg);
             };
@@ -741,9 +767,97 @@ actor BookingCanister {
         return dateRangeBookings;
     };
 
-    // CLIENT AVAILABILITY QUERY FUNCTIONS
+    // CLIENT AVAILABILITY QUERY FUNCTIONS - SERVICE-BASED (RECOMMENDED)
 
-    // Get provider's available time slots for a specific date
+    // Get service's available time slots for a specific date
+    public func getServiceAvailableSlots(
+        serviceId : Text,
+        date : Time.Time
+    ) : async Result<[Types.AvailableSlot]> {
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getAvailableTimeSlots : (Text, Time.Time) -> async Types.Result<[Types.AvailableSlot]>;
+                };
+                
+                return await serviceCanister.getAvailableTimeSlots(serviceId, date);
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
+    // Get service's availability settings
+    public func getServiceAvailabilitySettings(serviceId : Text) : async Result<Types.ProviderAvailability> {
+        switch (serviceCanisterId) {
+            case (?serviceCanisterId) {
+                let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
+                    getServiceAvailability : (Text) -> async Types.Result<Types.ProviderAvailability>;
+                };
+                
+                return await serviceCanister.getServiceAvailability(serviceId);
+            };
+            case (null) {
+                return #err("Service canister reference not set");
+            };
+        };
+    };
+
+    // Check if service is available for booking at specific date/time
+    public func checkServiceAvailability(
+        serviceId : Text,
+        requestedDateTime : Time.Time
+    ) : async Result<Bool> {
+        return await validateServiceAvailability(serviceId, requestedDateTime);
+    };
+
+    // Get service's booking conflicts for a date range
+    public func getServiceBookingConflicts(
+        serviceId : Text,
+        startDate : Time.Time,
+        endDate : Time.Time
+    ) : async [Booking] {
+        let serviceBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.serviceId == serviceId and 
+                       booking.requestedDate >= startDate and 
+                       booking.requestedDate <= endDate and
+                       (booking.status == #Accepted or booking.status == #InProgress);
+            }
+        );
+        
+        return serviceBookings;
+    };
+
+    // Get daily booking count for a service on a specific date
+    public query func getServiceDailyBookingCount(
+        serviceId : Text,
+        date : Time.Time
+    ) : async Nat {
+        let startOfDay = getStartOfDay(date);
+        let endOfDay = startOfDay + (24 * 3600_000_000_000); // Add 24 hours in nanoseconds
+        
+        let dailyBookings = Array.filter<Booking>(
+            Iter.toArray(bookings.vals()),
+            func (booking : Booking) : Bool {
+                return booking.serviceId == serviceId and 
+                       booking.requestedDate >= startOfDay and
+                       booking.requestedDate < endOfDay and
+                       (booking.status == #Accepted or booking.status == #InProgress);
+            }
+        );
+        
+        return dailyBookings.size();
+    };
+
+    // CLIENT AVAILABILITY QUERY FUNCTIONS - PROVIDER-BASED (DEPRECATED)
+    // NOTE: These functions are maintained for backward compatibility.
+    // New implementations should use service-based functions above.
+
+    // DEPRECATED: Get provider's available time slots for a specific date
+    // Use getServiceAvailableSlots instead
     public func getProviderAvailableSlots(
         providerId : Principal,
         date : Time.Time
@@ -762,7 +876,8 @@ actor BookingCanister {
         };
     };
 
-    // Get provider's availability settings
+    // DEPRECATED: Get provider's availability settings
+    // Use getServiceAvailabilitySettings instead
     public func getProviderAvailabilitySettings(providerId : Principal) : async Result<Types.ProviderAvailability> {
         switch (serviceCanisterId) {
             case (?serviceId) {
@@ -778,7 +893,8 @@ actor BookingCanister {
         };
     };
 
-    // Check if provider is available for booking at specific date/time
+    // DEPRECATED: Check if provider is available for booking at specific date/time
+    // Use checkServiceAvailability instead
     public func checkProviderAvailability(
         providerId : Principal,
         requestedDateTime : Time.Time
@@ -1128,6 +1244,8 @@ actor BookingCanister {
         };
         
         // Verify service exists
+        var serviceProviderId : Principal = Principal.fromText("aaaaa-aa"); // Default value
+
         switch (serviceCanisterId) {
             case (?serviceCanisterId) {
                 let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
@@ -1138,7 +1256,9 @@ actor BookingCanister {
                     case (#err(msg)) {
                         return #err("Service not found: " # msg);
                     };
-                    case (#ok(_)) {
+                    case (#ok(service)) {
+                        // Store the actual provider ID from the service
+                        serviceProviderId := service.providerId;
                         // Service exists, continue with analytics
                     };
                 };
@@ -1164,7 +1284,7 @@ actor BookingCanister {
         
         if (totalJobs == 0) {
             return #ok({
-                providerId = Principal.fromText("aaaaa-aa"); // Using IC management canister as placeholder
+                providerId = serviceProviderId; // Use the actual provider ID
                 completedJobs = 0;
                 cancelledJobs = 0;
                 totalJobs = 0;
@@ -1277,17 +1397,29 @@ actor BookingCanister {
         };
         
         // Verify package exists
+        var packageProviderId : Principal = Principal.fromText("aaaaa-aa"); // Default value
+
         switch (serviceCanisterId) {
             case (?serviceCanisterId) {
                 let serviceCanister = actor(Principal.toText(serviceCanisterId)) : actor {
                     getPackage : (Text) -> async Types.Result<Types.ServicePackage>;
+                    getService : (Text) -> async Types.Result<Types.Service>;
                 };
                 
                 switch (await serviceCanister.getPackage(packageId)) {
                     case (#err(msg)) {
                         return #err("Package not found: " # msg);
                     };
-                    case (#ok(_)) {
+                    case (#ok(package)) {
+                        // Get the service to find its provider
+                        switch (await serviceCanister.getService(package.serviceId)) {
+                            case (#ok(service)) {
+                                packageProviderId := service.providerId;
+                            };
+                            case (#err(_)) {
+                                // If service can't be found, keep the default ID
+                            };
+                        };
                         // Package exists, continue with analytics
                     };
                 };
@@ -1317,7 +1449,7 @@ actor BookingCanister {
         
         if (totalJobs == 0) {
             return #ok({
-                providerId = Principal.fromText("aaaaa-aa"); // Using IC management canister as placeholder
+                providerId = packageProviderId; // Use the actual provider ID
                 completedJobs = 0;
                 cancelledJobs = 0;
                 totalJobs = 0;
@@ -1329,7 +1461,6 @@ actor BookingCanister {
             });
         };
         
-        // Rest of analytics calculations follow the same pattern as serviceAnalytics
         // Count completed bookings
         let completedBookings = Array.filter<Booking>(
             packageBookings,

@@ -1,11 +1,3 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
 type TimeSlot = 
  record {
    endTime: text;
@@ -15,17 +7,17 @@ type Time = int;
 type Result_6 = 
  variant {
    err: text;
-   ok: ProviderAvailability;
+   ok: ProviderAnalytics;
  };
 type Result_5 = 
  variant {
    err: text;
-   ok: vec AvailableSlot;
+   ok: ProviderAvailability;
  };
 type Result_4 = 
  variant {
    err: text;
-   ok: ProviderAnalytics;
+   ok: vec AvailableSlot;
  };
 type Result_3 = 
  variant {
@@ -56,7 +48,6 @@ type ProviderAvailability =
    maxBookingsPerDay: nat;
    providerId: principal;
    updatedAt: Time;
-   vacationDates: vec VacationPeriod;
    weeklySchedule: vec record {
                          DayOfWeek;
                          DayAvailability;
@@ -151,6 +142,8 @@ service : {
   cancelBooking: (bookingId: text) -> (Result_1);
   checkProviderAvailability: (providerId: principal, requestedDateTime:
    Time) -> (Result_3);
+  checkServiceAvailability: (serviceId: text, requestedDateTime: Time) ->
+   (Result_3);
   completeBooking: (bookingId: text) -> (Result_1);
   createBooking: (serviceId: text, providerId: principal, price: nat,
    location: Location, requestedDate: Time, servicePackageId: opt text) ->
@@ -164,26 +157,31 @@ service : {
   getBookingsByStatus: (status: BookingStatus) -> (vec Booking) query;
   getClientActiveBookings: (clientId: principal) -> (vec Booking) query;
   getClientAnalytics: (clientId: principal, startDate: opt Time, endDate:
-   opt Time) -> (Result_4);
+   opt Time) -> (Result_6);
   getClientBookings: (clientId: principal) -> (vec Booking) query;
   getClientCompletedBookings: (clientId: principal) -> (vec Booking) query;
   getDailyBookingCount: (providerId: principal, date: Time) -> (nat) query;
   getDisputedBookings: () -> (vec Booking) query;
   getPackageAnalytics: (packageId: text, startDate: opt Time, endDate:
-   opt Time) -> (Result_4);
+   opt Time) -> (Result_6);
   getProviderActiveBookings: (providerId: principal) -> (vec Booking) query;
   getProviderAnalytics: (providerId: principal, startDate: opt Time, endDate:
-   opt Time) -> (Result_4);
-  getProviderAvailabilitySettings: (providerId: principal) -> (Result_6);
+   opt Time) -> (Result_6);
+  getProviderAvailabilitySettings: (providerId: principal) -> (Result_5);
   getProviderAvailableSlots: (providerId: principal, date: Time) ->
-   (Result_5);
+   (Result_4);
   getProviderBookingConflicts: (providerId: principal, startDate: Time,
    endDate: Time) -> (vec Booking);
   getProviderBookings: (providerId: principal) -> (vec Booking) query;
   getProviderCompletedBookings: (providerId: principal) ->
    (vec Booking) query;
   getServiceAnalytics: (serviceId: text, startDate: opt Time, endDate:
-   opt Time) -> (Result_4);
+   opt Time) -> (Result_6);
+  getServiceAvailabilitySettings: (serviceId: text) -> (Result_5);
+  getServiceAvailableSlots: (serviceId: text, date: Time) -> (Result_4);
+  getServiceBookingConflicts: (serviceId: text, startDate: Time, endDate:
+   Time) -> (vec Booking);
+  getServiceDailyBookingCount: (serviceId: text, date: Time) -> (nat) query;
   isEligibleForReview: (bookingId: text, reviewerId: principal) ->
    (Result_3) query;
   setCanisterReferences: (auth: opt principal, "service": opt principal,

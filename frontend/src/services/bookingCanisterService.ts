@@ -12,7 +12,6 @@ import type {
   ProviderAvailability as CanisterProviderAvailability,
   ProviderAnalytics as CanisterProviderAnalytics,
   TimeSlot as CanisterTimeSlot,
-  VacationPeriod as CanisterVacationPeriod,
   DayOfWeek as CanisterDayOfWeek,
   DayAvailability as CanisterDayAvailability,
   Result_4
@@ -99,7 +98,7 @@ export interface ProviderAvailability {
   bookingNoticeHours: number;
   maxBookingsPerDay: number;
   weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }>;
-  vacationDates: VacationPeriod[];
+  // Note: vacationDates removed to match backend implementation
   createdAt: string;
   updatedAt: string;
 }
@@ -245,14 +244,6 @@ const convertCanisterDayAvailability = (availability: CanisterDayAvailability): 
   slots: availability.slots.map(convertCanisterTimeSlot),
 });
 
-const convertCanisterVacationPeriod = (vacation: CanisterVacationPeriod): VacationPeriod => ({
-  id: vacation.id,
-  startDate: new Date(Number(vacation.startDate) / 1000000).toISOString(),
-  endDate: new Date(Number(vacation.endDate) / 1000000).toISOString(),
-  reason: vacation.reason[0],
-  createdAt: new Date(Number(vacation.createdAt) / 1000000).toISOString(),
-});
-
 const convertCanisterProviderAvailability = (availability: CanisterProviderAvailability): ProviderAvailability => ({
   providerId: availability.providerId,
   isActive: availability.isActive,
@@ -263,7 +254,7 @@ const convertCanisterProviderAvailability = (availability: CanisterProviderAvail
     day: convertCanisterDayOfWeek(day),
     availability: convertCanisterDayAvailability(avail),
   })),
-  vacationDates: availability.vacationDates.map(convertCanisterVacationPeriod),
+  // Note: vacationDates removed to match backend implementation
   createdAt: new Date(Number(availability.createdAt) / 1000000).toISOString(),
   updatedAt: new Date(Number(availability.updatedAt) / 1000000).toISOString(),
 });
@@ -660,9 +651,12 @@ export const bookingCanisterService = {
   },
 
   /**
+   * @deprecated Use getServiceAvailableSlots instead for service-based availability
+   * This function is maintained for backward compatibility
    * Get provider's available time slots for a specific date
    */
   async getProviderAvailableSlots(providerId: Principal, date: Date): Promise<AvailableSlot[] | null> {
+    console.warn('getProviderAvailableSlots is deprecated. Use getServiceAvailableSlots instead for service-based availability.');
     try {
       const actor = await getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
@@ -682,9 +676,12 @@ export const bookingCanisterService = {
   },
 
   /**
+   * @deprecated Use getServiceAvailabilitySettings instead for service-based availability
+   * This function is maintained for backward compatibility
    * Get provider's availability settings
    */
   async getProviderAvailabilitySettings(providerId: Principal): Promise<ProviderAvailability | null> {
+    console.warn('getProviderAvailabilitySettings is deprecated. Use getServiceAvailabilitySettings instead for service-based availability.');
     try {
       const actor = await getBookingActor();
       const result = await actor.getProviderAvailabilitySettings(providerId);
@@ -702,9 +699,12 @@ export const bookingCanisterService = {
   },
 
   /**
+   * @deprecated Use checkServiceAvailability instead for service-based availability
+   * This function is maintained for backward compatibility
    * Check if provider is available for booking at specific date/time
    */
   async checkProviderAvailability(providerId: Principal, requestedDateTime: Date): Promise<boolean | null> {
+    console.warn('checkProviderAvailability is deprecated. Use checkServiceAvailability instead for service-based availability.');
     try {
       const actor = await getBookingActor();
       const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
@@ -720,6 +720,109 @@ export const bookingCanisterService = {
     } catch (error) {
       console.error('Error checking provider availability:', error);
       throw new Error(`Failed to check provider availability: ${error}`);
+    }
+  },
+
+  // NEW SERVICE-BASED AVAILABILITY FUNCTIONS (RECOMMENDED)
+
+  /**
+   * Get service's available time slots for a specific date
+   */
+  async getServiceAvailableSlots(serviceId: string, date: Date): Promise<AvailableSlot[] | null> {
+    try {
+      const actor = await getBookingActor();
+      const dateTimestamp = BigInt(date.getTime() * 1000000);
+      
+      const result = await actor.getServiceAvailableSlots(serviceId, dateTimestamp);
+      
+      if ('ok' in result) {
+        return result.ok.map(convertCanisterAvailableSlot);
+      } else {
+        console.error('Error fetching service available slots:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching service available slots:', error);
+      throw new Error(`Failed to fetch service available slots: ${error}`);
+    }
+  },
+
+  /**
+   * Get service's availability settings
+   */
+  async getServiceAvailabilitySettings(serviceId: string): Promise<ProviderAvailability | null> {
+    try {
+      const actor = await getBookingActor();
+      const result = await actor.getServiceAvailabilitySettings(serviceId);
+      
+      if ('ok' in result) {
+        return convertCanisterProviderAvailability(result.ok);
+      } else {
+        console.error('Error fetching service availability settings:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching service availability settings:', error);
+      throw new Error(`Failed to fetch service availability settings: ${error}`);
+    }
+  },
+
+  /**
+   * Check if service is available for booking at specific date/time
+   */
+  async checkServiceAvailability(serviceId: string, requestedDateTime: Date): Promise<boolean | null> {
+    try {
+      const actor = await getBookingActor();
+      const timestamp = BigInt(requestedDateTime.getTime() * 1000000);
+      
+      const result = await actor.checkServiceAvailability(serviceId, timestamp);
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        console.error('Error checking service availability:', result.err);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error checking service availability:', error);
+      throw new Error(`Failed to check service availability: ${error}`);
+    }
+  },
+
+  /**
+   * Get service's booking conflicts for a date range
+   */
+  async getServiceBookingConflicts(
+    serviceId: string, 
+    startDate: Date, 
+    endDate: Date
+  ): Promise<Booking[]> {
+    try {
+      const actor = await getBookingActor();
+      const startTimestamp = BigInt(startDate.getTime() * 1000000);
+      const endTimestamp = BigInt(endDate.getTime() * 1000000);
+      
+      const bookings = await actor.getServiceBookingConflicts(serviceId, startTimestamp, endTimestamp);
+      return bookings.map(convertCanisterBooking);
+    } catch (error) {
+      console.error('Error fetching service booking conflicts:', error);
+      throw new Error(`Failed to fetch service booking conflicts: ${error}`);
+    }
+  },
+
+  /**
+   * Get daily booking count for a service on a specific date
+   */
+  async getServiceDailyBookingCount(serviceId: string, date: Date): Promise<number> {
+    try {
+      const actor = await getBookingActor();
+      const dateTimestamp = BigInt(date.getTime() * 1000000);
+      
+      const count = await actor.getServiceDailyBookingCount(serviceId, dateTimestamp);
+      return Number(count);
+    } catch (error) {
+      console.error('Error fetching service daily booking count:', error);
+      throw new Error(`Failed to fetch service daily booking count: ${error}`);
     }
   },
 

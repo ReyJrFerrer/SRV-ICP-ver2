@@ -56,14 +56,7 @@ export const idlFactory = ({ IDL }) => {
     'providerId' : IDL.Principal,
     'startDate' : IDL.Opt(Time),
   });
-  const Result_4 = IDL.Variant({ 'ok' : ProviderAnalytics, 'err' : IDL.Text });
-  const VacationPeriod = IDL.Record({
-    'id' : IDL.Text,
-    'endDate' : Time,
-    'createdAt' : Time,
-    'startDate' : Time,
-    'reason' : IDL.Opt(IDL.Text),
-  });
+  const Result_6 = IDL.Variant({ 'ok' : ProviderAnalytics, 'err' : IDL.Text });
   const DayOfWeek = IDL.Variant({
     'Saturday' : IDL.Null,
     'Thursday' : IDL.Null,
@@ -79,7 +72,6 @@ export const idlFactory = ({ IDL }) => {
     'slots' : IDL.Vec(TimeSlot),
   });
   const ProviderAvailability = IDL.Record({
-    'vacationDates' : IDL.Vec(VacationPeriod),
     'weeklySchedule' : IDL.Vec(IDL.Tuple(DayOfWeek, DayAvailability)),
     'createdAt' : Time,
     'instantBookingEnabled' : IDL.Bool,
@@ -89,7 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'bookingNoticeHours' : IDL.Nat,
     'providerId' : IDL.Principal,
   });
-  const Result_6 = IDL.Variant({
+  const Result_5 = IDL.Variant({
     'ok' : ProviderAvailability,
     'err' : IDL.Text,
   });
@@ -99,7 +91,7 @@ export const idlFactory = ({ IDL }) => {
     'conflictingBookings' : IDL.Vec(IDL.Text),
     'timeSlot' : TimeSlot,
   });
-  const Result_5 = IDL.Variant({
+  const Result_4 = IDL.Variant({
     'ok' : IDL.Vec(AvailableSlot),
     'err' : IDL.Text,
   });
@@ -113,6 +105,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_3],
         [],
       ),
+    'checkServiceAvailability' : IDL.Func([IDL.Text, Time], [Result_3], []),
     'completeBooking' : IDL.Func([IDL.Text], [Result_1], []),
     'createBooking' : IDL.Func(
         [IDL.Text, IDL.Principal, IDL.Nat, Location, Time, IDL.Opt(IDL.Text)],
@@ -144,7 +137,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getClientAnalytics' : IDL.Func(
         [IDL.Principal, IDL.Opt(Time), IDL.Opt(Time)],
-        [Result_4],
+        [Result_6],
         [],
       ),
     'getClientBookings' : IDL.Func(
@@ -165,7 +158,7 @@ export const idlFactory = ({ IDL }) => {
     'getDisputedBookings' : IDL.Func([], [IDL.Vec(Booking)], ['query']),
     'getPackageAnalytics' : IDL.Func(
         [IDL.Text, IDL.Opt(Time), IDL.Opt(Time)],
-        [Result_4],
+        [Result_6],
         [],
       ),
     'getProviderActiveBookings' : IDL.Func(
@@ -175,17 +168,17 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getProviderAnalytics' : IDL.Func(
         [IDL.Principal, IDL.Opt(Time), IDL.Opt(Time)],
-        [Result_4],
+        [Result_6],
         [],
       ),
     'getProviderAvailabilitySettings' : IDL.Func(
         [IDL.Principal],
-        [Result_6],
+        [Result_5],
         [],
       ),
     'getProviderAvailableSlots' : IDL.Func(
         [IDL.Principal, Time],
-        [Result_5],
+        [Result_4],
         [],
       ),
     'getProviderBookingConflicts' : IDL.Func(
@@ -205,8 +198,20 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getServiceAnalytics' : IDL.Func(
         [IDL.Text, IDL.Opt(Time), IDL.Opt(Time)],
-        [Result_4],
+        [Result_6],
         [],
+      ),
+    'getServiceAvailabilitySettings' : IDL.Func([IDL.Text], [Result_5], []),
+    'getServiceAvailableSlots' : IDL.Func([IDL.Text, Time], [Result_4], []),
+    'getServiceBookingConflicts' : IDL.Func(
+        [IDL.Text, Time, Time],
+        [IDL.Vec(Booking)],
+        [],
+      ),
+    'getServiceDailyBookingCount' : IDL.Func(
+        [IDL.Text, Time],
+        [IDL.Nat],
+        ['query'],
       ),
     'isEligibleForReview' : IDL.Func(
         [IDL.Text, IDL.Principal],

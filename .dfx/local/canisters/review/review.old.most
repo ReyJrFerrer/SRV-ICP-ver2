@@ -1,0 +1,21 @@
+// Version: 1.0.0
+type ReviewStatus__258668173 = {#Flagged; #Hidden; #Visible};
+type Review__154551843 =
+  {
+    bookingId : Text;
+    clientId : Principal;
+    comment : Text;
+    createdAt : Time__593356169;
+    id : Text;
+    providerId : Principal;
+    qualityScore : ?Float;
+    rating : Nat;
+    serviceId : Text;
+    status : ReviewStatus__258668173;
+    updatedAt : Time__593356169
+  };
+type Review__673131583 = Review__154551843;
+type Time__593356169 = Int;
+actor {
+  stable var reviewEntries : [(Text, Review__673131583)]
+};

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -45,68 +45,153 @@ const ProviderServiceDetailPage: React.FC = () => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [initializationAttempts, setInitializationAttempts] = useState(0);
+  
+  // Refs to track loading state
+  const hasLoadedSuccessfully = useRef(false);
+  const currentServiceId = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
+  const mountedRef = useRef(true);
 
-  // Fixed: Wait for hook to be ready and retry logic
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Wait for hook initialization before attempting to load service
+  const waitForInitialization = useCallback(async (maxAttempts = 20): Promise<boolean> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Check if hook is no longer loading and no errors
+      if (!hookLoading && !hookError) {
+        console.log('Hook initialized successfully');
+        return true;
+      }
+      
+      console.log(`Waiting for hook initialization... (${attempt + 1}/${maxAttempts})`);
+      setInitializationAttempts(attempt + 1);
+      
+      // Wait progressively longer each attempt
+      await new Promise(resolve => setTimeout(resolve, 250 + (attempt * 100)));
+      
+      // Check if component was unmounted
+      if (!mountedRef.current) {
+        return false;
+      }
+    }
+    
+    console.warn('Hook initialization timeout');
+    return false;
+  }, [hookLoading, hookError]);
+
+  // Robust service loading with initialization check
+  const loadServiceDataRobust = useCallback(async (serviceId: string): Promise<void> => {
+    // Prevent concurrent loading
+    if (isLoadingRef.current) {
+      console.log('Already loading, skipping...');
+      return;
+    }
+
+    // Don't reload if we already have this service loaded successfully
+    if (service && service.id === serviceId && hasLoadedSuccessfully.current) {
+      console.log('Service already loaded, skipping reload');
+      return;
+    }
+
+    isLoadingRef.current = true;
+    setLoading(true);
+    setError(null);
+    setInitializationAttempts(0);
+
+    try {
+      // Wait for hook to initialize first
+      const initialized = await waitForInitialization();
+      
+      if (!initialized) {
+        throw new Error('Hook initialization failed');
+      }
+
+      // Check if component was unmounted during initialization
+      if (!mountedRef.current) {
+        return;
+      }
+
+      // Attempt to get service with retries
+      const maxRetries = 3;
+      let lastError: any = null;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`Loading service data (attempt ${attempt + 1}/${maxRetries + 1})`);
+          
+          // Add progressive delay for retries
+          if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+
+          // Check if component was unmounted during delay
+          if (!mountedRef.current) {
+            return;
+          }
+          
+          const serviceData = await getService(serviceId);
+          
+          if (serviceData) {
+            console.log('Service loaded successfully:', serviceData);
+            
+            // Only update state if component is still mounted
+            if (mountedRef.current) {
+              setService(serviceData);
+              setRetryCount(0);
+              hasLoadedSuccessfully.current = true;
+              currentServiceId.current = serviceId;
+              setError(null);
+            }
+            return; // Success
+          } else {
+            lastError = new Error('Service not found');
+          }
+          
+        } catch (err) {
+          console.error(`Failed to load service (attempt ${attempt + 1}):`, err);
+          lastError = err;
+        }
+      }
+
+      // All retries failed
+      if (mountedRef.current) {
+        const errorMessage = lastError?.message || 'Failed to load service data';
+        setError(errorMessage);
+        hasLoadedSuccessfully.current = false;
+      }
+
+    } catch (err) {
+      console.error('Error in loadServiceDataRobust:', err);
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to load service');
+        hasLoadedSuccessfully.current = false;
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+      isLoadingRef.current = false;
+    }
+  }, [service, waitForInitialization, getService]);
+
+  // Main effect to load service when ID changes
   useEffect(() => {
     if (id && typeof id === 'string') {
-      loadServiceDataWithRetry(id);
-    }
-  }, [id, hookLoading]); // Added hookLoading dependency
-
-  const loadServiceDataWithRetry = async (serviceId: string, maxRetries = 3) => {
-    setLoading(true);
-    setError(null);
-    
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`Loading service data (attempt ${attempt + 1}/${maxRetries + 1})`);
-        
-        // Wait a bit longer on retries
-        if (attempt > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-        
-        const serviceData = await getService(serviceId);
-        
-        if (serviceData) {
-          console.log('Service loaded successfully:', serviceData);
-          setService(serviceData);
-          setRetryCount(0);
-          setLoading(false);
-          return; // Success, exit retry loop
-        } else if (attempt === maxRetries) {
-          // Only set error on final attempt
-          console.log('Service not found after all retries');
-          setError('Service not found');
-        }
-      } catch (err) {
-        console.error(`Failed to load service (attempt ${attempt + 1}):`, err);
-        if (attempt === maxRetries) {
-          setError('Failed to load service data');
-        }
+      // Only load if service ID changed or we haven't loaded successfully
+      if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
+        console.log('Loading service for ID:', id);
+        currentServiceId.current = id;
+        hasLoadedSuccessfully.current = false;
+        loadServiceDataRobust(id);
       }
     }
-    
-    setLoading(false);
-  };
-
-  const loadServiceData = async (serviceId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const serviceData = await getService(serviceId);
-      if (serviceData) {
-        setService(serviceData);
-      } else {
-        setError('Service not found');
-      }
-    } catch (err) {
-      console.error('Failed to load service:', err);
-      setError('Failed to load service data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [id, loadServiceDataRobust]);
 
   const handleDeleteService = async () => {
     if (!service) return;
@@ -119,6 +204,9 @@ const ProviderServiceDetailPage: React.FC = () => {
       setIsDeleting(true);
       try {
         await deleteService(service.id);
+        // Reset state when navigating away
+        hasLoadedSuccessfully.current = false;
+        currentServiceId.current = null;
         router.push('/provider/services');
       } catch (error) {
         console.error('Failed to delete service:', error);
@@ -136,7 +224,8 @@ const ProviderServiceDetailPage: React.FC = () => {
     setIsUpdatingStatus(true);
     try {
       await updateServiceStatus(service.id, newStatus);
-      await loadServiceData(service.id); // Reload to get updated data
+      // Update the service state directly instead of reloading
+      setService(prev => prev ? { ...prev, status: newStatus } : prev);
     } catch (error) {
       console.error('Failed to update service status:', error);
       alert('Failed to update service status. Please try again.');
@@ -148,16 +237,22 @@ const ProviderServiceDetailPage: React.FC = () => {
   const handleRetry = () => {
     if (id && typeof id === 'string') {
       setRetryCount(prev => prev + 1);
-      loadServiceDataWithRetry(id);
+      hasLoadedSuccessfully.current = false; // Reset success flag for retry
+      loadServiceDataRobust(id);
     }
   };
 
-  // Show loading while hook is initializing or we're fetching data
-  if (loading || hookLoading) {
+  // Show loading screen during initialization or data loading
+  if ((loading || hookLoading || initializationAttempts > 0) && !service) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="ml-3 text-gray-700 mt-4">Loading service details...</p>
+        <p className="text-gray-700 mt-4">
+          {initializationAttempts > 0 
+            ? `Initializing system... (${initializationAttempts}/20)`
+            : 'Loading service details...'
+          }
+        </p>
         {retryCount > 0 && (
           <p className="text-sm text-gray-500 mt-2">Retry attempt: {retryCount}</p>
         )}
@@ -165,56 +260,68 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
-  if (error || hookError) {
+  // Show error screen only if we have an error and no service data
+  if ((error || hookError) && !service) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <Head>
-            <title>Service Not Found | SRV Provider</title>
+            <title>Service Error | SRV Provider</title>
         </Head>
-        <h1 className="text-xl font-semibold text-red-600 mb-4">
-          {error || hookError || 'Service Not Found'}
-        </h1>
-        <p className="text-gray-600 mb-6 text-center">
-          {error || hookError || 'The service could not be loaded.'} 
-          {!service && ' This might be due to initialization timing.'}
-        </p>
-        <div className="flex space-x-4">
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry Loading
-          </button>
-          <Link href="/provider/services" legacyBehavior>
-            <a className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-              Back to Services
-            </a>
-          </Link>
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-red-600 mb-4">
+            Unable to Load Service
+          </h1>
+          <p className="text-gray-600 mb-6">
+            {error || hookError || 'The service could not be loaded.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRetry}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+            <Link href="/provider/services" legacyBehavior>
+              <a className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Back to Services
+              </a>
+            </Link>
+          </div>
+          {retryCount > 0 && (
+            <p className="text-xs text-gray-500 mt-4">
+              Attempted {retryCount} {retryCount === 1 ? 'retry' : 'retries'}
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
+  // Final fallback if no service data
   if (!service) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <Head>
             <title>Service Not Found | SRV Provider</title>
         </Head>
-        <h1 className="text-xl font-semibold text-red-600 mb-4">Service Not Found</h1>
-        <p className="text-gray-600 mb-6">The service could not be loaded.</p>
-        <div className="flex space-x-4">
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry Loading
-          </button>
-          <Link href="/provider/services" legacyBehavior>
-            <a className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-              Back to Services
-            </a>
-          </Link>
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-red-600 mb-4">Service Not Found</h1>
+          <p className="text-gray-600 mb-6">
+            The requested service could not be found or loaded.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRetry}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Loading Again
+            </button>
+            <Link href="/provider/services" legacyBehavior>
+              <a className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Back to Services
+              </a>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -247,6 +354,18 @@ const ProviderServiceDetailPage: React.FC = () => {
             <div className="w-8"></div>
           </div>
         </header>
+
+        {/* Show loading overlay for operations while keeping content visible */}
+        {(isUpdatingStatus || isDeleting) && (
+          <div className="fixed inset-0 bg-black bg-opacity-20 z-40 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-4 flex items-center shadow-lg">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              <span className="ml-3 text-gray-700">
+                {isUpdatingStatus ? 'Updating status...' : 'Deleting service...'}
+              </span>
+            </div>
+          </div>
+        )}
 
         <main className="container mx-auto p-4 sm:p-6 space-y-6">
           {/* Hero Image and Basic Info Card */}

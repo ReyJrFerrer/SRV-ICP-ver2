@@ -8,10 +8,6 @@ import Header from '@app/components/client/HeaderNextjs';
 import Categories from '@app/components/client/CategoriesNextjs';
 import TopPicks from '@app/components/client/TopPicksNextjs';
 import BottomNavigation from '@app/components/client/BottomNavigationNextjs';
-
-// Services
-import { ServiceCategory } from '@app/services/serviceCanisterService';
-
 // Utilities
 import { getCategoryIcon } from '@app/utils/serviceHelpers';
 

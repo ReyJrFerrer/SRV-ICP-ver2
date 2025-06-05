@@ -20,7 +20,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   // Use the service management hook
   const {
     userServices,
-    userProfile,
+    userProfile, // Use userProfile directly from hook
     getProviderStats,
     loading: servicesLoading,
     error: servicesError,
@@ -36,21 +36,25 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     averageRating: 0
   });
 
-  // Transform userProfile to match ServiceProvider interface for backward compatibility
-  const provider = useMemo(() => {
+  // Only create a legacy provider object for components that still need the old interface
+  const legacyProvider = useMemo(() => {
     if (!userProfile) return null;
+    
+    const nameParts = userProfile.name.split(' ');
     
     return {
       id: userProfile.id,
       name: userProfile.name,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
       email: userProfile.email,
       phone: userProfile.phone || '',
       profilePicture: userProfile.profilePicture || '',
       isVerified: userProfile.isVerified || false,
-      rating: 0, // Will be calculated from services
+      rating: 0,
       totalReviews: 0,
       joinDate: userProfile.createdAt || new Date().toISOString(),
-      servicesOffered: [], // Services come from userServices
+      servicesOffered: [],
       credentials: [],
       isActive: true
     };
@@ -83,7 +87,7 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         // Reset initialization attempts once authenticated
         setInitializationAttempts(0);
 
-        // Load provider stats (this will work even without profile)
+        // Load provider stats
         console.log('Loading provider stats...');
         const stats = await getProviderStats();
         setProviderStats(stats);
@@ -99,13 +103,10 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     loadProviderData();
   }, [isUserAuthenticated, getProviderStats, initializationAttempts]);
 
-  // Calculate counts for pending and upcoming jobs consistently with bookings.tsx
+  // Calculate counts for pending and upcoming jobs
   const bookingCounts = useMemo(() => {
     const now = new Date();
-    // Count for "Pending" tab
     const pendingCount = PROVIDER_BOOKING_REQUESTS.length; 
-
-    // Count for "Upcoming" tab
     const upcomingCount = PROVIDER_ORDERS.filter(
       order => order.status === 'CONFIRMED' && new Date(order.scheduledStartTime) >= now
     ).length;
@@ -160,17 +161,17 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
       </Head>
       
       <div className="pb-20 bg-gray-50 min-h-screen">
-        {/* {provider && (
-          <SPHeaderNextjs 
-            provider={provider} 
-            notificationCount={bookingCounts.pendingCount} 
-          />
-        )} */}
+        {/* Use userProfile directly for SPHeaderNextjs */}
+        <SPHeaderNextjs 
+          provider={userProfile} 
+          notificationCount={bookingCounts.pendingCount} 
+        />
         
         <div className="p-4 max-w-7xl mx-auto"> 
-          {/* {provider && (
+          {/* Use legacyProvider for components that still need the old interface */}
+          {/* {legacyProvider && (
             <ProviderStatsNextjs 
-              provider={provider}
+              provider={legacyProvider}
               stats={providerStats}
               loading={servicesLoading}
             />
@@ -188,8 +189,8 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
             onRefresh={refreshServices}
           />
 
-          {/* {provider && (
-            <CredentialsDisplayNextjs provider={provider} />
+          {/* {legacyProvider && (
+            <CredentialsDisplayNextjs provider={legacyProvider} />
           )} */}
         </div>
         

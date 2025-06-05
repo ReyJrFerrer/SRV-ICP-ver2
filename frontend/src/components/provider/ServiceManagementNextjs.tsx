@@ -169,8 +169,8 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
 
                       <div className="flex items-center text-xs md:text-sm text-gray-600 mt-2 space-x-3">
                         <div className="flex items-center">
-                          <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" />
-                          <span>{service.formattedPrice || `$${service.price}`}</span>
+                          {/* <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" /> */}
+                          <span>{service.formattedPrice || `₱${service.price}`}</span>
                         </div>
                         <div className="flex items-center">
                           <StarIcon className="h-4 w-4 text-yellow-400 mr-1" />

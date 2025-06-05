@@ -804,7 +804,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const formatServicePrice = useCallback((price: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PHP'
     }).format(price);
   }, []);
 

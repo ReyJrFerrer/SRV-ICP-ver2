@@ -28,34 +28,34 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
 
   return (
     <div className={`credentials-section ${className}`}>
-      <div className="section-header">
-        <h2 className="text-xl font-bold text-gray-800">Credentials & Verification</h2>
+      <div className="section-header flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-blue-700">Credentials & Verification</h2>
         <Link href="/provider/credentials/add">
-          <button className="add-button">
+          <button className="add-button bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 transition-colors">
             <PlusIcon className="h-5 w-5" />
           </button>
         </Link>
       </div>
       
-      <div className="verification-badges">
+      <div className="verification-badges flex gap-3 mb-4 flex-wrap">
         {identityVerified && (
-          <div className="verification-badge">
-            <UserIcon className="h-4 w-4 text-green-600 mr-1" />
-            <span className="text-sm text-gray-700">Identity Verified</span>
+          <div className="verification-badge flex items-center bg-blue-600 text-white px-3 py-1 rounded-full">
+            <UserIcon className="h-4 w-4 text-white mr-1" />
+            <span className="text-sm font-medium">Identity Verified</span>
           </div>
         )}
         
         {backgroundCheckPassed && (
-          <div className="verification-badge">
-            <ShieldCheckIcon className="h-4 w-4 text-green-600 mr-1" />
-            <span className="text-sm text-gray-700">Background Verified</span>
+          <div className="verification-badge flex items-center bg-yellow-200 text-black px-3 py-1 rounded-full">
+            <ShieldCheckIcon className="h-4 w-4 text-black mr-1" />
+            <span className="text-sm font-medium">Background Verified</span>
           </div>
         )}
         
         {verificationStatus === 'VERIFIED' && (
-          <div className="verification-badge bg-green-100">
-            <CheckBadgeIcon className="h-4 w-4 text-green-600 mr-1" />
-            <span className="text-sm text-green-700 font-medium">{verificationStatus}</span>
+          <div className="verification-badge flex items-center bg-black text-white px-3 py-1 rounded-full">
+            <CheckBadgeIcon className="h-4 w-4 text-yellow-400 mr-1" />
+            <span className="text-sm font-medium">{verificationStatus}</span>
           </div>
         )}
       </div>
@@ -63,32 +63,31 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
       {credentials.length > 0 ? (
         <div className="space-y-4">
           {credentials.map((credential) => (
-            <div key={credential.id} className="credential-card">
+            <div key={credential.id} className="credential-card bg-white rounded-lg shadow p-4">
               <div className="flex items-start justify-between">
                 <div className="flex">
-                  <AcademicCapIcon className="h-6 w-6 text-teal-600 mr-2 mt-1" />
+                  <AcademicCapIcon className="h-6 w-6 text-blue-600 mr-2 mt-1" />
                   <div>
-                    <h3 className="font-semibold text-gray-800">{credential.title}</h3>
-                    <p className="text-sm text-gray-600">Issued by: {credential.issuingAuthority}</p>
+                    <h3 className="font-semibold text-black">{credential.title}</h3>
+                    <p className="text-sm text-gray-700">Issued by: {credential.issuingAuthority}</p>
                     <p className="text-xs text-gray-500 mt-1">
                       Issued: {formatDate(credential.issueDate)}
                       {credential.expiryDate && ` • Expires: ${formatDate(credential.expiryDate)}`}
                     </p>
                   </div>
                 </div>
-                
                 {credential.verificationStatus === 'VERIFIED' && (
-                  <CheckBadgeIcon className="h-5 w-5 text-green-600" />
+                  <CheckBadgeIcon className="h-5 w-5 text-blue-600" />
                 )}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-gray-50 p-6 rounded-lg text-center">
-          <p className="text-gray-500">You haven't added any credentials yet</p>
+        <div className="bg-yellow-50 p-6 rounded-lg text-center">
+          <p className="text-black">You haven't added any credentials yet</p>
           <Link href="/provider/credentials/add">
-            <button className="mt-3 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors">
+            <button className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Add Credentials
             </button>
           </Link>

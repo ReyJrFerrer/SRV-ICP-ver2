@@ -7,6 +7,8 @@ import { useAuth } from '@bundly/ares-react';
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderServiceListItem from '@app/components/provider/ProviderServiceListItem';
 import { Service } from '../../../assets/types/service/service';
+import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+import { SERVICES as allMasterServicesList } from '../../../assets/services'; 
 import { SERVICE_PROVIDERS } from '../../../assets/serviceProviders'; 
 
 import { adaptServiceData } from '@app/utils/serviceDataAdapter';

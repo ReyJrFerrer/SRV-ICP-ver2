@@ -1,0 +1,77 @@
+// Version: 1.0.0
+type DayAvailability__882333125 =
+  {isAvailable : Bool; slots : [TimeSlot__1023712752]};
+type DayOfWeek__614152707 =
+  {#Friday; #Monday; #Saturday; #Sunday; #Thursday; #Tuesday; #Wednesday};
+type Location__978735841 =
+  {
+    address : Text;
+    city : Text;
+    country : Text;
+    latitude : Float;
+    longitude : Float;
+    postalCode : Text;
+    state : Text
+  };
+type ProviderAvailability__199315516 = ProviderAvailability__7514810;
+type ProviderAvailability__7514810 =
+  {
+    bookingNoticeHours : Nat;
+    createdAt : Time__593356169;
+    instantBookingEnabled : Bool;
+    isActive : Bool;
+    maxBookingsPerDay : Nat;
+    providerId : Principal;
+    updatedAt : Time__593356169;
+    weeklySchedule : [(DayOfWeek__614152707, DayAvailability__882333125)]
+  };
+type ServiceCategory__733176 = ServiceCategory__803536771;
+type ServiceCategory__803536771 =
+  {
+    description : Text;
+    id : Text;
+    imageUrl : Text;
+    name : Text;
+    parentId : ?Text;
+    slug : Text
+  };
+type ServicePackage__105949866 = ServicePackage__145258604;
+type ServicePackage__145258604 =
+  {
+    createdAt : Time__593356169;
+    description : Text;
+    id : Text;
+    price : Nat;
+    serviceId : Text;
+    title : Text;
+    updatedAt : Time__593356169
+  };
+type ServiceStatus__671671704 = {#Available; #Suspended; #Unavailable};
+type Service__213494878 = Service__874230076;
+type Service__874230076 =
+  {
+    bookingNoticeHours : ?Nat;
+    category : ServiceCategory__803536771;
+    createdAt : Time__593356169;
+    description : Text;
+    id : Text;
+    instantBookingEnabled : ?Bool;
+    location : Location__978735841;
+    maxBookingsPerDay : ?Nat;
+    price : Nat;
+    providerId : Principal;
+    rating : ?Float;
+    reviewCount : Nat;
+    status : ServiceStatus__671671704;
+    title : Text;
+    updatedAt : Time__593356169;
+    weeklySchedule : ?[(DayOfWeek__614152707, DayAvailability__882333125)]
+  };
+type TimeSlot__1023712752 = {endTime : Text; startTime : Text};
+type Time__593356169 = Int;
+actor {
+  stable var availabilityEntries : [(Text, ProviderAvailability__199315516)];
+  stable var categoryEntries : [(Text, ServiceCategory__733176)];
+  stable var packageEntries : [(Text, ServicePackage__105949866)];
+  stable var serviceEntries : [(Text, Service__213494878)]
+};

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { Principal } from '@dfinity/principal';
 import { Booking, BookingStatus } from '../../../services/bookingCanisterService';
+import { EnhancedBooking } from '../../../hooks/bookingManagement';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -15,24 +16,25 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 
 interface ViewBookingDetailsComponentProps {
-  booking?: Booking;
+  booking?: EnhancedBooking; // Changed from Booking to EnhancedBooking
   onUpdateBookingStatus?: (bookingId: string, newStatus: BookingStatus) => void;
 }
 
 // TO Remove
-// Placeholder Booking Data
-const createPlaceholderBooking = (): Booking => ({
+// Placeholder Booking Data - Updated to match EnhancedBooking format
+const createPlaceholderBooking = (): EnhancedBooking => ({
   id: 'placeholder-booking-details',
   clientId: Principal.fromText('rdmx6-jaaaa-aaaah-qcaiq-cai'),
   providerId: Principal.fromText('rrkah-fqaaa-aaaah-qcaiq-cai'),
   serviceId: 'placeholder-service-details',
   status: 'Accepted',
   requestedDate: new Date().toISOString(),
-  scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+  scheduledDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   price: 250,
   location: {
     latitude: 16.4095,
@@ -52,7 +54,9 @@ const createPlaceholderBooking = (): Booking => ({
   bookingTime: '10:00 AM',
   duration: '4-5 hours',
   priceDisplay: '$250',
-  serviceSlug: 'premium-deep-cleaning'
+  serviceSlug: 'premium-deep-cleaning',
+  formattedLocation: '456 Main Street, Apartment 2B, Baguio City, Benguet',
+  isProviderDataLoaded: true
 });
 
 const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = ({ 
@@ -80,9 +84,21 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
   };
 
   const handleContactProvider = () => {
-    // In a real app, this would open a chat or show contact details
-    alert(`Contact ${displayBooking.providerName} through the app's messaging system.`);
+    const providerName = displayBooking.providerProfile?.name || displayBooking.providerName || 'the provider';
+    alert(`Contact ${providerName} through the app's messaging system.`);
   };
+
+  // Get provider image source - same logic as BookingItemCard
+  const getProviderImageSource = () => {
+    if (displayBooking.providerProfile?.profilePicture?.imageUrl) {
+      return displayBooking.providerProfile.profilePicture.imageUrl;
+    }
+    return null;
+  };
+
+  const providerImageSrc = getProviderImageSource();
+  const providerName = displayBooking.providerProfile?.name || displayBooking.providerName || 'Unknown Provider';
+  const locationDisplay = displayBooking.formattedLocation || 'Location not specified';
 
   const getStatusIcon = (status: BookingStatus) => {
     switch (status) {
@@ -198,7 +214,7 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
           </div>
         </div>
 
-        {/* Service Information */}
+        {/* Service Information - Updated with provider profile */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Information</h3>
           
@@ -212,7 +228,12 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
             />
             <div className="flex-grow">
               <h4 className="text-xl font-semibold text-gray-900">{displayBooking.serviceName}</h4>
-              <p className="text-gray-600 mb-2">by {displayBooking.providerName}</p>
+              <p className="text-gray-600 mb-2">
+                by {providerName}
+                {displayBooking.providerProfile?.isVerified && (
+                  <span className="ml-1 text-blue-500">✓</span>
+                )}
+              </p>
               <div className="flex items-center text-lg font-semibold text-green-600">
                 <CurrencyDollarIcon className="h-5 w-5 mr-1" />
                 {displayBooking.price}
@@ -221,11 +242,58 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
           </div>
 
           {displayBooking.duration && (
-            <div className="flex items-center text-gray-600 mb-2">
+            <div className="flex items-center text-gray-600 mb-4">
               <ClockIcon className="h-5 w-5 mr-3" />
               <span>Estimated Duration: {displayBooking.duration}</span>
             </div>
           )}
+
+          {/* Provider Profile Section - New */}
+          <div className="pt-4 border-t border-gray-100">
+            <h4 className="text-md font-semibold text-gray-900 mb-3">Service Provider</h4>
+            <div className="flex items-start space-x-3">
+              {/* Provider Profile Picture */}
+              <div className="flex-shrink-0">
+                {providerImageSrc ? (
+                  <Image
+                    src={providerImageSrc}
+                    alt={`${providerName} profile`}
+                    width={56}
+                    height={56}
+                    className="rounded-full object-cover border-2 border-gray-200"
+                    onError={(e) => {
+                      console.log('Error loading provider image, using fallback');
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-300">
+                    <UserCircleIcon className="w-7 h-7 text-gray-400" />
+                  </div>
+                )}
+                
+                {/* Loading indicator for provider data */}
+                {!displayBooking.isProviderDataLoaded && (
+                  <div className="absolute top-0 right-0 w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+                )}
+              </div>
+              
+              <div className="flex-grow">
+                <p className="font-medium text-gray-900">{providerName}</p>
+                {displayBooking.providerProfile?.phone && (
+                  <p className="text-sm text-gray-600 flex items-center mt-1">
+                    <PhoneIcon className="h-4 w-4 mr-1" />
+                    {displayBooking.providerProfile.phone}
+                  </p>
+                )}
+                {displayBooking.providerProfile?.biography && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {displayBooking.providerProfile.biography}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Schedule Information */}
@@ -251,7 +319,7 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
           </div>
         </div>
 
-        {/* Location Information */}
+        {/* Location Information - Updated to use formattedLocation */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
           
@@ -263,6 +331,11 @@ const ViewBookingDetailsComponent: React.FC<ViewBookingDetailsComponentProps> = 
                 {displayBooking.location.city}, {displayBooking.location.state} {displayBooking.location.postalCode}
               </p>
               <p className="text-sm text-gray-600">{displayBooking.location.country}</p>
+              {locationDisplay && locationDisplay !== 'Location not specified' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Full Address: {locationDisplay}
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -1,26 +1,49 @@
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, FormEvent, ChangeEvent, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ArrowLeftIcon, CheckCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@bundly/ares-react';
 import { nanoid } from 'nanoid';
 
-// Types
-import { Service } from '../../../../../assets/types/service/service';
-import { Category } from '../../../../../assets/types/category/category';
-import { CATEGORIES as mockCategoriesData } from '../../../../../assets/categories';
-import { SERVICES as mockServicesData } from '../../../../../assets/services';
-import { DayOfWeek, ServiceAvailability } from '../../../../../assets/types/service/service-availability';
-import { ServicePrice } from '../../../../../assets/types/service/service-price';
-import { ServiceLocation } from '../../../../../assets/types/service/service-location';
-import { MediaItem } from '../../../../../assets/types/common/media-item';
-import { Package as ServicePackageTypeDefinition } from '../../../../../assets/types/service/service-package';
-import { Terms as ServiceTermsTypeDefinition } from '../../../../../assets/types/service/service-terms'; // Import Terms type
-import { adaptServiceData } from 'frontend/src/utils/serviceDataAdapter';
+// Service Management Hook
+import { 
+  useServiceManagement, 
+  EnhancedService,
+  ServiceUpdateRequest,
+  PackageCreateRequest,
+  PackageUpdateRequest,
+  DayOfWeek,
+  DayAvailability
+} from '../../../../hooks/serviceManagement';
+
+// Legacy types for UI compatibility  
+import { 
+  ServicePackage,
+  ServiceCategory,
+  Location,
+  ProviderAvailability,
+  Service
+} from '../../../../services/serviceCanisterService';
 
 // Interfaces for form data (same as add.tsx)
-interface TimeSlotUIData { id: string; startHour: string; startMinute: string; startPeriod: 'AM' | 'PM'; endHour: string; endMinute: string; endPeriod: 'AM' | 'PM'; }
-interface ServicePackageUIData { id: string; name: string; description: string; price: string; currency: string; isPopular: boolean; }
+interface TimeSlotUIData { 
+  id: string; 
+  startHour: string; 
+  startMinute: string; 
+  startPeriod: 'AM' | 'PM'; 
+  endHour: string; 
+  endMinute: string; 
+  endPeriod: 'AM' | 'PM'; 
+}
+
+interface ServicePackageUIData { 
+  id: string; 
+  name: string; 
+  description: string; 
+  price: string; 
+  currency: string; 
+  isPopular: boolean; 
+}
 
 const initialServiceFormState = {
   serviceOfferingTitle: '',
@@ -48,80 +71,245 @@ const convertServiceAvailabilityToUIData = (serviceSlots: string[]): TimeSlotUID
 
 const EditServicePage: React.FC = () => {
   const router = useRouter();
-  const { slug } = router.query;
+  const { id } = router.query; // Changed from slug to id
   const { isAuthenticated, currentIdentity } = useAuth();
 
-  const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
+  // Service Management Hook Integration
+  const {
+    getService,
+    updateService,
+    getServicePackages,
+    createPackage,
+    updatePackage,
+    deletePackage,
+    categories,
+    loading: hookLoading,
+    error: hookError,
+    clearError
+  } = useServiceManagement();
+
+  const [serviceToEdit, setServiceToEdit] = useState<EnhancedService | null>(null);
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [formData, setFormData] = useState(initialServiceFormState);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [initializationAttempts, setInitializationAttempts] = useState(0);
 
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  // Refs to track loading state
+  const hasLoadedSuccessfully = useRef(false);
+  const currentServiceId = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const daysOfWeek: DayOfWeek[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const hourOptions = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
   const minuteOptions = ['00', '15', '30', '45'];
   const periodOptions: ('AM' | 'PM')[] = ['AM', 'PM'];
 
+  // Cleanup on unmount
   useEffect(() => {
-    const relevantCategories = mockCategoriesData.filter(cat => !cat.parentId);
-    setCategories(relevantCategories);
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (slug && typeof slug === 'string') {
-      setPageLoading(true);
-      const rawService = mockServicesData.find(s => s.slug === slug || s.id === slug);
-      if (rawService) {
-        const adaptedService = adaptServiceData([rawService])[0] as Service;
-        setServiceToEdit(adaptedService);
-        setFormData({
-          serviceOfferingTitle: adaptedService.title || adaptedService.name,
-          categoryId: adaptedService.category.id,
-          locationAddress: adaptedService.location.address,
-          serviceRadius: String(adaptedService.location.serviceRadius),
-          serviceRadiusUnit: adaptedService.location.serviceRadiusUnit,
-          availabilitySchedule: adaptedService.availability.schedule,
-          useSameTimeForAllDays: true, 
-          commonTimeSlots: convertServiceAvailabilityToUIData(adaptedService.availability.timeSlots),
-          perDayTimeSlots: {
-            Monday: [],
-            Tuesday: [],
-            Wednesday: [],
-            Thursday: [],
-            Friday: [],
-            Saturday: [],
-            Sunday: []
-          }, 
-          requirements: adaptedService.requirements?.join(', ') || '',
-          servicePackages: (adaptedService.packages || []).map(pkg => ({
-            id: pkg.id || nanoid(),
-            name: pkg.name,
-            description: pkg.description,
-            price: String(pkg.price),
-            currency: pkg.currency,
-            isPopular: pkg.isPopular || false,
-          })),
-          existingHeroImage: typeof adaptedService.heroImage === 'string' ? adaptedService.heroImage : (adaptedService.heroImage as any)?.src || '',
-          existingMediaItems: (adaptedService.media || []).map(item => ({
-            type: item.type,
-            url: typeof item.url === 'string' ? item.url : (item.url as any)?.src || '',
-            name: typeof item.url === 'string' ? item.url.substring(item.url.lastIndexOf('/') + 1) : 'image'
-          })),
-          termsTitle: adaptedService.terms?.title || '',
-          termsContent: adaptedService.terms?.content || '',
-          termsAcceptanceRequired: adaptedService.terms?.acceptanceRequired || false,
-        });
-      } else {
-        setError("Service not found.");
+  // Wait for hook initialization before attempting to load service
+  const waitForInitialization = useCallback(async (maxAttempts = 20): Promise<boolean> => {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      // Check if hook is no longer loading and no errors
+      if (!hookLoading && !hookError) {
+        console.log('Hook initialized successfully');
+        return true;
       }
-      setPageLoading(false);
+      
+      console.log(`Waiting for hook initialization... (${attempt + 1}/${maxAttempts})`);
+      setInitializationAttempts(attempt + 1);
+      
+      // Wait progressively longer each attempt
+      await new Promise(resolve => setTimeout(resolve, 250 + (attempt * 100)));
+      
+      // Check if component was unmounted
+      if (!mountedRef.current) {
+        return false;
+      }
     }
-  }, [slug]);
+    
+    console.warn('Hook initialization timeout');
+    return false;
+  }, [hookLoading, hookError]);
+
+  // Load service data when component mounts
+  useEffect(() => {
+    if (id && typeof id === 'string') {
+      // Only load if service ID changed or we haven't loaded successfully
+      if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
+        console.log('Loading service for ID:', id);
+        currentServiceId.current = id;
+        hasLoadedSuccessfully.current = false;
+        loadServiceDataRobust(id);
+      }
+    }
+  }, [id]);
+
+  // Clear hook errors when component mounts
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
+  const loadServiceDataRobust = useCallback(async (serviceId: string): Promise<void> => {
+    // Prevent concurrent loading
+    if (isLoadingRef.current) {
+      console.log('Already loading, skipping...');
+      return;
+    }
+
+    // Don't reload if we already have this service loaded successfully
+    if (serviceToEdit && serviceToEdit.id === serviceId && hasLoadedSuccessfully.current) {
+      console.log('Service already loaded, skipping reload');
+      return;
+    }
+
+    isLoadingRef.current = true;
+    setPageLoading(true);
+    setError(null);
+    setInitializationAttempts(0);
+
+    try {
+      // Wait for hook to initialize first
+      const initialized = await waitForInitialization();
+      
+      if (!initialized) {
+        throw new Error('Hook initialization failed');
+      }
+
+      // Check if component was unmounted during initialization
+      if (!mountedRef.current) {
+        return;
+      }
+
+      // Attempt to get service with retries
+      const maxRetries = 3;
+      let lastError: any = null;
+
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`Loading service data (attempt ${attempt + 1}/${maxRetries + 1})`);
+          
+          // Add progressive delay for retries
+          if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          }
+
+          // Check if component was unmounted during delay
+          if (!mountedRef.current) {
+            return;
+          }
+          
+          const service = await getService(serviceId);
+          
+          if (service) {
+            console.log('Service loaded successfully:', service);
+            
+            // Only update state if component is still mounted
+            if (mountedRef.current) {
+              setServiceToEdit(service);
+            }
+
+            // Load service packages
+            let loadedPackages: ServicePackage[] = [];
+            try {
+              console.log('Loading packages for service:', serviceId);
+              loadedPackages = await getServicePackages(serviceId);
+              console.log('Packages loaded:', loadedPackages);
+              
+              if (mountedRef.current) {
+                setPackages(loadedPackages);
+              }
+            } catch (packagesError) {
+              console.error("Failed to load service packages:", packagesError);
+              if (mountedRef.current) {
+                setPackages([]);
+              }
+            }
+
+            // Populate form data
+            if (mountedRef.current) {
+              setFormData({
+                serviceOfferingTitle: service.title,
+                categoryId: service.category?.id || '',
+                locationAddress: service.location.address,
+                serviceRadius: '5', // Default value since this field may not exist in new schema
+                serviceRadiusUnit: 'km' as 'km' | 'mi',
+                availabilitySchedule: service.weeklySchedule ? service.weeklySchedule.map(item => item.day) : [],
+                useSameTimeForAllDays: true,
+                commonTimeSlots: service.weeklySchedule && service.weeklySchedule.length > 0 
+                  ? convertServiceAvailabilityToUIData([])  // We'll need to adapt this
+                  : [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM' as 'AM' | 'PM', endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }],
+                perDayTimeSlots: {
+                  Monday: [],
+                  Tuesday: [],
+                  Wednesday: [],
+                  Thursday: [],
+                  Friday: [],
+                  Saturday: [],
+                  Sunday: []
+                },
+                requirements: '', // We'll need to handle this differently
+                servicePackages: loadedPackages.map((pkg: ServicePackage) => ({
+                  id: pkg.id,
+                  name: pkg.title,
+                  description: pkg.description,
+                  price: String(pkg.price),
+                  currency: 'PHP', // Default currency
+                  isPopular: false, // Default value
+                })),
+                existingHeroImage: '', // We'll handle images differently
+                existingMediaItems: [],
+                termsTitle: '',
+                termsContent: '',
+                termsAcceptanceRequired: false,
+              });
+              
+              hasLoadedSuccessfully.current = true;
+            }
+            
+            return;
+          } else {
+            lastError = new Error('Service not found');
+          }
+          
+        } catch (err) {
+          console.error(`Failed to load service (attempt ${attempt + 1}):`, err);
+          lastError = err;
+        }
+      }
+
+      // All retries failed
+      if (mountedRef.current) {
+        const errorMessage = lastError?.message || 'Failed to load service data';
+        setError(errorMessage);
+        hasLoadedSuccessfully.current = false;
+      }
+
+    } catch (err) {
+      console.error('Error in loadServiceDataRobust:', err);
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to load service');
+        hasLoadedSuccessfully.current = false;
+      }
+    } finally {
+      if (mountedRef.current) {
+        setPageLoading(false);
+      }
+      isLoadingRef.current = false;
+    }
+  }, [serviceToEdit, waitForInitialization, getService, getServicePackages]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -157,78 +345,174 @@ const EditServicePage: React.FC = () => {
 
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault(); setIsLoading(true); setError(null); setSuccessMessage(null);
-    if (!isAuthenticated || !currentIdentity || !serviceToEdit) { setError("Authentication error or service not loaded."); setIsLoading(false); return; }
-    const validPackages = formData.servicePackages.filter(pkg => pkg.name.trim() !== '' && pkg.price.trim() !== '');
-    if (!formData.serviceOfferingTitle.trim() || validPackages.length === 0 || !formData.categoryId) { setError("Please fill Offering Title, Category, and at least one complete Package (name & price)."); setIsLoading(false); return; }
-    const selectedCategoryObject = categories.find(c => c.id === formData.categoryId);
-    if (!selectedCategoryObject) { setError("Invalid category selected."); setIsLoading(false); return; }
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    let finalTimeSlots: string[] = [];
-    if (formData.useSameTimeForAllDays) { finalTimeSlots = formData.commonTimeSlots.map(slot => formatSlotTo24HourString(slot)).filter(Boolean) as string[]; }
-    else { if (formData.availabilitySchedule.length > 0) { const firstScheduledDayWithSlots = formData.availabilitySchedule.find(day => formData.perDayTimeSlots[day] && formData.perDayTimeSlots[day].length > 0); if (firstScheduledDayWithSlots) { const slotsForDay = formData.perDayTimeSlots[firstScheduledDayWithSlots] || []; finalTimeSlots = slotsForDay.map(slot => formatSlotTo24HourString(slot)).filter(Boolean) as string[]; } } }
-
-    let updatedHeroImageUrl = formData.existingHeroImage;
-    let updatedMediaItems = formData.existingMediaItems.map(item => ({type: item.type, url: item.url})) as MediaItem[];
-    if (serviceImageFiles.length > 0) { /* ... image replacement logic ... */ updatedHeroImageUrl = `mock/uploaded/${serviceImageFiles[0].name}`; updatedMediaItems = serviceImageFiles.map(file => ({ type: 'IMAGE' as const, url: `mock/uploaded/${file.name}`, thumbnail: `mock/uploaded/thumb_${file.name}` }));}
-
-    const servicePackagesForPayload = validPackages.map(pkgUI => ({ /* ... package construction ... */
-        id: pkgUI.id.startsWith('pkg-') || serviceToEdit.packages?.find(p => p.id === pkgUI.id) ? pkgUI.id : nanoid(), // Preserve existing IDs
-        name: pkgUI.name, description: pkgUI.description, price: parseFloat(pkgUI.price) || 0,
-        currency: pkgUI.currency || "PHP",
-        isPopular: pkgUI.isPopular, isActive: true,
-        createdAt: serviceToEdit.packages?.find(p => p.id === pkgUI.id)?.createdAt || new Date(), // Preserve original createdAt
-        updatedAt: new Date(),
-    } as ServicePackageTypeDefinition));
-
-    const firstValidPackage = validPackages[0];
-    const mainServiceDescription = firstValidPackage.description || formData.serviceOfferingTitle;
-    const mainServicePrice = { /* ... price construction ... */ } as ServicePrice;
-
-    let termsPayload: ServiceTermsTypeDefinition | undefined = undefined;
-    if (formData.termsTitle.trim() !== '' && formData.termsContent.trim() !== '') {
-        termsPayload = {
-            id: serviceToEdit.terms?.id || nanoid(), 
-            title: formData.termsTitle.trim(),
-            content: formData.termsContent.trim(),
-            acceptanceRequired: formData.termsAcceptanceRequired,
-            version: serviceToEdit.terms ? String(parseFloat(serviceToEdit.terms.version || "1.0") + 0.1).slice(0,3) : "1.0", // Simple version increment or initial
-            lastUpdated: new Date(),
-            isActive: true,
-            createdAt: serviceToEdit.terms?.createdAt || new Date(), 
-            updatedAt: new Date(),
-        };
-    } else if (serviceToEdit.terms) { 
-        termsPayload = undefined;
+    if (!isAuthenticated || !currentIdentity || !serviceToEdit) {
+      setError("Authentication error or service not loaded.");
+      setIsLoading(false);
+      return;
     }
 
+    const validPackages = formData.servicePackages.filter(pkg => pkg.name.trim() !== '' && pkg.price.trim() !== '');
+    if (!formData.serviceOfferingTitle.trim() || validPackages.length === 0 || !formData.categoryId) {
+      setError("Please fill Offering Title, Category, and at least one complete Package (name & price).");
+      setIsLoading(false);
+      return;
+    }
 
-    const updatedServicePayload: Service = {
-      ...serviceToEdit,
-      name: formData.serviceOfferingTitle,
-      title: formData.serviceOfferingTitle,
-      description: mainServiceDescription, 
-      price: mainServicePrice,
-      location: { ...serviceToEdit.location, address: formData.locationAddress, serviceRadius: parseInt(formData.serviceRadius) || 0, serviceRadiusUnit: formData.serviceRadiusUnit },
-      availability: { ...serviceToEdit.availability, schedule: formData.availabilitySchedule, timeSlots: finalTimeSlots },
-      category: { ...selectedCategoryObject, services: undefined } as any, // Ensure 'services' field is not included
-      requirements: formData.requirements.split(',').map(r => r.trim()).filter(r => r),
-      heroImage: updatedHeroImageUrl,
-      media: updatedMediaItems,
-      packages: servicePackagesForPayload,
-      terms: termsPayload, // Add updated/new terms
-      updatedAt: new Date(),
-    };
+    const selectedCategory = categories.find(c => c.id === formData.categoryId);
+    if (!selectedCategory) {
+      setError("Invalid category selected.");
+      setIsLoading(false);
+      return;
+    }
 
-    console.log("Submitting Updated Service Data:", updatedServicePayload);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setSuccessMessage("Service updated successfully! (Mocked)");
-      setTimeout(() => { setSuccessMessage(null); router.push('/provider/services'); }, 2500);
-    } catch (err) { console.error("Failed to update service:", err); setError(err instanceof Error ? err.message : "An unknown error occurred while updating.");
-    } finally { setIsLoading(false); }
+      // Update the main service
+      const updatedService = await updateService(
+        serviceToEdit.id,
+        formData.serviceOfferingTitle,
+        formData.serviceOfferingTitle, // description
+        parseFloat(validPackages[0].price) || 0
+      );
+
+      // Handle package updates
+      const existingPackageIds = packages.map(pkg => pkg.id);
+      const formPackageIds = validPackages.map(pkg => pkg.id);
+
+      // Create new packages
+      for (const pkgUI of validPackages) {
+        if (!existingPackageIds.includes(pkgUI.id)) {
+          const packageRequest: PackageCreateRequest = {
+            serviceId: serviceToEdit.id,
+            title: pkgUI.name,
+            description: pkgUI.description,
+            price: parseFloat(pkgUI.price) || 0
+          };
+          await createPackage(packageRequest);
+        } else {
+          // Update existing package
+          const packageRequest: PackageUpdateRequest = {
+            id: pkgUI.id,
+            serviceId: serviceToEdit.id,
+            title: pkgUI.name,
+            description: pkgUI.description,
+            price: parseFloat(pkgUI.price) || 0
+          };
+          await updatePackage(packageRequest);
+        }
+      }
+
+      // Delete removed packages
+      for (const existingId of existingPackageIds) {
+        if (!formPackageIds.includes(existingId)) {
+          await deletePackage(existingId);
+        }
+      }
+
+      setSuccessMessage("Service updated successfully!");
+      setTimeout(() => {
+        setSuccessMessage(null);
+        router.push('/provider/services');
+      }, 2500);
+
+    } catch (err) {
+      console.error("Failed to update service:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred while updating.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const handleRetry = () => {
+    if (id && typeof id === 'string') {
+      setRetryCount(prev => prev + 1);
+      hasLoadedSuccessfully.current = false; // Reset success flag for retry
+      loadServiceDataRobust(id);
+    }
+  };
+
+  // Show loading screen during initialization or data loading
+  if ((pageLoading || hookLoading || initializationAttempts > 0) && !serviceToEdit) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="text-gray-700 mt-4">
+          {initializationAttempts > 0 
+            ? `Initializing system... (${initializationAttempts}/20)`
+            : 'Loading service details...'
+          }
+        </p>
+        {retryCount > 0 && (
+          <p className="text-sm text-gray-500 mt-2">Retry attempt: {retryCount}</p>
+        )}
+      </div>
+    );
+  }
+
+  // Show error screen only if we have an error and no service data
+  if ((error || hookError) && !serviceToEdit) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <Head>
+          <title>Service Error | SRV Provider</title>
+        </Head>
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-red-600 mb-4">
+            Unable to Load Service
+          </h1>
+          <p className="text-gray-600 mb-6">
+            {error || hookError}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRetry}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => router.push('/provider/services')}
+              className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+            >
+              Back to Services
+            </button>
+          </div>
+          {retryCount > 0 && (
+            <p className="text-sm text-gray-500 mt-4">Retry attempts: {retryCount}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Final fallback if no service data
+  if (!serviceToEdit) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <Head>
+          <title>Service Not Found | SRV Provider</title>
+        </Head>
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-gray-800 mb-4">
+            Service Not Found
+          </h1>
+          <p className="text-gray-600 mb-6">
+            The service you're looking for doesn't exist or has been removed.
+          </p>
+          <button
+            onClick={() => router.push('/provider/services')}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Back to Services
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (pageLoading) { /* ... page loading JSX ... */ return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div><p className="ml-3">Loading service details...</p></div>; }
   if (error && !serviceToEdit) { /* ... error JSX ... */ return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Error: {error}</div>; }
@@ -244,13 +528,21 @@ const EditServicePage: React.FC = () => {
         <header className="bg-white shadow-sm sticky top-0 z-20">
           <div className="container mx-auto px-4 py-3 flex items-center">
             <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 mr-2 transition-colors" aria-label="Go back"><ArrowLeftIcon className="h-5 w-5 text-gray-700" /></button>
-            <h1 className="text-xl font-semibold text-gray-800 truncate">Edit: {serviceToEdit.title || serviceToEdit.name}</h1>
+            <h1 className="text-xl font-semibold text-gray-800 truncate">Edit: {serviceToEdit.title}</h1>
           </div>
         </header>
 
         <main className="flex-grow container mx-auto p-4 sm:p-6">
-          {successMessage && ( <div className="mb-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded-md text-sm"> {successMessage} </div> )}
-          {error && ( <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm"> {error} </div> )}
+          {successMessage && ( 
+            <div className="mb-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded-md text-sm"> 
+              {successMessage} 
+            </div> 
+          )}
+          {(error || hookError) && ( 
+            <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm"> 
+              {error || hookError} 
+            </div> 
+          )}
 
             <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-6">
             {/* Service Offering Title */}

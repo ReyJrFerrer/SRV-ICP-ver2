@@ -23,6 +23,7 @@ import {
 
 import { useServiceManagement, EnhancedService } from '../../../hooks/serviceManagement';
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
+import { ServicePackage } from '../../../services/serviceCanisterService';
 
 const ProviderServiceDetailPage: React.FC = () => {
   const router = useRouter();
@@ -35,11 +36,13 @@ const ProviderServiceDetailPage: React.FC = () => {
     updateServiceStatus,
     formatServicePrice,
     getStatusColor,
+    getServicePackages,
     loading: hookLoading,
     error: hookError 
   } = useServiceManagement();
   
   const [service, setService] = useState<EnhancedService | null>(null);
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -140,13 +143,32 @@ const ProviderServiceDetailPage: React.FC = () => {
           if (serviceData) {
             console.log('Service loaded successfully:', serviceData);
             
-            // Only update state if component is still mounted
-            if (mountedRef.current) {
-              setService(serviceData);
-              setRetryCount(0);
-              hasLoadedSuccessfully.current = true;
-              currentServiceId.current = serviceId;
-              setError(null);
+            // Fetch packages for this service
+            console.log('Loading packages for service:', serviceId);
+            try {
+              const servicePackages = await getServicePackages(serviceId);
+              console.log('Packages loaded:', servicePackages);
+              
+              // Only update state if component is still mounted
+              if (mountedRef.current) {
+                setService(serviceData);
+                setPackages(servicePackages || []);
+                setRetryCount(0);
+                hasLoadedSuccessfully.current = true;
+                currentServiceId.current = serviceId;
+                setError(null);
+              }
+            } catch (packageError) {
+              console.warn('Failed to load packages:', packageError);
+              // Continue with service loading even if packages fail
+              if (mountedRef.current) {
+                setService(serviceData);
+                setPackages([]);
+                setRetryCount(0);
+                hasLoadedSuccessfully.current = true;
+                currentServiceId.current = serviceId;
+                setError(null);
+              }
             }
             return; // Success
           } else {
@@ -327,9 +349,9 @@ const ProviderServiceDetailPage: React.FC = () => {
     );
   }
 
-  const heroImageUrl = typeof service.heroImage === 'string' 
-    ? service.heroImage 
-    : (service.heroImage as any)?.default?.src || (service.heroImage as any)?.src;
+  // const heroImageUrl = typeof service.heroImage === 'string' 
+  //   ? service.heroImage 
+  //   : (service.heroImage as any)?.default?.src || (service.heroImage as any)?.src;
 
   return (
     <>
@@ -370,7 +392,7 @@ const ProviderServiceDetailPage: React.FC = () => {
         <main className="container mx-auto p-4 sm:p-6 space-y-6">
           {/* Hero Image and Basic Info Card */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            {heroImageUrl && (
+            {/* {heroImageUrl && (
               <div className="relative w-full aspect-[16/6] bg-gray-200 overflow-hidden">
                 <Image
                   src={heroImageUrl}
@@ -379,7 +401,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                   objectFit="cover"
                 />
               </div>
-            )}
+            )} */}
             <div className="p-6">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 min-w-0">
@@ -443,57 +465,121 @@ const ProviderServiceDetailPage: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-3">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Location & Provider</h3>
-              <p className="flex items-start text-sm">
-                <MapPinIcon className="h-5 w-5 mr-2 text-blue-500 flex-shrink-0 mt-0.5"/>
-                Location: <span className="font-medium ml-1">{service.formattedLocation}</span>
-              </p>
+              <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Location & Provider Details</h3>
+              <div className="space-y-3">
+                <p className="flex items-start text-sm">
+                  <MapPinIcon className="h-5 w-5 mr-2 text-blue-500 flex-shrink-0 mt-0.5"/>
+                  <div className="flex-1">
+                    <span className="font-medium">Full Address:</span>
+                    <div className="text-gray-600 mt-1">
+                      {service.location.address && (
+                        <div>{service.location.address}</div>
+                      )}
+                      <div>
+                        {service.location.city}{service.location.state && `, ${service.location.state}`}
+                        {service.location.postalCode && ` ${service.location.postalCode}`}
+                      </div>
+                      {service.location.country && (
+                        <div className="text-gray-500">{service.location.country}</div>
+                      )}
+                    </div>
+                  </div>
+                </p>
+                
+                {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
+                  <p className="flex items-center text-sm">
+                    <MapPinIcon className="h-5 w-5 mr-2 text-green-500"/>
+                    Coordinates: <span className="font-medium ml-1 font-mono text-xs">
+                      {service.location.latitude.toFixed(6)}, {service.location.longitude.toFixed(6)}
+                    </span>
+                  </p>
+                )}
+              </div>
               {service.providerProfile && (
                 <p className="flex items-center text-sm">
                   Provider: <span className="font-medium ml-1">{service.providerProfile.name}</span>
                 </p>
               )}
-              {service.availability && (
+              {service.weeklySchedule && service.weeklySchedule.length > 0 && (
                 <>
                   <p className="flex items-center text-sm">
                     <CalendarDaysIcon className="h-5 w-5 mr-2 text-indigo-500"/>
-                    Schedule: <span className="font-medium ml-1">{service.availability.schedule?.join(', ') || 'Not specified'}</span>
+                    Available Days: <span className="font-medium ml-1">
+                      {service.weeklySchedule
+                        ?.filter(({ availability }) => availability.isAvailable)
+                        ?.map(({ day }) => day)
+                        ?.join(', ') || 'Not specified'}
+                    </span>
                   </p>
                   <p className="flex items-center text-sm">
                     <ClockIcon className="h-5 w-5 mr-2 text-purple-500"/>
-                    Time Slots: <span className="font-medium ml-1">{service.availability.timeSlots?.join(' | ') || 'Not specified'}</span>
+                    Time Slots: <span className="font-medium ml-1">
+                      {service.weeklySchedule
+                        ?.filter(({ availability }) => availability.isAvailable)
+                        ?.flatMap(({ availability }) => availability.slots)
+                        ?.map(slot => `${slot.startTime}-${slot.endTime}`)
+                        ?.join(' | ') || 'Not specified'}
+                    </span>
                   </p>
+                  {service.instantBookingEnabled !== undefined && (
+                    <p className="flex items-center text-sm">
+                      <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500"/>
+                      Instant Booking: <span className="font-medium ml-1">
+                        {service.instantBookingEnabled ? 'Available' : 'Not Available'}
+                      </span>
+                    </p>
+                  )}
+                  {service.bookingNoticeHours !== undefined && (
+                    <p className="flex items-center text-sm">
+                      <ClockIcon className="h-5 w-5 mr-2 text-orange-500"/>
+                      Advance Notice: <span className="font-medium ml-1">
+                        {service.bookingNoticeHours} hours required
+                      </span>
+                    </p>
+                  )}
                 </>
               )}
             </div>
           </div>
 
-          {service.packages && service.packages.length > 0 && (
+          {packages && packages.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                <BriefcaseIcon className="h-5 w-5 mr-2 text-gray-500"/>Service Packages
+                <BriefcaseIcon className="h-5 w-5 mr-2 text-gray-500"/>Service Packages ({packages.length})
               </h3>
               <div className="space-y-4">
-                {service.packages.map((pkg) => (
+                {packages.map((pkg) => (
                   <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                     <div className="flex justify-between items-start">
-                      <h4 className="font-semibold text-md text-gray-800">{pkg.name}</h4>
-                      {pkg.isPopular && (
-                        <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                          Popular
-                        </span>
-                      )}
+                      <h4 className="font-semibold text-md text-gray-800">{pkg.title}</h4>
+                      <span className="text-md font-semibold text-green-600 ml-2">
+                        ₱{pkg.price.toFixed(2)}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{pkg.description}</p>
-                    <p className="text-md font-semibold text-green-600">
-                      ₱{pkg.price.toFixed(2)}
-                    </p>
+                    <p className="text-sm text-gray-600 mt-2">{pkg.description}</p>
+                    <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
+                      <span>Created: {new Date(pkg.createdAt).toLocaleDateString()}</span>
+                      <span>Updated: {new Date(pkg.updatedAt).toLocaleDateString()}</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-          
+
+          {packages && packages.length === 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                <BriefcaseIcon className="h-5 w-5 mr-2 text-gray-500"/>Service Packages
+              </h3>
+              <div className="text-center py-8">
+                <BriefcaseIcon className="h-12 w-12 text-gray-300 mx-auto mb-4"/>
+                <p className="text-gray-500 mb-4">No packages available for this service</p>
+                <p className="text-sm text-gray-400">Packages help customers choose specific service options with different pricing</p>
+              </div>
+            </div>
+          )}
+{/*           
           {service.media && service.media.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
@@ -515,7 +601,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
         </main>
         <div className="md:hidden">

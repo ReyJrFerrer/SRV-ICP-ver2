@@ -3,19 +3,32 @@ import Head from 'next/head';
 import { useRouter } from 'next/router'; 
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderBookingItemCard from '@app/components/provider/ProviderBookingItemCard';
-
-import { PROVIDER_ORDERS, PROVIDER_BOOKING_REQUESTS } from '../../../assets/providerOrders';
-import { ProviderOrder as ProviderOrderType } from '../../../assets/types/provider/provider-order';
+import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../hooks/useProviderBookingManagement';
+import { BookingStatus } from '../../services/bookingCanisterService';
 
 type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled';
 const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'Completed', 'Cancelled'];
-
 
 const ProviderBookingsPage: React.FC = () => {
   const router = useRouter();
   const { tab: queryTab } = router.query; 
 
   const [activeTab, setActiveTab] = useState<BookingStatusTab>('Pending'); 
+  
+  // Use the provider booking management hook
+  const {
+    bookings,
+    loading,
+    error,
+    refreshing,
+    getPendingBookings,
+    getUpcomingBookings,
+    getCompletedBookings,
+    getBookingsByStatus,
+    clearError,
+    refreshBookings,
+    isProviderAuthenticated
+  } = useProviderBookingManagement();
 
   useEffect(() => {
     if (typeof queryTab === 'string' && TAB_ITEMS.includes(queryTab as BookingStatusTab)) {
@@ -25,28 +38,85 @@ const ProviderBookingsPage: React.FC = () => {
     }
   }, [queryTab]); 
 
+  // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {
-    const now = new Date();
-    const pending = PROVIDER_BOOKING_REQUESTS.map(req => ({ ...req, status: 'PENDING' as const, effectiveStatus: 'Pending' as BookingStatusTab }));
-    const upcoming = PROVIDER_ORDERS.filter(
-      order => order.status === 'CONFIRMED' && new Date(order.scheduledStartTime) >= now
-    ).map(order => ({ ...order, effectiveStatus: 'Upcoming' as BookingStatusTab }));
-    const completed = PROVIDER_ORDERS.filter(
-      order => order.status === 'COMPLETED'
-    ).map(order => ({ ...order, effectiveStatus: 'Completed' as BookingStatusTab }));
-    const cancelled = PROVIDER_ORDERS.filter(
-      order => order.status === 'CANCELLED'
-    ).map(order => ({ ...order, effectiveStatus: 'Cancelled' as BookingStatusTab }));
-
     return {
-      Pending: pending,
-      Upcoming: upcoming,
-      Completed: completed,
-      Cancelled: cancelled,
+      Pending: getPendingBookings(),
+      Upcoming: getUpcomingBookings(),
+      Completed: getCompletedBookings(),
+      Cancelled: getBookingsByStatus('Cancelled')
     };
-  }, []);
+  }, [getPendingBookings, getUpcomingBookings, getCompletedBookings, getBookingsByStatus]);
 
-  const currentBookings: ProviderOrderType[] = (categorizedBookings[activeTab] || []) as ProviderOrderType[];
+  const currentBookings: ProviderEnhancedBooking[] = categorizedBookings[activeTab] || [];
+
+  // Handle retry functionality
+  const handleRetry = async () => {
+    clearError();
+    try {
+      await refreshBookings();
+    } catch (error) {
+      console.error('❌ Failed to retry loading bookings:', error);
+    }
+  };
+
+  // Show authentication error if not authenticated as provider
+  if (!isProviderAuthenticated() && !loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-4">
+            You need to be logged in as a service provider to access this page.
+          </p>
+          <button
+            onClick={() => router.push('/provider/login')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your bookings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && bookings.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Bookings</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="space-x-3">
+            <button
+              onClick={() => router.push('/provider/dashboard')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={handleRetry}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -55,11 +125,50 @@ const ProviderBookingsPage: React.FC = () => {
         <meta name="description" content="Manage your service bookings" />
       </Head>
       <div className="min-h-screen bg-gray-100 flex flex-col">
+        {/* Error Display */}
+        {error && (
+          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-red-600 text-sm">{error}</span>
+              </div>
+              <button
+                onClick={clearError}
+                className="text-red-600 hover:text-red-800 text-sm font-medium"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Refresh indicator */}
+        {refreshing && (
+          <div className="mx-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+              <span className="text-blue-600 text-sm">Refreshing bookings...</span>
+            </div>
+          </div>
+        )}
+
         <header className="bg-white shadow-sm sticky top-0 z-20 px-4 py-3">
-          <h1 className="text-xl font-semibold text-gray-800 text-center">My Bookings</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-gray-800">My Bookings</h1>
+            <button
+              onClick={refreshBookings}
+              disabled={refreshing}
+              className="p-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+              title="Refresh bookings"
+            >
+              <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
         </header>
 
-        <div className="bg-white border-b border-gray-200 sticky top-[57px] z-10"> {/* Adjust based on header height */}
+        <div className="bg-white border-b border-gray-200 sticky top-[73px] z-10">
           <nav className="flex space-x-1 sm:space-x-2 p-1 sm:p-2 justify-around">
             {TAB_ITEMS.map(tab => (
               <button
@@ -90,7 +199,34 @@ const ProviderBookingsPage: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <p className="text-gray-500 text-lg">No bookings in the "{activeTab}" category.</p>
+              <div className="mb-4">
+                {activeTab === 'Pending' && (
+                  <div className="text-6xl mb-4">⏳</div>
+                )}
+                {activeTab === 'Upcoming' && (
+                  <div className="text-6xl mb-4">📅</div>
+                )}
+                {activeTab === 'Completed' && (
+                  <div className="text-6xl mb-4">✅</div>
+                )}
+                {activeTab === 'Cancelled' && (
+                  <div className="text-6xl mb-4">❌</div>
+                )}
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No {activeTab.toLowerCase()} bookings
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {activeTab === 'Pending' && "You don't have any pending booking requests."}
+                {activeTab === 'Upcoming' && "You don't have any upcoming confirmed bookings."}
+                {activeTab === 'Completed' && "You haven't completed any bookings yet."}
+                {activeTab === 'Cancelled' && "You don't have any cancelled bookings."}
+              </p>
+              {activeTab === 'Pending' && (
+                <p className="text-sm text-gray-400">
+                  New booking requests will appear here when clients book your services.
+                </p>
+              )}
             </div>
           )}
         </main>

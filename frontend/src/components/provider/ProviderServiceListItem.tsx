@@ -44,7 +44,7 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({ servi
         <div>
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">{service.category.name}</p>
           {/* MODIFICATION: Make title a link */}
-          <Link href={`/provider/service-details/${service.slug || service.id}`} legacyBehavior>
+          <Link href={`/provider/service-details/${service.id}`} legacyBehavior>
             <a className="hover:text-blue-600 transition-colors" title="View service details">
               <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2 truncate">
                 {service.title || service.name}
@@ -63,7 +63,7 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({ servi
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2 items-center justify-start">
-          <Link href={`/provider/services/edit/${service.slug || service.id}`} legacyBehavior>
+          <Link href={`/provider/services/edit/${service.id}`} legacyBehavior>
             <a className="flex items-center text-xs sm:text-sm bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-lg transition-colors">
               <PencilIcon className="h-4 w-4 mr-1.5" /> Edit
             </a>
@@ -79,7 +79,7 @@ const ProviderServiceListItem: React.FC<ProviderServiceListItemProps> = ({ servi
             {service.isActive ? 'Set Inactive' : 'Set Active'}
           </button>
           {/* Stats link can also go to the new detail page or a dedicated stats page */}
-          <Link href={`/provider/service-details/${service.slug || service.id}?section=stats`} legacyBehavior>
+          <Link href={`/provider/service-details/${service.id}?section=stats`} legacyBehavior>
             <a className="flex items-center text-xs sm:text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-3 rounded-lg transition-colors">
               <ChartBarIcon className="h-4 w-4 mr-1.5" /> Stats
             </a>

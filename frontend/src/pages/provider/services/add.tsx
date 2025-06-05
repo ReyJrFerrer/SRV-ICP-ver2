@@ -50,7 +50,18 @@ interface ServicePackageUIData {
 const initialServiceState = {
   serviceOfferingTitle: '',
   categoryId: '',
-  locationAddress: '',
+  
+  // Location fields (matching client booking pattern)
+  locationHouseNumber: '',
+  locationStreet: '',
+  locationBarangay: '',
+  locationMunicipalityCity: '',
+  locationProvince: '',
+  locationCountry: 'Philippines',
+  locationPostalCode: '',
+  locationLatitude: '',
+  locationLongitude: '',
+  locationAddress: '', // Full address string for backend compatibility
   serviceRadius: '5',
   serviceRadiusUnit: 'km' as 'km' | 'mi',
   
@@ -66,7 +77,6 @@ const initialServiceState = {
   ] as TimeSlotUIData[],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
   
-  requirements: '',
   servicePackages: [
     { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }
   ] as ServicePackageUIData[],
@@ -96,7 +106,9 @@ const AddServicePage: React.FC = () => {
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  const daysOfWeek: DayOfWeek[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  // Location-specific state
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [showGPSCoordinates, setShowGPSCoordinates] = useState(false);
   const hourOptions = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
   const minuteOptions = ['00', '15', '30', '45'];
   const periodOptions: ('AM' | 'PM')[] = ['AM', 'PM'];
@@ -202,6 +214,53 @@ const AddServicePage: React.FC = () => {
   };
 
   const formatSlotTo24HourString = (slot: TimeSlotUIData): string | null => { /* ... same as before ... */ if (!slot.startHour || !slot.startMinute || !slot.startPeriod || !slot.endHour || !slot.endMinute || !slot.endPeriod) return null; const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => { let hour = parseInt(hourStr, 10); if (period === 'PM' && hour !== 12) hour += 12; else if (period === 'AM' && hour === 12) hour = 0; return `${String(hour).padStart(2, '0')}:${minuteStr}`; }; const startTime24 = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod); const endTime24 = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod); const startDateForCompare = new Date(`1970/01/01 ${startTime24}`); const endDateForCompare = new Date(`1970/01/01 ${endTime24}`); if (endDateForCompare <= startDateForCompare) return null;  return `${startTime24}-${endTime24}`; };
+
+  // Enhanced location validation function
+  const validateLocationFields = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Validate required address fields
+    if (!formData.locationStreet.trim()) {
+      errors.push("Street name is required.");
+    }
+    if (!formData.locationBarangay.trim()) {
+      errors.push("Barangay is required.");
+    }
+    if (!formData.locationMunicipalityCity.trim()) {
+      errors.push("Municipality/City is required.");
+    }
+    if (!formData.locationProvince.trim()) {
+      errors.push("Province is required.");
+    }
+    if (!formData.locationCountry.trim()) {
+      errors.push("Country is required.");
+    }
+
+    // Validate GPS coordinates if provided
+    if (formData.locationLatitude) {
+      const lat = parseFloat(formData.locationLatitude);
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        errors.push("Latitude must be between -90 and 90 degrees.");
+      }
+    }
+    if (formData.locationLongitude) {
+      const lng = parseFloat(formData.locationLongitude);
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        errors.push("Longitude must be between -180 and 180 degrees.");
+      }
+    }
+
+    // Validate service radius
+    const radius = parseFloat(formData.serviceRadius);
+    if (isNaN(radius) || radius < 1 || radius > 100) {
+      errors.push("Service radius must be between 1 and 100.");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
 
   // Comprehensive validation function for availability settings
   const validateAvailabilitySettings = (): { isValid: boolean; errors: string[] } => {
@@ -327,6 +386,14 @@ const AddServicePage: React.FC = () => {
       return;
     }
 
+    // Enhanced location validation
+    const locationValidation = validateLocationFields();
+    if (!locationValidation.isValid) {
+      setError(`Location Error: ${locationValidation.errors.join(' ')}`);
+      setIsLoading(false);
+      return;
+    }
+
     const selectedCategoryObject = categories.find((c: ServiceCategory) => c.id === formData.categoryId);
     if (!selectedCategoryObject) {
       setError("Invalid category selected.");
@@ -381,13 +448,20 @@ const AddServicePage: React.FC = () => {
         categoryId: formData.categoryId,
         price: parseFloat(firstValidPackage.price) || 0,
         location: {
-          address: formData.locationAddress,
-          city: "", // Extract from address if needed
-          state: "", // Extract from address if needed
-          country: "", // Extract from address if needed
-          postalCode: "", // Extract from address if needed
-          latitude: 0,
-          longitude: 0
+          address: formData.locationAddress || [
+            formData.locationHouseNumber,
+            formData.locationStreet,
+            formData.locationBarangay,
+            formData.locationMunicipalityCity,
+            formData.locationProvince,
+            formData.locationCountry
+          ].filter(part => part.trim() !== '').join(', '),
+          city: formData.locationMunicipalityCity,
+          state: formData.locationProvince,
+          country: formData.locationCountry,
+          postalCode: formData.locationPostalCode,
+          latitude: formData.locationLatitude ? parseFloat(formData.locationLatitude) : 0,
+          longitude: formData.locationLongitude ? parseFloat(formData.locationLongitude) : 0
         } as Location,
         weeklySchedule,
         instantBookingEnabled: formData.instantBookingEnabled
@@ -420,6 +494,68 @@ const AddServicePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Location detection and address handling functions
+  const handleDetectLocation = () => {
+    setIsDetectingLocation(true);
+    setError(null);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          // Update location coordinates
+          setFormData(prev => ({
+            ...prev,
+            locationLatitude: latitude.toString(),
+            locationLongitude: longitude.toString()
+          }));
+
+          setIsDetectingLocation(false);
+          setShowGPSCoordinates(true); // Show GPS section when location is detected
+          
+          // In a real implementation, you could also do reverse geocoding here
+          // to populate the address fields automatically
+          console.log('Location detected:', { latitude, longitude });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setError(`Could not detect location: ${error.message}. Please enter address manually.`);
+          setIsDetectingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 600000 // 10 minutes
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by this browser. Please enter address manually.');
+      setIsDetectingLocation(false);
+    }
+  };
+
+  const handleLocationFieldChange = (field: string, value: string) => {
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Update the combined address whenever individual fields change
+      const addressParts = [
+        updated.locationHouseNumber,
+        updated.locationStreet,
+        updated.locationBarangay,
+        updated.locationMunicipalityCity,
+        updated.locationProvince,
+        updated.locationCountry
+      ].filter(part => part.trim() !== '');
+      
+      return {
+        ...updated,
+        locationAddress: addressParts.join(', ')
+      };
+    });
   };
 
   return (
@@ -469,7 +605,7 @@ const AddServicePage: React.FC = () => {
                 <div key={pkg.id} className="space-y-3 border border-gray-200 p-4 rounded-md mb-4 bg-gray-50 relative">
                   <h4 className="text-sm font-semibold text-gray-800">Package {index + 1}</h4>
                   <div><label htmlFor={`pkgName-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Package Name*</label><input type="text" name="name" id={`pkgName-${pkg.id}`} value={pkg.name} onChange={(e) => handlePackageChange(index, 'name', e.target.value)} required={index === 0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div><label htmlFor={`pkgDesc-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Description*</label><textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500"></textarea></div>
+                  <div><label htmlFor={`pkgDesc-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Description*</label><textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Describe your service package. You can specify requirements for your clients here (e.g., materials to prepare, access requirements, timing constraints)."></textarea></div>
                   <div><label htmlFor={`pkgPrice-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Price (PHP)*</label><input type="number" name="price" id={`pkgPrice-${pkg.id}`} value={pkg.price} onChange={(e) => handlePackageChange(index, 'price', e.target.value)} required={index === 0} step="0.01" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
                   {formData.servicePackages.length > 1 && (<button type="button" onClick={() => removePackage(pkg.id)} className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700" aria-label="Remove package"><TrashIcon className="h-4 w-4"/></button>)}
                 </div>
@@ -500,8 +636,234 @@ const AddServicePage: React.FC = () => {
 
             {/* Service Location */}
             <fieldset className="border p-4 rounded-md border-gray-300">
-                <legend className="text-sm font-medium text-gray-700 px-1">Service Location*</legend>
-                 {/* ... location content ... */}
+              <legend className="text-sm font-medium text-gray-700 px-1">Service Location*</legend>
+              <div className="space-y-4">
+                {/* Current Location Detection */}
+                <div className="bg-blue-50 p-4 rounded-md">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">Auto-Detect Location</h4>
+                  <button 
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={isDetectingLocation}
+                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isDetectingLocation ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Detecting Location...
+                      </>
+                    ) : (
+                      '📍 Use Current Location'
+                    )}
+                  </button>
+                  {formData.locationLatitude && formData.locationLongitude && (
+                    <p className="mt-2 text-xs text-green-700">
+                      ✓ Location detected: {parseFloat(formData.locationLatitude).toFixed(4)}°, {parseFloat(formData.locationLongitude).toFixed(4)}°
+                    </p>
+                  )}
+                </div>
+
+                {/* Address Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="locationHouseNumber" className="block text-sm font-medium text-gray-700 mb-1">House/Bldg Number</label>
+                    <input 
+                      type="text" 
+                      id="locationHouseNumber" 
+                      name="locationHouseNumber"
+                      value={formData.locationHouseNumber} 
+                      onChange={(e) => handleLocationFieldChange('locationHouseNumber', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="123"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="locationStreet" className="block text-sm font-medium text-gray-700 mb-1">Street*</label>
+                    <input 
+                      type="text" 
+                      id="locationStreet" 
+                      name="locationStreet"
+                      value={formData.locationStreet} 
+                      onChange={(e) => handleLocationFieldChange('locationStreet', e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Session Road"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="locationBarangay" className="block text-sm font-medium text-gray-700 mb-1">Barangay*</label>
+                    <input 
+                      type="text" 
+                      id="locationBarangay" 
+                      name="locationBarangay"
+                      value={formData.locationBarangay} 
+                      onChange={(e) => handleLocationFieldChange('locationBarangay', e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Barangay"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="locationMunicipalityCity" className="block text-sm font-medium text-gray-700 mb-1">Municipality/City*</label>
+                    <input 
+                      type="text" 
+                      id="locationMunicipalityCity" 
+                      name="locationMunicipalityCity"
+                      value={formData.locationMunicipalityCity} 
+                      onChange={(e) => handleLocationFieldChange('locationMunicipalityCity', e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Baguio City"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="locationProvince" className="block text-sm font-medium text-gray-700 mb-1">Province*</label>
+                    <input 
+                      type="text" 
+                      id="locationProvince" 
+                      name="locationProvince"
+                      value={formData.locationProvince} 
+                      onChange={(e) => handleLocationFieldChange('locationProvince', e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Benguet"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="locationCountry" className="block text-sm font-medium text-gray-700 mb-1">Country*</label>
+                    <select 
+                      id="locationCountry" 
+                      name="locationCountry"
+                      value={formData.locationCountry} 
+                      onChange={(e) => handleLocationFieldChange('locationCountry', e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    >
+                      <option value="Philippines">Philippines</option>
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="Malaysia">Malaysia</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="locationPostalCode" className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                    <input 
+                      type="text" 
+                      id="locationPostalCode" 
+                      name="locationPostalCode"
+                      value={formData.locationPostalCode} 
+                      onChange={(e) => handleLocationFieldChange('locationPostalCode', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="2600"
+                    />
+                  </div>
+                </div>
+
+                {/* GPS Coordinates Section (Optional/Collapsible) */}
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-900">GPS Coordinates (Optional)</h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowGPSCoordinates(!showGPSCoordinates)}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {showGPSCoordinates ? 'Hide' : 'Show'} GPS Section
+                    </button>
+                  </div>
+                  
+                  {showGPSCoordinates && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="locationLatitude" className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                        <input 
+                          type="number" 
+                          id="locationLatitude" 
+                          name="locationLatitude"
+                          value={formData.locationLatitude} 
+                          onChange={(e) => handleLocationFieldChange('locationLatitude', e.target.value)}
+                          step="any"
+                          min="-90"
+                          max="90"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          placeholder="16.4145"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Range: -90 to 90 degrees</p>
+                      </div>
+                      <div>
+                        <label htmlFor="locationLongitude" className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                        <input 
+                          type="number" 
+                          id="locationLongitude" 
+                          name="locationLongitude"
+                          value={formData.locationLongitude} 
+                          onChange={(e) => handleLocationFieldChange('locationLongitude', e.target.value)}
+                          step="any"
+                          min="-180"
+                          max="180"
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          placeholder="120.5960"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Range: -180 to 180 degrees</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Service Radius */}
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Service Radius</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="serviceRadius" className="block text-sm font-medium text-gray-700 mb-1">Radius*</label>
+                      <input 
+                        type="number" 
+                        id="serviceRadius" 
+                        name="serviceRadius"
+                        value={formData.serviceRadius} 
+                        onChange={handleChange}
+                        min="1"
+                        max="100"
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="serviceRadiusUnit" className="block text-sm font-medium text-gray-700 mb-1">Unit*</label>
+                      <select 
+                        id="serviceRadiusUnit" 
+                        name="serviceRadiusUnit"
+                        value={formData.serviceRadiusUnit} 
+                        onChange={handleChange}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      >
+                        <option value="km">Kilometers</option>
+                        <option value="mi">Miles</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">This is the maximum distance you're willing to travel for service delivery.</p>
+                </div>
+
+                {/* Generated Address Preview */}
+                {formData.locationAddress && (
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <h4 className="text-sm font-medium text-green-900 mb-1">Address Preview:</h4>
+                    <p className="text-sm text-green-800">{formData.locationAddress}</p>
+                  </div>
+                )}
+              </div>
             </fieldset>
 
             {/* Image Upload Section */}

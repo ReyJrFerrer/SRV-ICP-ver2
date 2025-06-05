@@ -51,7 +51,7 @@ actor ServiceCanister {
     private let MAX_TITLE_LENGTH : Nat = 100;
     private let MIN_DESCRIPTION_LENGTH : Nat = 20;
     private let MAX_DESCRIPTION_LENGTH : Nat = 1000;
-    private let MIN_PRICE : Nat = 100;
+    private let MIN_PRICE : Nat = 5;
     private let MAX_PRICE : Nat = 1_000_000;
 
     // Set canister references

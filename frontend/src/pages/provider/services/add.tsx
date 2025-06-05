@@ -11,17 +11,20 @@ import {
   useServiceManagement, 
   ServiceCreateRequest,
   PackageCreateRequest,
-  EnhancedService 
+  EnhancedService,
+  DayOfWeek,
+  DayAvailability
 } from '../../../hooks/serviceManagement';
 
 // Import only essential types from the service canister service that the hook uses
 import { 
   ServiceCategory, 
-  DayOfWeek, 
   Location, 
-  ServicePackage,
-  DayAvailability 
+  ServicePackage
 } from '../../../services/serviceCanisterService';
+
+// Import the AvailabilityConfiguration component
+import AvailabilityConfiguration from '../../../components/provider/AvailabilityConfiguration';
 
 // Interface for the structured time slot input in the form
 interface TimeSlotUIData {
@@ -50,6 +53,11 @@ const initialServiceState = {
   locationAddress: '',
   serviceRadius: '5',
   serviceRadiusUnit: 'km' as 'km' | 'mi',
+  
+  // Availability settings
+  instantBookingEnabled: true,
+  bookingNoticeHours: 24,
+  maxBookingsPerDay: 5,
   availabilitySchedule: [] as DayOfWeek[],
   useSameTimeForAllDays: true,
   commonTimeSlots: [
@@ -57,6 +65,7 @@ const initialServiceState = {
       endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }
   ] as TimeSlotUIData[],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
+  
   requirements: '',
   servicePackages: [
     { id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }
@@ -75,7 +84,8 @@ const AddServicePage: React.FC = () => {
     error: hookError,
     createService,
     createPackage,
-    getCategories
+    getCategories,
+    getServiceAvailability
   } = useServiceManagement();
 
   const [formData, setFormData] = useState(initialServiceState);
@@ -153,12 +163,6 @@ const AddServicePage: React.FC = () => {
   const handleRemoveImage = (indexToRemove: number) => { /* ... same as before ... */ if (imagePreviews[indexToRemove]) { URL.revokeObjectURL(imagePreviews[indexToRemove]); } setServiceImageFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove)); setImagePreviews(prevPreviews => prevPreviews.filter((_, index) => index !== indexToRemove)); };
   useEffect(() => { return () => { imagePreviews.forEach(url => URL.revokeObjectURL(url)); }; }, [imagePreviews]);
 
-  const handleCommonTimeSlotChange = (index: number, field: keyof TimeSlotUIData, value: string) => { /* ... same as before ... */ setFormData(prev => ({ ...prev, commonTimeSlots: prev.commonTimeSlots.map((slot, i) => i === index ? { ...slot, [field]: value } : slot) })); };
-  const addCommonTimeSlot = () => { /* ... same as before ... */ setFormData(prev => ({ ...prev, commonTimeSlots: [...prev.commonTimeSlots, { id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM', endHour: '05', endMinute: '00', endPeriod: 'PM' }] })); };
-  const removeCommonTimeSlot = (idToRemove: string) => { /* ... same as before ... */ setFormData(prev => ({ ...prev, commonTimeSlots: prev.commonTimeSlots.filter(slot => slot.id !== idToRemove) })); };
-  const handlePerDayTimeSlotChange = (day: DayOfWeek, index: number, field: keyof TimeSlotUIData, value: string) => { /* ... same as before ... */ setFormData(prev => { const daySlots = prev.perDayTimeSlots[day] || []; return { ...prev, perDayTimeSlots: { ...prev.perDayTimeSlots, [day]: daySlots.map((slot, i) => i === index ? { ...slot, [field]: value } : slot) } }; }); };
-  const addPerDayTimeSlot = (day: DayOfWeek) => { /* ... same as before ... */ setFormData(prev => { const daySlots = prev.perDayTimeSlots[day] || []; return { ...prev, perDayTimeSlots: { ...prev.perDayTimeSlots, [day]: [...daySlots, { id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM', endHour: '05', endMinute: '00', endPeriod: 'PM' }] } }; }); };
-  const removePerDayTimeSlot = (day: DayOfWeek, idToRemove: string) => { /* ... same as before ... */ setFormData(prev => ({ ...prev, perDayTimeSlots: { ...prev.perDayTimeSlots, [day]: (prev.perDayTimeSlots[day] || []).filter(slot => slot.id !== idToRemove) } })); };
   const handlePackageChange = (index: number, field: keyof ServicePackageUIData, value: string | boolean) => { /* ... same as before ... */ setFormData(prev => { const updatedPackages = prev.servicePackages.map((pkg, i) => i === index ? { ...pkg, [field]: value } : pkg ); return { ...prev, servicePackages: updatedPackages }; }); };
   const addPackage = () => {
     setFormData(prev => ({
@@ -167,7 +171,141 @@ const AddServicePage: React.FC = () => {
     }));
   };
   const removePackage = (idToRemove: string) => { /* ... same as before ... */ setFormData(prev => ({ ...prev, servicePackages: prev.servicePackages.filter(pkg => pkg.id !== idToRemove) })); };
+  
+  // Availability handler functions
+  const handleInstantBookingChange = (enabled: boolean) => {
+    setFormData(prev => ({ ...prev, instantBookingEnabled: enabled }));
+  };
+
+  const handleBookingNoticeHoursChange = (hours: number) => {
+    setFormData(prev => ({ ...prev, bookingNoticeHours: hours }));
+  };
+
+  const handleMaxBookingsPerDayChange = (count: number) => {
+    setFormData(prev => ({ ...prev, maxBookingsPerDay: count }));
+  };
+
+  const handleAvailabilityScheduleChange = (days: DayOfWeek[]) => {
+    setFormData(prev => ({ ...prev, availabilitySchedule: days }));
+  };
+
+  const handleUseSameTimeChange = (useSame: boolean) => {
+    setFormData(prev => ({ ...prev, useSameTimeForAllDays: useSame }));
+  };
+
+  const handleCommonTimeSlotsChange = (slots: TimeSlotUIData[]) => {
+    setFormData(prev => ({ ...prev, commonTimeSlots: slots }));
+  };
+
+  const handlePerDayTimeSlotsChange = (perDaySlots: Record<DayOfWeek, TimeSlotUIData[]>) => {
+    setFormData(prev => ({ ...prev, perDayTimeSlots: perDaySlots }));
+  };
+
   const formatSlotTo24HourString = (slot: TimeSlotUIData): string | null => { /* ... same as before ... */ if (!slot.startHour || !slot.startMinute || !slot.startPeriod || !slot.endHour || !slot.endMinute || !slot.endPeriod) return null; const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => { let hour = parseInt(hourStr, 10); if (period === 'PM' && hour !== 12) hour += 12; else if (period === 'AM' && hour === 12) hour = 0; return `${String(hour).padStart(2, '0')}:${minuteStr}`; }; const startTime24 = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod); const endTime24 = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod); const startDateForCompare = new Date(`1970/01/01 ${startTime24}`); const endDateForCompare = new Date(`1970/01/01 ${endTime24}`); if (endDateForCompare <= startDateForCompare) return null;  return `${startTime24}-${endTime24}`; };
+
+  // Comprehensive validation function for availability settings
+  const validateAvailabilitySettings = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    // Validate booking notice hours
+    if (formData.bookingNoticeHours < 0 || formData.bookingNoticeHours > 720) {
+      errors.push("Booking notice hours must be between 0 and 720 hours (30 days).");
+    }
+
+    // Validate max bookings per day
+    if (formData.maxBookingsPerDay < 1 || formData.maxBookingsPerDay > 50) {
+      errors.push("Maximum bookings per day must be between 1 and 50.");
+    }
+
+    // Validate working days and time slots
+    if (formData.availabilitySchedule.length > 0) {
+      // Check if time slots are properly configured when days are selected
+      let hasValidTimeSlots = false;
+
+      if (formData.useSameTimeForAllDays) {
+        // Validate common time slots
+        if (formData.commonTimeSlots.length === 0) {
+          errors.push("Please add at least one time slot for your working days.");
+        } else {
+          const validCommonSlots = formData.commonTimeSlots.filter(slot => 
+            slot.startHour && slot.startMinute && slot.startPeriod && 
+            slot.endHour && slot.endMinute && slot.endPeriod
+          );
+          
+          if (validCommonSlots.length === 0) {
+            errors.push("Please complete all time slot fields for your working days.");
+          } else {
+            // Validate that time slots are logically correct
+            const invalidSlots = validCommonSlots.filter(slot => {
+              const formatted = formatSlotTo24HourString(slot);
+              return formatted === null;
+            });
+            
+            if (invalidSlots.length > 0) {
+              errors.push("Some time slots have invalid times (end time must be after start time).");
+            } else {
+              hasValidTimeSlots = true;
+            }
+          }
+        }
+      } else {
+        // Validate per-day time slots
+        const daysWithSlots = formData.availabilitySchedule.filter(day => 
+          formData.perDayTimeSlots[day] && formData.perDayTimeSlots[day].length > 0
+        );
+
+        if (daysWithSlots.length === 0) {
+          errors.push("Please add time slots for your selected working days.");
+        } else {
+          let allDaysHaveValidSlots = true;
+          
+          for (const day of formData.availabilitySchedule) {
+            const daySlots = formData.perDayTimeSlots[day] || [];
+            
+            if (daySlots.length === 0) {
+              errors.push(`Please add time slots for ${day}.`);
+              allDaysHaveValidSlots = false;
+              continue;
+            }
+
+            const validDaySlots = daySlots.filter(slot => 
+              slot.startHour && slot.startMinute && slot.startPeriod && 
+              slot.endHour && slot.endMinute && slot.endPeriod
+            );
+            
+            if (validDaySlots.length === 0) {
+              errors.push(`Please complete all time slot fields for ${day}.`);
+              allDaysHaveValidSlots = false;
+              continue;
+            }
+
+            const invalidDaySlots = validDaySlots.filter(slot => {
+              const formatted = formatSlotTo24HourString(slot);
+              return formatted === null;
+            });
+            
+            if (invalidDaySlots.length > 0) {
+              errors.push(`${day} has invalid time slots (end time must be after start time).`);
+              allDaysHaveValidSlots = false;
+            }
+          }
+          
+          if (allDaysHaveValidSlots) {
+            hasValidTimeSlots = true;
+          }
+        }
+      }
+
+      if (!hasValidTimeSlots && errors.length === 0) {
+        errors.push("Please configure valid time slots for your working days.");
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -181,6 +319,7 @@ const AddServicePage: React.FC = () => {
       return;
     }
 
+    // Basic form validation
     const validPackages = formData.servicePackages.filter(pkg => pkg.name.trim() !== '' && pkg.price.trim() !== '');
     if (!formData.serviceOfferingTitle.trim() || validPackages.length === 0 || !formData.categoryId) {
       setError("Please fill Offering Title, Category, and at least one complete Package (name & price).");
@@ -195,12 +334,20 @@ const AddServicePage: React.FC = () => {
       return;
     }
 
-    // Prepare time slots
+    // Comprehensive availability validation
+    const availabilityValidation = validateAvailabilitySettings();
+    if (!availabilityValidation.isValid) {
+      setError(`Availability Settings Error: ${availabilityValidation.errors.join(' ')}`);
+      setIsLoading(false);
+      return;
+    }
+
+    // Prepare time slots (simplified since validation is handled above)
     let finalTimeSlots: string[] = [];
-    if (formData.useSameTimeForAllDays) {
-      finalTimeSlots = formData.commonTimeSlots.map(slot => formatSlotTo24HourString(slot)).filter(Boolean) as string[];
-    } else {
-      if (formData.availabilitySchedule.length > 0) {
+    if (formData.availabilitySchedule.length > 0) {
+      if (formData.useSameTimeForAllDays) {
+        finalTimeSlots = formData.commonTimeSlots.map(slot => formatSlotTo24HourString(slot)).filter(Boolean) as string[];
+      } else {
         const firstScheduledDayWithSlots = formData.availabilitySchedule.find(day => 
           formData.perDayTimeSlots[day] && formData.perDayTimeSlots[day].length > 0
         );
@@ -209,22 +356,6 @@ const AddServicePage: React.FC = () => {
           finalTimeSlots = slotsForDay.map(slot => formatSlotTo24HourString(slot)).filter(Boolean) as string[];
         }
       }
-    }
-
-    // Validate time slots if days are selected
-    const commonSlotsAttempted = formData.useSameTimeForAllDays && formData.commonTimeSlots.length > 0 && formData.commonTimeSlots.some(s => s.startHour);
-    const perDaySlotsAttempted = !formData.useSameTimeForAllDays && formData.availabilitySchedule.length > 0 && formData.availabilitySchedule.some(day => formData.perDayTimeSlots[day]?.some(s => s.startHour));
-    
-    if ((commonSlotsAttempted || perDaySlotsAttempted) && finalTimeSlots.length === 0) {
-      setError("Time slots are incomplete or invalid.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.availabilitySchedule.length > 0 && finalTimeSlots.length === 0 && !commonSlotsAttempted && !perDaySlotsAttempted) {
-      setError("Define time slots for selected working days or unselect days.");
-      setIsLoading(false);
-      return;
     }
 
     const firstValidPackage = validPackages[0];
@@ -259,7 +390,7 @@ const AddServicePage: React.FC = () => {
           longitude: 0
         } as Location,
         weeklySchedule,
-        instantBookingEnabled: true
+        instantBookingEnabled: formData.instantBookingEnabled
       } as ServiceCreateRequest);
 
       if (createdService) {
@@ -348,8 +479,23 @@ const AddServicePage: React.FC = () => {
 
             {/* Availability Section */}
             <fieldset className="border p-4 rounded-md border-gray-300">
-                <legend className="text-sm font-medium text-gray-700 px-1">Availability*</legend>
-                 {/* ... availability content ... */}
+              <legend className="text-sm font-medium text-gray-700 px-1">Availability*</legend>
+              <AvailabilityConfiguration
+                instantBookingEnabled={formData.instantBookingEnabled}
+                bookingNoticeHours={formData.bookingNoticeHours}
+                maxBookingsPerDay={formData.maxBookingsPerDay}
+                availabilitySchedule={formData.availabilitySchedule}
+                useSameTimeForAllDays={formData.useSameTimeForAllDays}
+                commonTimeSlots={formData.commonTimeSlots}
+                perDayTimeSlots={formData.perDayTimeSlots}
+                onInstantBookingChange={handleInstantBookingChange}
+                onBookingNoticeHoursChange={handleBookingNoticeHoursChange}
+                onMaxBookingsPerDayChange={handleMaxBookingsPerDayChange}
+                onAvailabilityScheduleChange={handleAvailabilityScheduleChange}
+                onUseSameTimeChange={handleUseSameTimeChange}
+                onCommonTimeSlotsChange={handleCommonTimeSlotsChange}
+                onPerDayTimeSlotsChange={handlePerDayTimeSlotsChange}
+              />
             </fieldset>
 
             {/* Service Location */}

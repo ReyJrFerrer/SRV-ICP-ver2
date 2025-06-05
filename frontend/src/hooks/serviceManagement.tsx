@@ -19,6 +19,9 @@ import {
   authCanisterService 
 } from '../services/authCanisterService';
 
+// Export availability-related types for use in components
+export type { DayOfWeek, DayAvailability, TimeSlot, ProviderAvailability, AvailableSlot };
+
 // Enhanced Service interface with additional frontend data
 export interface EnhancedService extends Service {
   providerProfile?: FrontendProfile;
@@ -131,6 +134,7 @@ interface ServiceManagementHook {
   
   // Availability management
   updateAvailability: (serviceId: string, availability: ProviderAvailability) => Promise<void>;
+  getServiceAvailability: (serviceId: string) => Promise<ProviderAvailability | null>;
   getAvailableSlots: (serviceId: string, date: Date) => Promise<AvailableSlot[]>;
   toggleInstantBooking: (serviceId: string, enabled: boolean) => Promise<void>;
   
@@ -954,6 +958,25 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [isInitialized, fetchServices, fetchCategories]);
 
+  // Availability management functions
+  const getServiceAvailability = useCallback(async (serviceId: string): Promise<ProviderAvailability | null> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching service availability');
+      return null;
+    }
+
+    try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      return await serviceCanisterService.getServiceAvailability(serviceId);
+    } catch (error) {
+      handleError(error, 'get service availability');
+      return null;
+    }
+  }, [isInitialized, handleError]);
+
   // Return the hook interface
   return {
     // Core data states
@@ -992,6 +1015,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     
     // Availability management
     updateAvailability,
+    getServiceAvailability,
     getAvailableSlots,
     toggleInstantBooking,
     

@@ -193,6 +193,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Add initialization state tracking
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Computed states
   const loading = useMemo(() => 
     loadingStates.services || loadingStates.profile,
@@ -249,11 +252,14 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Fetch user profile
   const fetchUserProfile = useCallback(async () => {
-    if (!isAuthenticated || !currentIdentity) return;
+    // Wait for authentication context to be properly initialized
+    if (!isAuthenticated || !currentIdentity || !isInitialized) return;
 
     try {
       setLoadingState('profile', true);
-      // Fixed: using currentIdentity.getPrincipal().toString() instead of user.principal
+      // Add a small delay to ensure HTTP agent is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const profileData = await authCanisterService.getProfile(currentIdentity.getPrincipal().toString());
       setUserProfile(profileData);
     } catch (error) {
@@ -261,14 +267,33 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState('profile', false);
     }
-  }, [isAuthenticated, currentIdentity, setLoadingState, handleError]);
+  }, [isAuthenticated, currentIdentity, isInitialized, setLoadingState, handleError]);
+
+  // Add initialization effect (add this after your existing useEffects)
+  useEffect(() => {
+    // Wait for auth context to be ready before initializing
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 500); // Give auth context time to initialize
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch provider profile
   const fetchProviderProfile = useCallback(async (providerId: string): Promise<FrontendProfile | null> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching provider profile');
+      return null;
+    }
+
     try {
       if (providerProfiles.has(providerId)) {
         return providerProfiles.get(providerId)!;
       }
+
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const profile = await authCanisterService.getProfile(providerId);
       if (profile) {
@@ -280,13 +305,17 @@ export const useServiceManagement = (): ServiceManagementHook => {
       console.error('Error fetching provider profile:', error);
       return null;
     }
-  }, [providerProfiles]);
+  }, [isInitialized, providerProfiles]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
+    if (!isInitialized) return;
+    
     try {
       setLoadingState('categories', true);
-      // Fixed: using getAllCategories instead of getServiceCategories
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const categoriesData = await serviceCanisterService.getAllCategories();
       setCategories(categoriesData);
     } catch (error) {
@@ -294,7 +323,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState('categories', false);
     }
-  }, [setLoadingState, handleError]);
+  }, [isInitialized, setLoadingState, handleError]);
 
   // Enrich service with provider data
   const enrichServiceWithProviderData = useCallback(async (service: Service): Promise<EnhancedService> => {
@@ -315,8 +344,13 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Fetch services
   const fetchServices = useCallback(async () => {
+    if (!isInitialized) return;
+    
     try {
       setLoadingState('services', true);
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const servicesData = await serviceCanisterService.getAllServices();
       
       // Enrich services with provider data
@@ -330,7 +364,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     } finally {
       setLoadingState('services', false);
     }
-  }, [setLoadingState, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, setLoadingState, handleError, enrichServiceWithProviderData]);
 
   // Service CRUD Operations
 
@@ -412,7 +446,16 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [setOperationLoading, handleError]);
 
   const getService = useCallback(async (serviceId: string): Promise<EnhancedService | null> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching service');
+      return null;
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const service = await serviceCanisterService.getService(serviceId);
       if (!service) return null;
       
@@ -421,7 +464,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, 'get service');
       return null;
     }
-  }, [handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, handleError, enrichServiceWithProviderData]);
 
   // Service status management
   const updateServiceStatus = useCallback(async (serviceId: string, status: ServiceStatus): Promise<void> => {
@@ -516,13 +559,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [setOperationLoading, handleError]);
 
   const getServicePackages = useCallback(async (serviceId: string): Promise<ServicePackage[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching service packages');
+      return [];
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return await serviceCanisterService.getServicePackages(serviceId);
     } catch (error) {
       handleError(error, 'get service packages');
       return [];
     }
-  }, [handleError]);
+  }, [isInitialized, handleError]);
 
   // Availability management
   const updateAvailability = useCallback(async (
@@ -563,13 +615,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
     serviceId: string, 
     date: Date
   ): Promise<AvailableSlot[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching available slots');
+      return [];
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return await serviceCanisterService.getAvailableTimeSlots(serviceId, date);
     } catch (error) {
       handleError(error, 'get available slots');
       return [];
     }
-  }, [handleError]);
+  }, [isInitialized, handleError]);
 
   const toggleInstantBooking = useCallback(async (
     serviceId: string, 
@@ -659,7 +720,16 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [services, handleError]);
 
   const getServicesByCategory = useCallback(async (categoryId: string): Promise<EnhancedService[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching services by category');
+      return [];
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const categoryServices = await serviceCanisterService.getServicesByCategory(categoryId);
       return await Promise.all(
         categoryServices.map(service => enrichServiceWithProviderData(service))
@@ -668,13 +738,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, 'get services by category');
       return [];
     }
-  }, [handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, handleError, enrichServiceWithProviderData]);
 
   const getServicesByLocation = useCallback(async (
     location: Location, 
     radius: number
   ): Promise<EnhancedService[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching services by location');
+      return [];
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const locationServices = await serviceCanisterService.searchServicesByLocation(
         location, 
         radius
@@ -686,7 +765,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, 'get services by location');
       return [];
     }
-  }, [handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, handleError, enrichServiceWithProviderData]);
 
   const getNearbyServices = useCallback(async (userLocation?: Location): Promise<EnhancedService[]> => {
     if (!userLocation) return services;
@@ -782,13 +861,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Category management
   const getCategories = useCallback(async (): Promise<ServiceCategory[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching categories');
+      return [];
+    }
+
     try {
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return await serviceCanisterService.getAllCategories();
     } catch (error) {
       handleError(error, 'get categories');
       return [];
     }
-  }, [handleError]);
+  }, [isInitialized, handleError]);
 
   const refreshCategories = useCallback(async (): Promise<void> => {
     await fetchCategories();
@@ -796,9 +884,18 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Provider functions
   const getProviderServices = useCallback(async (providerId?: string): Promise<EnhancedService[]> => {
+    // Wait for initialization before making canister calls
+    if (!isInitialized) {
+      console.log('Waiting for initialization before fetching provider services');
+      return [];
+    }
+
     try {
       const targetProviderId = providerId || getCurrentUserId();
       if (!targetProviderId) return [];
+
+      // Add delay to ensure agents are ready
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       const providerServices = await serviceCanisterService.getServicesByProvider(targetProviderId);
       return await Promise.all(
@@ -808,7 +905,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, 'get provider services');
       return [];
     }
-  }, [getCurrentUserId, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, getCurrentUserId, handleError, enrichServiceWithProviderData]);
 
   const getProviderStats = useCallback(async (providerId?: string): Promise<{
     totalServices: number;
@@ -851,9 +948,11 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [isAuthenticated, currentIdentity, fetchUserProfile]);
 
   useEffect(() => {
-    fetchServices();
-    fetchCategories();
-  }, [fetchServices, fetchCategories]);
+    if (isInitialized) {
+      fetchServices();
+      fetchCategories();
+    }
+  }, [isInitialized, fetchServices, fetchCategories]);
 
   // Return the hook interface
   return {

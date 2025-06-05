@@ -1,10 +1,13 @@
-import React, { useState, useEffect, ChangeEvent, FC, useCallback } from 'react';
+
+import React, { useState, useEffect, ChangeEvent, FC } from 'react'; 
 import { useRouter } from 'next/router';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { Service } from '../../../assets/types/service/service';
 import { Package as ServicePackageType } from '../../../assets/types/service/service-package';
 import { ServiceAvailability, DayOfWeek } from '../../../assets/types/service/service-availability';
+import { SERVICES as mockServicesData } from '../../../assets/services'; 
+import { adaptServiceData } from '@app/utils/serviceDataAdapter'; 
 
 const dayIndexToName = (dayIndex: number): string => {
   const days: DayOfWeek[] = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -21,6 +24,7 @@ const parseTimeSlotString = (slotStr: string): ParsedTimeSlot | null => {
   return { start: { h: startH, m: startM }, end: { h: endH, m: endM } };
 };
 // --- End Helper Functions ---
+
 
 interface SelectablePackage extends ServicePackageType {
   checked: boolean;
@@ -52,7 +56,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadServiceData = async () => {
+    const loadServiceData = () => { 
       if (!serviceSlug) {
         setLoading(false);
         setService(null);
@@ -62,11 +66,11 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       }
       setLoading(true);
       try {
-        const { SERVICES } = await import('../../../assets/services');
-        const foundService = SERVICES.find(s => s.slug === serviceSlug);
+        const allAdaptedServices = adaptServiceData(mockServicesData);
+        const foundService = allAdaptedServices.find(s => s.slug === serviceSlug || s.id === serviceSlug);
 
         if (foundService) {
-          setService(foundService as Service);
+          setService(foundService as Service); 
           setPackages(
             foundService.packages?.map((pkg: ServicePackageType) => ({ ...pkg, checked: false })) || []
           );
@@ -74,7 +78,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         } else {
           setService(null);
           setPackages([]);
-          setFormError("Service not found.");
+          setFormError("Service not found for slug: " + serviceSlug);
         }
       } catch (error) {
         console.error('Error loading service data:', error);
@@ -91,10 +95,9 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
   useEffect(() => {
     if (!service || !service.availability) {
       setIsSameDayPossible(false);
-      setBookingOption('scheduled'); 
+      if (bookingOption === 'sameday') setBookingOption('scheduled');
       return;
     }
-
     const today = new Date();
     const currentDayName = dayIndexToName(today.getDay());
     const isTodayServiceDay = service.availability.schedule.some(s => s.toLowerCase() === currentDayName.toLowerCase());
@@ -115,98 +118,65 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
             }
         }
         possibleToday = inSlot;
-    } else if (possibleToday) { 
-        possibleToday = false; 
+    } else if (possibleToday && (!service.availability.timeSlots || service.availability.timeSlots.length === 0)) { 
+             possibleToday = false; 
     }
     
     setIsSameDayPossible(possibleToday);
 
-    if (possibleToday) {
-      setBookingOption('sameday');
-    } else {
+    if (possibleToday && bookingOption !== 'sameday') {
+        } else if (!possibleToday && bookingOption === 'sameday') {
       setBookingOption('scheduled');
     }
-  }, [service]); 
+  }, [service, bookingOption]); 
 
-
-  // Event Handlers
   const handlePackageChange = (packageId: string) => { /* ... */ setFormError(null); setPackages(prevPackages => prevPackages.map(pkg => pkg.id === packageId ? { ...pkg, checked: !pkg.checked } : pkg)); };
-  
-  const handleBookingOptionChange = (option: 'sameday' | 'scheduled') => {
-    setFormError(null);
-    setBookingOption(option);
-    if (option === 'sameday') {
-      setSelectedDate(null);
-      setSelectedTime('');
-    }
-  };
-  
-  const handleDateChange = (date: Date | null) => { setSelectedDate(date); if (!date) setSelectedTime(''); if (formError?.includes('date')) setFormError(null); };
-  const handleTimeChange = (time: string) => { setSelectedTime(time); if (formError?.includes('time')) setFormError(null); };
-  const handleUseCurrentLocation = () => { setFormError(null); setCurrentLocationStatus('Fetching location...'); setUseGpsLocation(true); setShowManualAddress(false); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const { latitude, longitude } = position.coords; setCurrentLocationStatus(`📍 Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)} (Using this)`); setHouseNumber(''); setStreet(''); setBarangay(''); setMunicipalityCity(''); setProvince(''); }, (error) => { setCurrentLocationStatus(`⚠️ Could not get location. Please enter manually. (Error: ${error.message})`); setUseGpsLocation(false); } ); } else { setCurrentLocationStatus("Geolocation not supported. Please enter address manually."); setUseGpsLocation(false); } };
-  const toggleManualAddress = () => { 
-    setShowManualAddress(!showManualAddress);
-    if (!showManualAddress) {
-      setUseGpsLocation(false);
-      setCurrentLocationStatus('');
-    }
-    setFormError(null); 
-    setShowManualAddress(prev => 
-      { const nextShowState = !prev; if (nextShowState) 
-        { setUseGpsLocation(false); setCurrentLocationStatus(''); } 
-        return nextShowState; 
-      }); };
+  const handleBookingOptionChange = (option: 'sameday' | 'scheduled') => { /* ... */    setFormError(null); if (option === 'sameday' && !isSameDayPossible) return; setBookingOption(option); if (option === 'sameday') { setSelectedDate(null); setSelectedTime(''); }};
+  const handleDateChange = (date: Date | null) => { /* ... */ setSelectedDate(date); if (!date) setSelectedTime(''); if (formError?.includes('date')) setFormError(null); };
+  const handleTimeChange = (time: string) => { /* ... */ setSelectedTime(time); if (formError?.includes('time')) setFormError(null); };
+  const handleUseCurrentLocation = () => { /* ... */ setFormError(null); setCurrentLocationStatus('Fetching location...'); setUseGpsLocation(true); setShowManualAddress(false); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const { latitude, longitude } = position.coords; setCurrentLocationStatus(`📍 Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)} (Using this)`); setHouseNumber(''); setStreet(''); setBarangay(''); setMunicipalityCity(''); setProvince(''); }, (error) => { setCurrentLocationStatus(`⚠️ Could not get location. Please enter manually. (Error: ${error.message})`); setUseGpsLocation(false); } ); } else { setCurrentLocationStatus("Geolocation not supported. Please enter address manually."); setUseGpsLocation(false); } };
+  const toggleManualAddress = () => {  setShowManualAddress(prev => { const nextShowState = !prev; if (nextShowState) { setUseGpsLocation(false); setCurrentLocationStatus(''); } return nextShowState; }); setFormError(null); };
+
   const handleConfirmBooking = () => {
-    if (!service) {
+       if (!service) { // Use the 'service' state
         setFormError("Service details not loaded yet.");
         return;
     }
-    if (!packages.some(pkg => pkg.checked)) {
-        setFormError("Please select at least one service package.");
-        return;
-    }
-     if (bookingOption === 'scheduled') {
-      if (!selectedDate) {
-        setFormError("Please select a date for your scheduled booking.");
-        return;
-      }
-      if (!selectedTime.trim()) {
-        setFormError("Please select a time for your scheduled booking.");
-        return;
-      }
-    }
-    setFormError(null);
-    if (!service) { setFormError("Service details are not loaded."); return; }
-    if (!packages.some(pkg => pkg.checked)) { setFormError("Please select at least one service package."); return; }
+       if (!packages.some(pkg => pkg.checked)) { setFormError("Please select at least one service package."); return; }
     if (bookingOption === 'scheduled') { if (!selectedDate) { setFormError("Please select a date."); return; } if (!selectedTime.trim()) { setFormError("Please select a time."); return; } } 
     else if (bookingOption === 'sameday' && !isSameDayPossible) { setFormError("Same day booking not possible."); return; }
+    
     let finalAddress = ""; let isLocationValid = false;
     if (useGpsLocation) { if (currentLocationStatus.startsWith('📍')) { finalAddress = currentLocationStatus.replace('📍 ', '').replace(' (Using this)', ''); isLocationValid = true; } else { setFormError("GPS location not confirmed."); return; } }
     else if (showManualAddress) { if ([houseNumber, street, barangay, municipalityCity, province].some(f => f.trim() === '')) { setFormError("Fill all manual address fields."); return; } finalAddress = `${houseNumber}, ${street}, ${barangay}, ${municipalityCity}, ${province}`; isLocationValid = true; }
     else { setFormError("Please provide a location."); return; }
     if (!isLocationValid) { setFormError("A valid location is required."); return; }
-    const bookingDetails = { serviceId: service.id, serviceSlug: service.slug, serviceName: service.title, providerName: service.name, selectedPackages: packages.filter(p => p.checked).map(p => ({ id: p.id, name: p.name })), concerns: concerns.trim() || "No specific concerns.", bookingType: bookingOption, date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : "N/A"), time: bookingOption === 'scheduled' && selectedTime ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (within operating hours)' : "N/A"), location: finalAddress };
+
+    const bookingDetails = { 
+      serviceId: service.id, // Use service.id from state
+      serviceSlug: service.slug, // Use service.slug from state
+      serviceName: service.title, 
+      providerName: service.name, // This is provider's name from the Service object
+      selectedPackages: packages.filter(p => p.checked).map(p => ({ id: p.id, name: p.name })), 
+      concerns: concerns.trim() || "No specific concerns.", 
+      bookingType: bookingOption, 
+      date: bookingOption === 'scheduled' && selectedDate ? selectedDate.toISOString().split('T')[0] : (bookingOption === 'sameday' ? 'Same day' : "N/A"), 
+      time: bookingOption === 'scheduled' && selectedTime ? selectedTime : (bookingOption === 'sameday' ? 'ASAP (within operating hours)' : "N/A"), 
+      location: finalAddress 
+    };
+    console.log('New Booking Details to send:', bookingDetails);
     router.push({ pathname: '/client/booking/confirmation', query: { details: JSON.stringify(bookingDetails) } });
   };
 
-  if (loading) {
-    return ( <div className="flex items-center justify-center min-h-screen p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p className="ml-3 text-gray-600">Loading...</p></div>);
-  }
-  if (!service) {
-    return ( <div className="flex items-center justify-center min-h-screen p-4 text-red-600">{formError || "Service not found."}</div>);
-  }
+    if (loading) { /* ... */ return ( <div className="flex items-center justify-center min-h-screen p-4"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div><p className="ml-3 text-gray-600">Loading Service...</p></div>); }
+  if (!service) { /* ... */ return ( <div className="flex items-center justify-center min-h-screen p-4 text-red-600">{formError || "Service details could not be loaded."}</div>); }
   
-  const isConfirmDisabled = 
-    !packages.some(pkg => pkg.checked) ||
-    (bookingOption === 'sameday' && !isSameDayPossible) ||
-    (bookingOption === 'scheduled' && (!selectedDate || !selectedTime.trim())) ||
-    (!useGpsLocation && !showManualAddress) ||
-    (useGpsLocation && !currentLocationStatus.startsWith('📍')) ||
-    (showManualAddress && [houseNumber, street, barangay, municipalityCity, province].some(f => f.trim() === ''));
+  const isConfirmDisabled =  !packages.some(pkg => pkg.checked) || (bookingOption === 'sameday' && !isSameDayPossible) || (bookingOption === 'scheduled' && (!selectedDate || !selectedTime.trim())) || (!useGpsLocation && !showManualAddress) || (useGpsLocation && !currentLocationStatus.startsWith('📍')) || (showManualAddress && [houseNumber, street, barangay, municipalityCity, province].some(f => f.trim() === ''));
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col">
-      <div className="flex-grow pb-28 md:pb-24">
+       <div className="bg-gray-50 min-h-screen flex flex-col">
+      {/* ... The rest of your JSX from ClientBookingPageComponent.tsx ... */}
+       <div className="flex-grow pb-28 md:pb-24">
         <div className="md:flex md:flex-row md:gap-x-6 lg:gap-x-8 md:p-4 lg:p-6">
           {/* Left Column Wrapper */}
           <div className="md:w-1/2 md:flex md:flex-col">
@@ -219,7 +189,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                   <div className="flex-1">
                     <div className="font-medium text-gray-900">{pkg.name}</div>
                     <div className="text-sm text-gray-600">{pkg.description}</div>
-                    <div className="text-sm font-medium text-green-600">₱{pkg.price}</div>
+                    <div className="text-sm font-medium text-green-600">₱{pkg.price}</div> {/* Assuming pkg.price is string from UI, convert to number if needed for display */}
                   </div>
                 </label>
               ))}
@@ -247,7 +217,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                     <button
                       className={`flex-1 p-3 border rounded-lg text-center ${ bookingOption === 'sameday' ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-50 text-gray-700 border-gray-300'} ${!isSameDayPossible ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-500 hover:text-white'}`}
                       onClick={() => handleBookingOptionChange('sameday')}
-                      disabled={!isSameDayPossible} // Button is disabled if not possible
+                      disabled={!isSameDayPossible}
                     >
                       <div className="font-medium text-sm">Same Day</div>
                       {isSameDayPossible && <div className="text-xs opacity-75">Arrive within 20-45 mins</div>}
@@ -269,14 +239,14 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
                       </div>
                       {selectedDate && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Select Time {service.availability?.timeSlots?.length > 0 && `(${service.availability.timeSlots.join(' / ')})`}:</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Select Time {service.availability?.timeSlots?.length > 0 && `(e.g. ${service.availability.timeSlots[0].split('-')[0]})`}:</label>
                           <input type="time" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" value={selectedTime} onChange={(e: ChangeEvent<HTMLInputElement>) => handleTimeChange(e.target.value)}/>
                         </div>
                       )}
                     </div>
                   )}
                 </>
-              ) : ( <div className="text-sm text-gray-500 p-2">Availability information not set.</div> )}
+              ) : ( <div className="text-sm text-gray-500 p-2">Availability information not set for this service.</div> )}
             </div>
             {/* Location Section */}
             <div className="bg-white border-b border-gray-200 p-4 md:rounded-b-xl md:border-x md:border-b md:shadow-sm">

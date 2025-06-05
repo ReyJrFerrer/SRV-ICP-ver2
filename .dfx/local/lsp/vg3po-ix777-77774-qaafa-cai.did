@@ -1,16 +1,3 @@
-type VacationPeriod = 
- record {
-   createdAt: Time;
-   endDate: Time;
-   id: text;
-   reason: opt text;
-   startDate: Time;
- };
-type TimeSlot = 
- record {
-   endTime: text;
-   startTime: text;
- };
 type Time = int;
 type ServiceStatus = 
  variant {
@@ -42,50 +29,15 @@ type Service =
    title: text;
    updatedAt: Time;
  };
-type Result_5 = 
- variant {
-   err: text;
-   ok: ServiceCategory;
- };
-type Result_4 = 
- variant {
-   err: text;
-   ok: vec AvailableSlot;
- };
-type Result_3 = 
- variant {
-   err: text;
-   ok: bool;
- };
-type Result_2 = 
- variant {
-   err: text;
-   ok: text;
- };
 type Result_1 = 
  variant {
    err: text;
-   ok: ProviderAvailability;
+   ok: vec Service;
  };
 type Result = 
  variant {
    err: text;
    ok: Service;
- };
-type ProviderAvailability = 
- record {
-   bookingNoticeHours: nat;
-   createdAt: Time;
-   instantBookingEnabled: bool;
-   isActive: bool;
-   maxBookingsPerDay: nat;
-   providerId: principal;
-   updatedAt: Time;
-   vacationDates: vec VacationPeriod;
-   weeklySchedule: vec record {
-                         DayOfWeek;
-                         DayAvailability;
-                       };
  };
 type Location = 
  record {
@@ -97,58 +49,13 @@ type Location =
    postalCode: text;
    state: text;
  };
-type DayOfWeek = 
- variant {
-   Friday;
-   Monday;
-   Saturday;
-   Sunday;
-   Thursday;
-   Tuesday;
-   Wednesday;
- };
-type DayAvailability = 
- record {
-   isAvailable: bool;
-   slots: vec TimeSlot;
- };
-type AvailableSlot = 
- record {
-   conflictingBookings: vec text;
-   date: Time;
-   isAvailable: bool;
-   timeSlot: TimeSlot;
- };
 service : {
-  addCategory: (name: text, description: text, parentId: opt text, slug:
-   text, imageUrl: text) -> (Result_5);
-  addVacationDates: (startDate: Time, endDate: Time, reason: opt text) ->
-   (Result_1);
-  createService: (title: text, description: text, categoryId: text, price:
-   nat, location: Location) -> (Result);
   getAllCategories: () -> (vec ServiceCategory) query;
-  getAvailableTimeSlots: (providerId: principal, date: Time) -> (Result_4);
-  getProviderAvailability: (providerId: principal) -> (Result_1) query;
+  getAllServices: () -> (vec Service) query;
   getService: (serviceId: text) -> (Result) query;
-  getServicesByCategory: (categoryId: text) -> (vec Service) query;
-  getServicesByProvider: (providerId: principal) -> (vec Service) query;
-  isProviderAvailable: (providerId: principal, requestedDateTime: Time) ->
-   (Result_3);
-  removeVacationDates: (vacationId: text) -> (Result_1);
-  searchServicesByLocation: (userLocation: Location, maxDistance: float64,
-   categoryId: opt text) -> (vec Service) query;
-  searchServicesWithReputationFilter: (userLocation: Location, maxDistance:
-   float64, categoryId: opt text, minTrustScore: opt float64) ->
-   (vec Service);
-  setCanisterReferences: (auth: opt principal, booking: opt principal,
-   review: opt principal, reputation: opt principal) -> (Result_2);
-  setProviderAvailability: (weeklySchedule:
-   vec record {
-         DayOfWeek;
-         DayAvailability;
-       }, instantBookingEnabled: bool, bookingNoticeHours: nat,
-   maxBookingsPerDay: nat) -> (Result_1);
-  updateServiceRating: (serviceId: text, newRating: float64, newReviewCount:
-   nat) -> (Result);
-  updateServiceStatus: (serviceId: text, status: ServiceStatus) -> (Result);
+  testCreateService: () -> (Result);
+  testGetServiceByProvider: () -> (Result_1);
+  testSearchServicesByLocation: () -> (Result_1);
+  testUpdateServiceRating: () -> (Result);
+  testUpdateServiceStatus: () -> (Result);
 }

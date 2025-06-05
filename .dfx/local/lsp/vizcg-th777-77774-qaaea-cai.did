@@ -19,20 +19,10 @@ type Review =
    status: ReviewStatus;
    updatedAt: Time;
  };
-type Result_3 = 
- variant {
-   err: text;
-   ok: float64;
- };
-type Result_2 = 
- variant {
-   err: text;
-   ok;
- };
 type Result_1 = 
  variant {
    err: text;
-   ok: text;
+   ok: vec Review;
  };
 type Result = 
  variant {
@@ -40,11 +30,7 @@ type Result =
    ok: Review;
  };
 service : {
-  calculateProviderRating: (providerId: principal) -> (Result_3) query;
-  calculateServiceRating: (serviceId: text) -> (Result_3) query;
-  calculateUserAverageRating: (userId: principal) -> (Result_3) query;
-  deleteReview: (reviewId: text) -> (Result_2);
-  getBookingReviews: (bookingId: text) -> (vec Review) query;
+  getAllReviews: () -> (vec Review) query;
   getReview: (reviewId: text) -> (Result) query;
   getReviewStatistics: () ->
    (record {
@@ -54,10 +40,11 @@ service : {
       hiddenReviews: nat;
       totalReviews: nat;
     }) query;
-  getUserReviews: (userId: principal) -> (vec Review) query;
-  initializeStaticReviewsManually: () -> (Result_1);
-  setCanisterReferences: (booking: principal, "service": principal,
-   reputation: principal, auth: principal) -> (Result_1);
-  submitReview: (bookingId: text, rating: nat, comment: text) -> (Result);
-  updateReview: (reviewId: text, rating: nat, comment: text) -> (Result);
+  testDeleteReview: () -> (Result);
+  testGetBookingReviews: () -> (Result_1);
+  testGetUserReviews: () -> (Result_1);
+  testInvalidComment: () -> (Result);
+  testInvalidRating: () -> (Result);
+  testSubmitReview: () -> (Result);
+  testUpdateReview: () -> (Result);
 }

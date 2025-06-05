@@ -1,11 +1,3 @@
-type TrustLevel = 
- variant {
-   High;
-   Low;
-   Medium;
-   New;
-   VeryHigh;
- };
 type Time = int;
 type ReviewStatus = 
  variant {
@@ -30,68 +22,42 @@ type Review =
 type Result_3 = 
  variant {
    err: text;
-   ok: vec record {
-             Time;
-             float64;
-           };
+   ok: float64;
  };
 type Result_2 = 
  variant {
    err: text;
-   ok: Evidence;
+   ok;
  };
 type Result_1 = 
  variant {
    err: text;
-   ok: Review;
+   ok: text;
  };
 type Result = 
  variant {
    err: text;
-   ok: ReputationScore;
- };
-type ReputationScore = 
- record {
-   averageRating: opt float64;
-   completedBookings: nat;
-   detectionFlags: vec DetectionFlag;
-   lastUpdated: Time;
-   trustLevel: TrustLevel;
-   trustScore: float64;
-   userId: principal;
- };
-type Evidence = 
- record {
-   bookingId: text;
-   createdAt: Time;
-   description: text;
-   fileUrls: vec text;
-   id: text;
-   qualityScore: opt float64;
-   submitterId: principal;
- };
-type DetectionFlag = 
- variant {
-   CompetitiveManipulation;
-   FakeEvidence;
-   IdentityFraud;
-   Other;
-   ReviewBomb;
+   ok: Review;
  };
 service : {
-  getReputationHistory: (userId: principal) -> (Result_3) query;
-  getReputationStatistics: () ->
+  calculateProviderRating: (providerId: principal) -> (Result_3) query;
+  calculateServiceRating: (serviceId: text) -> (Result_3) query;
+  calculateUserAverageRating: (userId: principal) -> (Result_3) query;
+  deleteReview: (reviewId: text) -> (Result_2);
+  getBookingReviews: (bookingId: text) -> (vec Review) query;
+  getReview: (reviewId: text) -> (Result) query;
+  getReviewStatistics: () ->
    (record {
-      averageTrustScore: float64;
-      totalUsers: nat;
-      trustLevelDistribution: vec record {
-                                    TrustLevel;
-                                    nat;
-                                  };
+      activeReviews: nat;
+      deletedReviews: nat;
+      flaggedReviews: nat;
+      hiddenReviews: nat;
+      totalReviews: nat;
     }) query;
-  testAddDetectionFlag: () -> (Result);
-  testInitializeReputation: () -> (Result);
-  testProcessEvidence: () -> (Result_2);
-  testProcessReview: () -> (Result_1);
-  testUpdateTrustScore: () -> (Result);
+  getUserReviews: (userId: principal) -> (vec Review) query;
+  initializeStaticReviewsManually: () -> (Result_1);
+  setCanisterReferences: (booking: principal, "service": principal,
+   reputation: principal, auth: principal) -> (Result_1);
+  submitReview: (bookingId: text, rating: nat, comment: text) -> (Result);
+  updateReview: (reviewId: text, rating: nat, comment: text) -> (Result);
 }

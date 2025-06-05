@@ -1,6 +1,6 @@
 {
   "__Candid_UI": {
-    "local": "vu5yx-eh777-77774-qaaga-cai"
+    "local": "vb2j2-fp777-77774-qaafq-cai"
   },
   "auth": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
@@ -14,28 +14,25 @@
   "booking-test": {
     "local": "umunu-kh777-77774-qaaca-cai"
   },
-  "frontend": {
-    "local": "ulvla-h7777-77774-qaacq-cai"
-  },
   "internet_identity": {
     "local": "rdmx6-jaaaa-aaaaa-aaadq-cai"
   },
   "reputation": {
-    "local": "ucwa4-rx777-77774-qaada-cai"
+    "local": "ulvla-h7777-77774-qaacq-cai"
   },
   "reputation-test": {
-    "local": "ufxgi-4p777-77774-qaadq-cai"
+    "local": "ucwa4-rx777-77774-qaada-cai"
   },
   "review": {
-    "local": "vizcg-th777-77774-qaaea-cai"
+    "local": "ufxgi-4p777-77774-qaadq-cai"
   },
   "review-test": {
-    "local": "vpyes-67777-77774-qaaeq-cai"
+    "local": "vizcg-th777-77774-qaaea-cai"
   },
   "service": {
-    "local": "vg3po-ix777-77774-qaafa-cai"
+    "local": "vpyes-67777-77774-qaaeq-cai"
   },
   "service-test": {
-    "local": "vb2j2-fp777-77774-qaafq-cai"
+    "local": "vg3po-ix777-77774-qaafa-cai"
   }
 }

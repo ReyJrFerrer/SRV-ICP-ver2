@@ -19,3 +19,5 @@ export interface Order extends BaseEntity {
     dispute?: Dispute;
     rating?: Rating;
 }
+
+export type { OrderStatus };

@@ -770,59 +770,42 @@ actor ServiceCanister {
         return #ok(newAvailability);
     };
     // Get service availability
-    public query func getServiceAvailability(serviceId : Text) : async Result<ProviderAvailability> {
-        // First check the separate availability HashMap (for services that used setServiceAvailability)
-        switch (serviceAvailabilities.get(serviceId)) {
-            case (?availability) {
-                return #ok(availability);
-            };
-            case (null) {
-                // If not found, try to construct from service data (for newly created services)
-                switch (services.get(serviceId)) {
-                    case (?service) {
-                        switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
-                            case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
-                                let availability : ProviderAvailability = {
-                                    providerId = service.providerId;
-                                    weeklySchedule = schedule;
-                                    instantBookingEnabled = instantBooking;
-                                    bookingNoticeHours = noticeHours;
-                                    maxBookingsPerDay = maxBookings;
-                                    isActive = true;
-                                    createdAt = service.createdAt;
-                                    updatedAt = service.updatedAt;
-                            };
+    // Update getServiceAvailability to prioritize service record data
+public query func getServiceAvailability(serviceId : Text) : async Result<ProviderAvailability> {
+    switch (services.get(serviceId)) {
+        case (?service) {
+            // First try to get from service record (this will have the most up-to-date data)
+            switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
+                case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
+                    let availability : ProviderAvailability = {
+                        providerId = service.providerId;
+                        weeklySchedule = schedule;
+                        instantBookingEnabled = instantBooking;
+                        bookingNoticeHours = noticeHours;
+                        maxBookingsPerDay = maxBookings;
+                        isActive = true;
+                        createdAt = service.createdAt;
+                        updatedAt = service.updatedAt;
+                    };
+                    return #ok(availability);
+                };
+                case (_, _, _, _) {
+                    // Fallback to separate availability HashMap
+                    switch (serviceAvailabilities.get(serviceId)) {
+                        case (?availability) {
                             return #ok(availability);
                         };
-                        case (_, _, _, _) {
-                            // Handle partial availability data with defaults
-                            switch (service.weeklySchedule, service.instantBookingEnabled) {
-                                case (?schedule, ?instantBooking) {
-                                    let availability : ProviderAvailability = {
-                                        providerId = service.providerId;
-                                        weeklySchedule = schedule;
-                                        instantBookingEnabled = instantBooking;
-                                        bookingNoticeHours = switch (service.bookingNoticeHours) { case (?hours) hours; case (null) 2 }; // Default 2 hours
-                                        maxBookingsPerDay = switch (service.maxBookingsPerDay) { case (?max) max; case (null) 10 }; // Default 10 bookings
-                                        isActive = true;
-                                        createdAt = service.createdAt;
-                                        updatedAt = service.updatedAt;
-                                    };
-                                    return #ok(availability);
-                                };
-                                case (_, _) {
-                                    return #err("Service availability not properly configured");
-                                };
-                            };
+                        case (null) {
+                            return #err("Service availability not properly configured");
                         };
                     };
                 };
-                case (null) {
-                    return #err("Service not found");
-                };
             };
         };
-     };
+        case (null) {
+            return #err("Service not found");
+        };
+    };
     };
 
     // Get provider availability (backward compatibility - deprecated)

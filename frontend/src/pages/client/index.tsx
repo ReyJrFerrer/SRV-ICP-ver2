@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth, InternetIdentityButton } from "@bundly/ares-react";
+import { useAuth, useClient } from "@bundly/ares-react";
 import Head from 'next/head';
 import Link from 'next/link';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from '../../declarations/auth/auth.did.js';
 import type { Profile } from '../../declarations/auth/auth.did.js';
+import { FingerPrintIcon, UserPlusIcon } from '@heroicons/react/24/solid';
 
 type Result<T> = {
   ok?: T;
@@ -15,7 +16,8 @@ type Result<T> = {
 export default function ClientIndexPage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
-  const [isLoading, setIsLoading] = useState(true); 
+  const client = useClient();
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('Initializing...');
 
@@ -39,35 +41,58 @@ export default function ClientIndexPage() {
 
           if ('ok' in profileResult && profileResult.ok) {
             if ('Client' in profileResult.ok.role) {
-              // Case 1: Profile exists and role is correct -> Redirect to home
-              setStatusMessage('Profile found. Redirecting...');
               router.push('/client/home');
             } else {
-              // Case 2: Profile exists, but wrong role -> Show error
               setError('Access denied. A Client profile is required to access this section.');
-              setIsLoading(false);
             }
           } else if ('err' in profileResult && profileResult.err?.includes("Profile not found")) {
-            // Case 3: New user (no profile) -> Redirect to create profile
-            setStatusMessage('No profile found. Redirecting to sign up...');
             router.push('/create-profile');
           } else {
-            // Case 4: Other canister error
             throw new Error(profileResult.err || 'Failed to retrieve profile.');
           }
         } catch (e) {
           setError(e instanceof Error ? e.message : 'Failed to check profile.');
+        } finally {
           setIsLoading(false);
         }
       } else {
-        // Case 5: Not authenticated -> Show login prompt
         setIsLoading(false);
-        setStatusMessage('Please log in to access the client portal.');
+        setStatusMessage('Please log in or create an account to access the client portal.');
       }
     };
 
     checkProfile();
   }, [isAuthenticated, currentIdentity, router]);
+
+  const handleAuthAction = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      setStatusMessage('Connecting to Internet Identity...');
+      const provider = client.getProvider("internet-identity");
+      if (!provider) throw new Error('Internet Identity provider not found');
+      await provider.connect();
+    } catch (err) {
+      console.error('Authentication error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
+      setIsLoading(false);
+    }
+  };
+
+  const renderStatus = () => {
+    if (error) {
+      return <p className="text-red-600 text-sm font-medium">{error}</p>;
+    }
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-600 mr-2"></div>
+          <span className="text-slate-600">{statusMessage}</span>
+        </div>
+      );
+    }
+    return <p className="text-slate-600">{statusMessage}</p>;
+  };
 
   return (
     <>
@@ -82,20 +107,34 @@ export default function ClientIndexPage() {
           </h2>
           
           <div className="min-h-[4rem] flex items-center justify-center mb-6">
-            {error ? (
-              <p className="text-red-600 text-sm font-medium">{error}</p>
-            ) : isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-600 mr-2"></div>
-                <span className="text-slate-600">{statusMessage}</span>
-              </div>
-            ) : (
-              <p className="text-slate-600">{statusMessage}</p>
-            )}
+            {renderStatus()}
           </div>
-         
-          <div className="w-full">
-            <InternetIdentityButton />
+
+          <div className="space-y-4">
+            <button
+              onClick={handleAuthAction}
+              disabled={isLoading}
+              className={`w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg 
+                          transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105
+                          ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isLoading ? 'Processing...' : (
+                <>
+                  <FingerPrintIcon className="h-6 w-6 mr-2" />
+                  Login with Internet Identity
+                </>
+              )}
+            </button>
+
+            <Link href="/create-profile" legacyBehavior>
+              <a
+                className={`w-full flex items-center justify-center bg-yellow-300 hover:bg-yellow-400 text-slate-800 font-bold py-3 px-6 rounded-lg 
+                            transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105`}
+              >
+                <UserPlusIcon className="h-6 w-6 mr-2" />
+                Create an Account
+              </a>
+            </Link>
           </div>
 
           <Link href="/" className="mt-6 block text-sm text-blue-500 hover:underline">

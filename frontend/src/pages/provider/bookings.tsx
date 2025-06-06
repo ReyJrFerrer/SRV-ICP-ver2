@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderBookingItemCard from '@app/components/provider/ProviderBookingItemCard';
 import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../hooks/useProviderBookingManagement';
-import { BookingStatus } from '../../services/bookingCanisterService';
 
 type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled';
 const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'Completed', 'Cancelled'];

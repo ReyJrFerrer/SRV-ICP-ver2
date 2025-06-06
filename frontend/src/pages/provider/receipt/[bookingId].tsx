@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ArrowLeftIcon, PrinterIcon, ShareIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
-import { PROVIDER_ORDERS } from '../../../../assets/providerOrders';
-import { ProviderOrder as ProviderOrderType } from '../../../../assets/types/provider/provider-order';
+import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../../hooks/useProviderBookingManagement';
 
 const ReceiptPage: React.FC = () => {
   const router = useRouter();
   const { bookingId, price, paid, change, method } = router.query;
-
-  const [booking, setBooking] = useState<ProviderOrderType | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Payment details from query params
   const serviceTotal = typeof price === 'string' ? parseFloat(price) : 0;
@@ -18,15 +14,21 @@ const ReceiptPage: React.FC = () => {
   const changeGiven = typeof change === 'string' ? parseFloat(change) : 0;
   const paymentMethod = typeof method === 'string' ? method : 'N/A';
 
-  useEffect(() => {
+  // Use the enhanced hook instead of mock data
+  const {
+    getBookingById,
+    loading,
+    error: hookError,
+    isProviderAuthenticated
+  } = useProviderBookingManagement();
+
+  // Get booking data from hook
+  const booking = useMemo(() => {
     if (bookingId && typeof bookingId === 'string') {
-      const foundBooking = PROVIDER_ORDERS.find(b => b.id === bookingId);
-      setBooking(foundBooking || null);
-      setLoading(false);
-    } else {
-      setLoading(false);
+      return getBookingById(bookingId);
     }
-  }, [bookingId]);
+    return null;
+  }, [bookingId, getBookingById]);
 
   const handleDone = () => {
     router.push('/provider/bookings?tab=Completed'); // Or provider home
@@ -40,7 +42,7 @@ const ReceiptPage: React.FC = () => {
   const handleShare = () => {
       if (navigator.share) {
           navigator.share({
-              title: `Receipt for ${booking?.serviceTitle}`,
+              title: `Receipt for ${booking?.serviceName}`,
               text: `Service completed for ${booking?.clientName}. Amount Paid: ₱${amountPaid.toFixed(2)}`,
               url: window.location.href, // Share current page URL
           }).catch(console.error);
@@ -48,6 +50,11 @@ const ReceiptPage: React.FC = () => {
           alert('Web Share API not supported. You can copy the URL.');
       }
   };
+
+  // Check authentication
+  if (!isProviderAuthenticated()) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Please log in as a service provider to access this page.</div>;
+  }
 
 
   if (loading) {
@@ -58,12 +65,12 @@ const ReceiptPage: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Booking details for receipt not found.</div>;
   }
 
-  const completionTime = booking.actualEndTime ? new Date(booking.actualEndTime) : new Date(booking.updatedAt); // Use actualEndTime if available
+  const completionTime = booking.completedDate ? new Date(booking.completedDate) : new Date(booking.updatedAt);
 
   return (
     <>
       <Head>
-        <title>Receipt - {booking.serviceTitle} | SRV Provider</title>
+        <title>Receipt - {booking.serviceName} | SRV Provider</title>
       </Head>
       <div className="min-h-screen bg-gray-100 flex flex-col items-center py-6 sm:py-12 print:bg-white">
         {/* Back button (hidden on print) */}
@@ -96,7 +103,7 @@ const ReceiptPage: React.FC = () => {
             <hr className="my-3"/>
             <div className="flex justify-between">
               <span className="text-gray-600">Service:</span>
-              <span className="font-medium text-gray-800 text-right break-words max-w-[60%]">{booking.serviceTitle}</span>
+              <span className="font-medium text-gray-800 text-right break-words max-w-[60%]">{booking.serviceName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Client:</span>

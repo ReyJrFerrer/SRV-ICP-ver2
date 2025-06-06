@@ -35,7 +35,7 @@ actor BookingCanister {
     private var reputationCanisterId : ?Principal = null;
 
     // Constants
-    private let MIN_PRICE : Nat = 100;
+    private let MIN_PRICE : Nat = 5;
     private let MAX_PRICE : Nat = 1_000_000;
     private let MIN_SCHEDULE_AHEAD : Int = 3600_000_000_000; // 1 hour in nanoseconds
     private let MAX_SCHEDULE_AHEAD : Int = 30 * 24 * 3600_000_000_000; // 30 days in nanoseconds

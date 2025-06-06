@@ -16,7 +16,7 @@ import {
   DayAvailability
 } from '../../../../hooks/serviceManagement';
 
-// Legacy types for UI compatibility  
+// Legacy types for UI compatibility   
 import { 
   ServicePackage,
   ServiceCategory,
@@ -75,6 +75,7 @@ const EditServicePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
 
   // Service Management Hook Integration
+  // missing availability
   const {
     getService,
     updateService,

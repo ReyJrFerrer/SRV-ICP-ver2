@@ -1,35 +1,42 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, useMemo, ChangeEvent, FormEvent } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ArrowLeftIcon, CurrencyDollarIcon, CheckCircleIcon } from '@heroicons/react/24/solid'; 
-import { PROVIDER_ORDERS } from '../../../../assets/providerOrders';
-import { ProviderOrder as ProviderOrderType } from '../../../../assets/types/provider/provider-order';
+import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../../hooks/useProviderBookingManagement';
 
 const CompleteServicePage: React.FC = () => {
-   const router = useRouter();
+  const router = useRouter();
   const { bookingId } = router.query;
 
-  const [booking, setBooking] = useState<ProviderOrderType | null>(null);
   const [servicePrice, setServicePrice] = useState<number>(0);
   const [cashReceived, setCashReceived] = useState<string>('');
   const [changeDue, setChangeDue] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
- useEffect(() => {
+  // Use the enhanced hook instead of mock data
+  const {
+    getBookingById,
+    completeBookingById,
+    loading,
+    error: hookError,
+    isProviderAuthenticated
+  } = useProviderBookingManagement();
+
+  // Get booking data from hook
+  const booking = useMemo(() => {
     if (bookingId && typeof bookingId === 'string') {
-      const foundBooking = PROVIDER_ORDERS.find(b => b.id === bookingId);
-      if (foundBooking) {
-        setBooking(foundBooking);
-        const price = foundBooking.finalPrice && foundBooking.finalPrice > 0 
-          ? foundBooking.finalPrice 
-          : foundBooking.quotedPrice;
-        setServicePrice(price);
-      }
-      setLoading(false);
+      return getBookingById(bookingId);
     }
-  }, [bookingId]);
+    return null;
+  }, [bookingId, getBookingById]);
+
+  useEffect(() => {
+    if (booking) {
+      // Use the booking price as the service price
+      setServicePrice(booking.price);
+    }
+  }, [booking]);
 
    useEffect(() => {
     const received = parseFloat(cashReceived);
@@ -49,7 +56,7 @@ const CompleteServicePage: React.FC = () => {
     }
   };
 
- const handleSubmitPayment = async (e: FormEvent) => {
+   const handleSubmitPayment = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     const receivedAmount = parseFloat(cashReceived);
@@ -59,36 +66,46 @@ const CompleteServicePage: React.FC = () => {
       return;
     }
     
+    if (!booking) {
+      setError('Booking not found. Please try again.');
+      return;
+    }
+    
     setIsSubmitting(true);
     console.log('Processing payment and completing service for booking:', bookingId);
-    const paymentDetailsForReceipt = {
-      servicePrice: servicePrice.toFixed(2),
-      amountPaid: receivedAmount.toFixed(2),
-      changeGiven: changeDue.toFixed(2),
-      paymentMethod: 'Cash',
-    };
-    console.log(paymentDetailsForReceipt);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000)); 
-    setIsSubmitting(false);
-    
-    // Navigate to the receipt page
-    if (booking) {
-      router.push({
-        pathname: `/provider/receipt/${booking.id}`,
-        query: { 
-          price: servicePrice.toFixed(2),
-          paid: receivedAmount.toFixed(2),
-          change: changeDue.toFixed(2),
-          method: 'Cash' // Pass payment method
-        },
-      });
-    } else {
-      // Fallback if booking somehow becomes null
-      router.push('/provider/bookings?tab=Completed');
+    try {
+      // Use the hook's complete function with the final price if different
+      const finalPrice = receivedAmount !== servicePrice ? receivedAmount : undefined;
+      const success = await completeBookingById(booking.id, finalPrice);
+      
+      if (success) {
+        // Navigate to the receipt page
+        router.push({
+          pathname: `/provider/receipt/${booking.id}`,
+          query: { 
+            price: servicePrice.toFixed(2),
+            paid: receivedAmount.toFixed(2),
+            change: changeDue.toFixed(2),
+            method: 'Cash'
+          },
+        });
+      } else {
+        setError('Failed to complete the booking. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error completing booking:', error);
+      setError('An error occurred while completing the booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
+  // Check authentication
+  if (!isProviderAuthenticated()) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Please log in as a service provider to access this page.</div>;
+  }
+  
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
   }
@@ -100,7 +117,7 @@ const CompleteServicePage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Complete Service & Payment | SRV Provider</title>
+        <title>Complete Service: {booking.serviceName || 'Service'} | SRV Provider</title>
       </Head>
       <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="bg-white shadow-sm sticky top-0 z-20 px-4 py-3">
@@ -116,7 +133,7 @@ const CompleteServicePage: React.FC = () => {
           <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-md space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-800 text-center mb-1">Payment Collection</h2>
-              <p className="text-sm text-gray-500 text-center mb-6">Finalize service for "{booking.serviceTitle}" with {booking.clientName}.</p>
+              <p className="text-sm text-gray-500 text-center mb-6">Finalize service for "{booking.serviceName}" with {booking.clientName}.</p>
             </div>
 
             <div className="space-y-4">

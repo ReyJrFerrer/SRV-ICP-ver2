@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router'; 
-import { ProviderOrder as ProviderOrderType } from '../../../assets/types/provider/provider-order';
-import { Order } from '../../../assets/types/order/order';
+import { ProviderEnhancedBooking, useProviderBookingManagement } from '../../hooks/useProviderBookingManagement';
 import { 
     MapPinIcon, CalendarIcon, ClockIcon, UserIcon, 
     CurrencyDollarIcon, PhoneIcon, InformationCircleIcon 
@@ -20,34 +19,80 @@ const calculateDuration = (start: string | Date, end: string | Date): string => 
 };
 
 interface ProviderBookingItemCardProps {
-  booking: ProviderOrderType;
+  booking: ProviderEnhancedBooking;
 }
 
 const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booking }) => {
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
-  const orderDetails: Order | undefined = booking.order; 
-  const clientName = booking.clientName;
-  const clientContact = booking.clientContact;
-  const serviceTitle = booking.serviceTitle;
-  const scheduledStartTime = new Date(booking.scheduledStartTime);
-  const scheduledEndTime = booking.scheduledEndTime ? new Date(booking.scheduledEndTime) : null;
-  const duration = scheduledEndTime ? calculateDuration(scheduledStartTime, scheduledEndTime) : orderDetails?.schedule?.actualDuration ? `${orderDetails.schedule.actualDuration} mins` : 'N/A';
-  const price = booking.finalPrice && booking.finalPrice > 0 ? booking.finalPrice : booking.quotedPrice;
-  const priceLabel = booking.finalPrice && booking.finalPrice > 0 && booking.finalPrice !== booking.quotedPrice ? "Final Price" : "Quoted Price";
-  const locationAddress = booking.location?.address || orderDetails?.location?.address || "Location not specified";
-  const status = booking.status || orderDetails?.status;
+  const { 
+    acceptBookingById, 
+    declineBookingById, 
+    startBookingById, 
+    completeBookingById,
+    isBookingActionInProgress,
+    getStatusColor,
+    formatBookingDate,
+    formatBookingTime
+  } = useProviderBookingManagement();
 
-  // Placeholder actions
-  const handleAccept = () => alert(`Accept booking: ${booking.id}`);
-  const handleReject = () => alert(`Reject booking: ${booking.id}`);
-  const handleContactClient = () => alert(`Contact client: ${clientContact || 'Contact info not available'}`);
-  const handleMarkAsCompleted = () => alert(`Mark as completed: ${booking.id}`);
+  // Extract booking data with proper property names for ProviderEnhancedBooking
+  const clientName = booking.clientName || 'Unknown Client';
+  const clientContact = booking.clientPhone || booking.clientProfile?.phone || 'Contact not available';
+  const serviceTitle = booking.serviceId || 'Service'; // TODO: Add serviceTitle to the interface when service data is available
+  const scheduledDate = booking.scheduledDate ? new Date(booking.scheduledDate) : null;
+  const duration = booking.serviceDuration || 'N/A';
+  const price = booking.price;
+  const priceLabel = "Service Price";
+  const locationAddress = booking.formattedLocation || "Location not specified";
+  const status = booking.status;
 
-  const handleStartService = () => {
-    console.log(`Starting service for booking: ${booking.id}`);
-    const actualStartTime = new Date().toISOString();
-    router.push(`/provider/active-service/${booking.id}?startTime=${actualStartTime}`);
+  // Action handlers using the hook's functions
+  const handleAccept = async () => {
+    const success = await acceptBookingById(booking.id);
+    if (success) {
+      console.log(`✅ Booking ${booking.id} accepted successfully`);
+    } else {
+      console.error(`❌ Failed to accept booking ${booking.id}`);
+    }
+  };
+
+  const handleReject = async () => {
+    const success = await declineBookingById(booking.id, 'Declined by provider');
+    if (success) {
+      console.log(`✅ Booking ${booking.id} declined successfully`);
+    } else {
+      console.error(`❌ Failed to decline booking ${booking.id}`);
+    }
+  };
+
+  const handleContactClient = () => {
+    if (clientContact && clientContact !== 'Contact not available') {
+      // Open phone/messaging app
+      window.location.href = `tel:${clientContact}`;
+    } else {
+      alert('Contact information not available');
+    }
+  };
+
+  const handleMarkAsCompleted = async () => {
+    const success = await completeBookingById(booking.id);
+    if (success) {
+      console.log(`✅ Booking ${booking.id} marked as completed`);
+    } else {
+      console.error(`❌ Failed to complete booking ${booking.id}`);
+    }
+  };
+
+  const handleStartService = async () => {
+    const success = await startBookingById(booking.id);
+    if (success) {
+      console.log(`✅ Service started for booking ${booking.id}`);
+      const actualStartTime = new Date().toISOString();
+      router.push(`/provider/active-service/${booking.id}?startTime=${actualStartTime}`);
+    } else {
+      console.error(`❌ Failed to start service for booking ${booking.id}`);
+    }
   };
 
   return (
@@ -56,18 +101,11 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
         <h3 className="text-base font-semibold text-blue-700 group-hover:text-blue-800 transition-colors pr-2 flex-grow break-words">
             {serviceTitle}
         </h3>
-          <span 
-            className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0
-              ${status === 'PENDING' ? 'bg-yellow-200 text-black' : ''}
-              ${status === 'CONFIRMED' ? 'bg-blue-600 text-white' : ''}
-              ${status === 'COMPLETED' ? 'bg-black text-white' : ''}
-              ${status === 'CANCELLED' ? 'bg-red-100 text-red-700' : ''}
-              ${status === 'IN_PROGRESS' ? 'bg-white text-blue-600 border border-blue-600' : ''}
-              ${status === 'DISPUTED' ? 'bg-orange-100 text-orange-700' : ''}
-            `}
-          >
-            {status?.replace('_', ' ') || 'N/A'}
-          </span>
+        <span 
+          className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(status)}`}
+        >
+          {status === 'InProgress' ? 'In Progress' : status}
+        </span>
       </div>
 
       {/* Always visible info */}
@@ -117,11 +155,15 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
         <div className="space-y-2 text-xs text-gray-700">
           <div className="flex items-center">
             <CalendarIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-            <span>Date: <span className="font-medium">{scheduledStartTime.toLocaleDateString()}</span></span>
+            <span>Date: <span className="font-medium">
+              {booking.scheduledDate ? formatBookingDate(booking.scheduledDate) : 'TBD'}
+            </span></span>
           </div>
           <div className="flex items-center">
             <ClockIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-            <span>Time: <span className="font-medium">{scheduledStartTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></span>
+            <span>Time: <span className="font-medium">
+              {booking.scheduledDate ? formatBookingTime(booking.scheduledDate) : 'TBD'}
+            </span></span>
           </div>
           {duration !== 'N/A' && (
             <div className="flex items-center">
@@ -129,32 +171,64 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
               <span>Duration: <span className="font-medium">{duration}</span></span>
             </div>
           )}
-          {orderDetails?.completion?.notes && (
-            <div className="flex items-start mt-1 pt-1 border-t border-gray-100">
-              <InformationCircleIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
-              <span className="text-xs italic break-words">Notes: <span className="font-medium not-italic">{orderDetails.completion.notes}</span></span>
-            </div>
-          )}
+          {/* Note: booking.notes property doesn't exist in the interface - removed for now */}
         </div>
       </div>
 
       <div className="mt-auto pt-3 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
-        {status === 'PENDING' && (
+        {/* Show accept/reject buttons for pending bookings */}
+        {booking.canAccept && booking.canDecline && (
           <>
-            <button onClick={handleReject} className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors">Reject</button>
-            <button onClick={handleAccept} className="px-3 py-1.5 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md transition-colors">Accept</button>
+            <button 
+              onClick={handleReject} 
+              disabled={isBookingActionInProgress(booking.id, 'decline')}
+              className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+            >
+              {isBookingActionInProgress(booking.id, 'decline') ? 'Declining...' : 'Reject'}
+            </button>
+            <button 
+              onClick={handleAccept} 
+              disabled={isBookingActionInProgress(booking.id, 'accept')}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+            >
+              {isBookingActionInProgress(booking.id, 'accept') ? 'Accepting...' : 'Accept'}
+            </button>
           </>
         )}
-        {status === 'CONFIRMED' && (
+        {/* Show contact and start service buttons for accepted bookings */}
+        {booking.canStart && (
           <>
-            <button onClick={handleContactClient} className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">Contact Client</button>
-            <button onClick={handleStartService} className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-md transition-colors">Start Service</button>
+            <button 
+              onClick={handleContactClient} 
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+            >
+              Contact Client
+            </button>
+            <button 
+              onClick={handleStartService} 
+              disabled={isBookingActionInProgress(booking.id, 'start')}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+            >
+              {isBookingActionInProgress(booking.id, 'start') ? 'Starting...' : 'Start Service'}
+            </button>
           </>
         )}
-        {status === 'IN_PROGRESS' && (
+        {/* Show contact and complete buttons for in-progress bookings */}
+        {booking.canComplete && (
           <>
-            <button onClick={handleContactClient} className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">Contact Client</button>
-            <button onClick={handleMarkAsCompleted} className="px-3 py-1.5 text-xs font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-md transition-colors">Mark Completed</button>
+            <button 
+              onClick={handleContactClient} 
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+            >
+              Contact Client
+            </button>
+            <button 
+              onClick={handleMarkAsCompleted} 
+              disabled={isBookingActionInProgress(booking.id, 'complete')}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+            >
+              {isBookingActionInProgress(booking.id, 'complete') ? 'Completing...' : 'Mark Completed'}
+            </button>
           </>
         )}
       </div>

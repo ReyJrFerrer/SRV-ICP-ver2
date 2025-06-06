@@ -104,6 +104,16 @@ interface ProviderBookingManagementHook {
   completeBooking: (bookingId: string, finalPrice?: number) => Promise<void>;
   disputeBooking: (bookingId: string, reason: string) => Promise<void>;
   
+  // Individual booking lookup and action functions
+  getBookingById: (bookingId: string) => ProviderEnhancedBooking | null;
+  getBookingWithClientData: (bookingId: string) => Promise<ProviderEnhancedBooking | null>;
+  acceptBookingById: (bookingId: string, scheduledDate?: Date) => Promise<boolean>;
+  declineBookingById: (bookingId: string, reason?: string) => Promise<boolean>;
+  startBookingById: (bookingId: string) => Promise<boolean>;
+  completeBookingById: (bookingId: string, finalPrice?: number) => Promise<boolean>;
+  disputeBookingById: (bookingId: string, reason: string) => Promise<boolean>;
+  isBookingActionInProgress: (bookingId: string, action: string) => boolean;
+  
   // Data filtering and categorization
   getBookingsByStatus: (status: BookingStatus) => ProviderEnhancedBooking[];
   getPendingBookings: () => ProviderEnhancedBooking[];
@@ -321,8 +331,8 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       const enhancedBooking: ProviderEnhancedBooking = {
         ...booking,
         clientProfile: clientProfile || undefined,
-        clientName: clientProfile?.name || booking.clientName || 'Unknown Client',
-        clientPhone: clientProfile?.phone || booking.clientContact,
+        clientName: clientProfile?.name ||'Unknown Client',
+        clientPhone: clientProfile?.phone || 'Unknown Phone Number',
         formattedLocation,
         timeUntilService,
         isOverdue,
@@ -336,7 +346,7 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         // Action availability
         canAccept: booking.status === 'Requested',
         canDecline: booking.status === 'Requested',
-        canStart: booking.status === 'Accepted' && scheduledDate && scheduledDate <= now,
+        canStart: booking.status === 'Accepted' && scheduledDate ? scheduledDate <= now : false,
         canComplete: booking.status === 'InProgress',
         canDispute: booking.status === 'Completed',
         
@@ -363,7 +373,7 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Return booking with minimal enhancement
       return {
         ...booking,
-        clientName: booking.clientName || 'Unknown Client',
+        clientName:'Unknown Client',
         formattedLocation: formatLocationString(booking.location),
         isClientDataLoaded: false,
         isPending: booking.status === 'Requested',
@@ -570,7 +580,7 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} disputed successfully`);
+        console.log(`✅ Booking ${bookingId} disputed successfully with reason: ${reason}`);
       }
     } catch (error) {
       handleBookingError(error, `dispute booking ${bookingId}`);
@@ -579,6 +589,92 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       setLoadingState(`dispute-${bookingId}`, false);
     }
   }, [setLoadingState, clearError, handleBookingError, enrichBookingWithClientData]);
+
+  // Individual booking lookup and action functions
+  const getBookingById = useCallback((bookingId: string): ProviderEnhancedBooking | null => {
+    return providerBookings.find(booking => booking.id === bookingId) || null;
+  }, [providerBookings]);
+
+  const getBookingWithClientData = useCallback(async (bookingId: string): Promise<ProviderEnhancedBooking | null> => {
+    try {
+      const booking = getBookingById(bookingId);
+      if (!booking) {
+        console.warn(`Booking ${bookingId} not found in current bookings`);
+        return null;
+      }
+
+      // If client data is already loaded, return the booking
+      if (booking.isClientDataLoaded) {
+        return booking;
+      }
+
+      // Re-enrich with fresh client data
+      const rawBooking = await bookingCanisterService.getBooking(bookingId);
+      if (rawBooking) {
+        return await enrichBookingWithClientData(rawBooking);
+      }
+
+      return booking;
+    } catch (error) {
+      console.error(`Error getting booking ${bookingId} with client data:`, error);
+      return getBookingById(bookingId);
+    }
+  }, [getBookingById, enrichBookingWithClientData]);
+
+  const acceptBookingById = useCallback(async (bookingId: string, scheduledDate?: Date): Promise<boolean> => {
+    try {
+      await acceptBooking(bookingId, scheduledDate);
+      return true;
+    } catch (error) {
+      console.error(`Failed to accept booking ${bookingId}:`, error);
+      return false;
+    }
+  }, [acceptBooking]);
+
+  const declineBookingById = useCallback(async (bookingId: string, reason?: string): Promise<boolean> => {
+    try {
+      await declineBooking(bookingId, reason);
+      return true;
+    } catch (error) {
+      console.error(`Failed to decline booking ${bookingId}:`, error);
+      return false;
+    }
+  }, [declineBooking]);
+
+  const startBookingById = useCallback(async (bookingId: string): Promise<boolean> => {
+    try {
+      await startBooking(bookingId);
+      return true;
+    } catch (error) {
+      console.error(`Failed to start booking ${bookingId}:`, error);
+      return false;
+    }
+  }, [startBooking]);
+
+  const completeBookingById = useCallback(async (bookingId: string, finalPrice?: number): Promise<boolean> => {
+    try {
+      await completeBooking(bookingId, finalPrice);
+      return true;
+    } catch (error) {
+      console.error(`Failed to complete booking ${bookingId}:`, error);
+      return false;
+    }
+  }, [completeBooking]);
+
+  const disputeBookingById = useCallback(async (bookingId: string, reason: string): Promise<boolean> => {
+    try {
+      await disputeBooking(bookingId, reason);
+      return true;
+    } catch (error) {
+      console.error(`Failed to dispute booking ${bookingId}:`, error);
+      return false;
+    }
+  }, [disputeBooking]);
+
+  const isBookingActionInProgress = useCallback((bookingId: string, action: string): boolean => {
+    const operationKey = `${action}-${bookingId}`;
+    return isOperationInProgress(operationKey);
+  }, [isOperationInProgress]);
 
   // Data filtering and categorization functions
   const getBookingsByStatus = useCallback((status: BookingStatus): ProviderEnhancedBooking[] => {
@@ -892,6 +988,57 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     startBooking,
     completeBooking,
     disputeBooking,
+    
+    // Individual booking lookup and action functions
+    getBookingById: (bookingId: string) => providerBookings.find(booking => booking.id === bookingId) || null,
+    getBookingWithClientData: async (bookingId: string) => {
+      const booking = providerBookings.find(booking => booking.id === bookingId);
+      if (!booking) return null;
+      return await enrichBookingWithClientData(booking);
+    },
+    acceptBookingById: async (bookingId: string, scheduledDate?: Date) => {
+      try {
+        await acceptBooking(bookingId, scheduledDate);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    declineBookingById: async (bookingId: string, reason?: string) => {
+      try {
+        await declineBooking(bookingId, reason);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    startBookingById: async (bookingId: string) => {
+      try {
+        await startBooking(bookingId);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    completeBookingById: async (bookingId: string, finalPrice?: number) => {
+      try {
+        await completeBooking(bookingId, finalPrice);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    disputeBookingById: async (bookingId: string, reason: string) => {
+      try {
+        await disputeBooking(bookingId, reason);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    isBookingActionInProgress: (bookingId: string, action: string) => {
+      return isOperationInProgress(`${action}-${bookingId}`);
+    },
     
     // Data filtering and categorization
     getBookingsByStatus,

@@ -7,15 +7,58 @@ import {
   AcademicCapIcon
 } from '@heroicons/react/24/solid';
 import Link from 'next/link';
-import { ServiceProvider } from '../../../assets/types/provider/service-provider';
+import { FrontendProfile } from '../../services/authCanisterService';
+
+// Placeholder credential interface
+interface Credential {
+  id: string;
+  title: string;
+  issuingAuthority: string;
+  issueDate: Date;
+  expiryDate?: Date;
+  verificationStatus: 'VERIFIED' | 'PENDING' | 'REJECTED';
+}
 
 interface CredentialsDisplayProps {
-  provider: ServiceProvider;
+  provider: FrontendProfile;
   className?: string;
 }
 
 const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider, className = '' }) => {
-  const { credentials, identityVerified, backgroundCheckPassed, verificationStatus } = provider;
+  // Placeholder credentials data - this would eventually come from the backend
+  const placeholderCredentials: Credential[] = [
+    {
+      id: '1',
+      title: 'Certified Professional Cleaner',
+      issuingAuthority: 'Philippine Cleaning Association',
+      issueDate: new Date('2023-01-15'),
+      expiryDate: new Date('2025-01-15'),
+      verificationStatus: 'VERIFIED'
+    },
+    {
+      id: '2',
+      title: 'Basic First Aid Certificate',
+      issuingAuthority: 'Philippine Red Cross',
+      issueDate: new Date('2023-06-10'),
+      expiryDate: new Date('2024-06-10'),
+      verificationStatus: 'VERIFIED'
+    },
+    {
+      id: '3',
+      title: 'Business Permit',
+      issuingAuthority: 'City Government of Manila',
+      issueDate: new Date('2024-01-01'),
+      expiryDate: new Date('2024-12-31'),
+      verificationStatus: 'PENDING'
+    }
+  ];
+
+  // Placeholder verification status - this would come from the backend
+  const verificationData = {
+    identityVerified: provider.isVerified || true,
+    backgroundCheckPassed: true,
+    verificationStatus: 'VERIFIED' as const
+  };
   
   // Format date
   const formatDate = (date: Date): string => {
@@ -37,32 +80,40 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
         </Link>
       </div>
       
+      {/* Provider Info */}
+      <div className="provider-info mb-4 p-3 bg-gray-50 rounded-lg">
+        {/* <p className="text-sm text-gray-600">
+          Credentials for: <span className="font-semibold text-gray-800">{provider.name}</span>
+        </p> */}
+        {/* <p className="text-xs text-gray-500">ID: {provider.id}</p> */}
+      </div>
+      
       <div className="verification-badges flex gap-3 mb-4 flex-wrap">
-        {identityVerified && (
+        {verificationData.identityVerified && (
           <div className="verification-badge flex items-center bg-blue-600 text-white px-3 py-1 rounded-full">
             <UserIcon className="h-4 w-4 text-white mr-1" />
             <span className="text-sm font-medium">Identity Verified</span>
           </div>
         )}
         
-        {backgroundCheckPassed && (
+        {verificationData.backgroundCheckPassed && (
           <div className="verification-badge flex items-center bg-yellow-200 text-black px-3 py-1 rounded-full">
             <ShieldCheckIcon className="h-4 w-4 text-black mr-1" />
             <span className="text-sm font-medium">Background Verified</span>
           </div>
         )}
         
-        {verificationStatus === 'VERIFIED' && (
+        {verificationData.verificationStatus === 'VERIFIED' && (
           <div className="verification-badge flex items-center bg-black text-white px-3 py-1 rounded-full">
             <CheckBadgeIcon className="h-4 w-4 text-yellow-400 mr-1" />
-            <span className="text-sm font-medium">{verificationStatus}</span>
+            <span className="text-sm font-medium">{verificationData.verificationStatus}</span>
           </div>
         )}
       </div>
       
-      {credentials.length > 0 ? (
+      {placeholderCredentials.length > 0 ? (
         <div className="space-y-4">
-          {credentials.map((credential) => (
+          {placeholderCredentials.map((credential) => (
             <div key={credential.id} className="credential-card bg-white rounded-lg shadow p-4">
               <div className="flex items-start justify-between">
                 <div className="flex">
@@ -74,6 +125,17 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
                       Issued: {formatDate(credential.issueDate)}
                       {credential.expiryDate && ` • Expires: ${formatDate(credential.expiryDate)}`}
                     </p>
+                    <div className="mt-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        credential.verificationStatus === 'VERIFIED' 
+                          ? 'bg-green-100 text-green-800'
+                          : credential.verificationStatus === 'PENDING'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {credential.verificationStatus}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 {credential.verificationStatus === 'VERIFIED' && (
@@ -86,6 +148,9 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
       ) : (
         <div className="bg-yellow-50 p-6 rounded-lg text-center">
           <p className="text-black">You haven't added any credentials yet</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Add credentials to build trust with potential clients
+          </p>
           <Link href="/provider/credentials/add">
             <button className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               Add Credentials

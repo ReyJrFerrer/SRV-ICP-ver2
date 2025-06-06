@@ -169,13 +169,11 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         
         <div className="p-4 max-w-7xl mx-auto"> 
           {/* Use legacyProvider for components that still need the old interface */}
-          {/* {legacyProvider && (
-            <ProviderStatsNextjs 
-              provider={legacyProvider}
-              stats={providerStats}
-              loading={servicesLoading}
-            />
-          )} */}
+          {legacyProvider && (
+              <ProviderStatsNextjs 
+                loading={servicesLoading}
+              />
+          )}
           
           <BookingRequestsNextjs 
             pendingRequests={bookingCounts.pendingCount}
@@ -189,9 +187,10 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
             onRefresh={refreshServices}
           />
 
-          {/* {legacyProvider && (
-            <CredentialsDisplayNextjs provider={legacyProvider} />
-          )} */}
+          {userProfile && (
+            <CredentialsDisplayNextjs provider={userProfile} />
+          )}
+
         </div>
         
         <BottomNavigationNextjs />

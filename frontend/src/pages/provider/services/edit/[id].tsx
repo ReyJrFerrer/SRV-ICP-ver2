@@ -25,6 +25,9 @@ import {
   Service
 } from '../../../../services/serviceCanisterService';
 
+// Import AvailabilityConfiguration component
+import AvailabilityConfiguration from '../../../../components/provider/AvailabilityConfiguration';
+
 // Interfaces for form data (same as add.tsx)
 interface TimeSlotUIData { 
   id: string; 
@@ -51,10 +54,16 @@ const initialServiceFormState = {
   locationAddress: '',
   serviceRadius: '5',
   serviceRadiusUnit: 'km' as 'km' | 'mi',
+  
+  // Availability settings
+  instantBookingEnabled: true,
+  bookingNoticeHours: 24,
+  maxBookingsPerDay: 5,
   availabilitySchedule: [] as DayOfWeek[],
   useSameTimeForAllDays: true,
   commonTimeSlots: [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM' as 'AM' | 'PM', endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }] as TimeSlotUIData[],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
+  
   requirements: '',
   servicePackages: [{ id: nanoid(), name: '', description: '', price: '', currency: 'PHP', isPopular: false }] as ServicePackageUIData[],
   existingHeroImage: '',
@@ -68,6 +77,83 @@ const initialServiceFormState = {
 const timeToUIDataParts = (time24: string): { hour: string, minute: string, period: 'AM' | 'PM' } => { /* ... same as add.tsx ... */ const [h, m] = time24.split(':').map(Number); const period = h >= 12 ? 'PM' : 'AM'; let hour12 = h % 12; if (hour12 === 0) hour12 = 12; return { hour: String(hour12).padStart(2, '0'), minute: String(m).padStart(2, '0'), period: period as 'AM' | 'PM' }; };
 const convertServiceAvailabilityToUIData = (serviceSlots: string[]): TimeSlotUIData[] => { /* ... same as add.tsx ... */ if (!serviceSlots || serviceSlots.length === 0) { return [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM', endHour: '05', endMinute: '00', endPeriod: 'PM' }]; } return serviceSlots.map(slotString => { const [startTime24, endTime24] = slotString.split('-'); const startParts = timeToUIDataParts(startTime24); const endParts = timeToUIDataParts(endTime24); return { id: nanoid(), startHour: startParts.hour, startMinute: startParts.minute, startPeriod: startParts.period, endHour: endParts.hour, endMinute: endParts.minute, endPeriod: endParts.period, }; }); };
 
+// Helper functions for availability conversion
+const convertTimeSlotUIToBackend = (slot: TimeSlotUIData): string => {
+  const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => {
+    let hour = parseInt(hourStr, 10);
+    if (period === 'PM' && hour !== 12) hour += 12;
+    else if (period === 'AM' && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, '0')}:${minuteStr}`;
+  };
+
+  const startTime = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod);
+  const endTime = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod);
+  
+  return `${startTime}-${endTime}`;
+};
+
+const convertUIAvailabilityToBackend = (formData: typeof initialServiceFormState): ProviderAvailability => {
+  const weeklySchedule: Array<{ day: DayOfWeek; availability: DayAvailability }> = [];
+
+  formData.availabilitySchedule.forEach(day => {
+    let timeSlots: string[] = [];
+
+    if (formData.useSameTimeForAllDays) {
+      // Use common time slots for all days
+      timeSlots = formData.commonTimeSlots
+        .map(slot => convertTimeSlotUIToBackend(slot))
+        .filter(slot => slot !== null) as string[];
+    } else {
+      // Use per-day time slots
+      const daySlots = formData.perDayTimeSlots[day] || [];
+      timeSlots = daySlots
+        .map(slot => convertTimeSlotUIToBackend(slot))
+        .filter(slot => slot !== null) as string[];
+    }
+
+    if (timeSlots.length > 0) {
+      weeklySchedule.push({
+        day,
+        availability: {
+          isAvailable: true,
+          slots: timeSlots.map(slotString => {
+            const [startTime, endTime] = slotString.split('-');
+            return { startTime, endTime };
+          })
+        }
+      });
+    }
+  });
+
+  return {
+    weeklySchedule,
+    instantBookingEnabled: formData.instantBookingEnabled,
+    bookingNoticeHours: formData.bookingNoticeHours,
+    maxBookingsPerDay: formData.maxBookingsPerDay
+  } as ProviderAvailability;
+};
+
+const convertBackendSlotsToUI = (slots: Array<{startTime: string, endTime: string}>): TimeSlotUIData[] => {
+  if (!slots || slots.length === 0) {
+    return [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM', endHour: '05', endMinute: '00', endPeriod: 'PM' }];
+  }
+
+  return slots.map(slot => {
+    const startParts = timeToUIDataParts(slot.startTime);
+    const endParts = timeToUIDataParts(slot.endTime);
+    
+    return {
+      id: nanoid(),
+      startHour: startParts.hour,
+      startMinute: startParts.minute,
+      startPeriod: startParts.period,
+      endHour: endParts.hour,
+      endMinute: endParts.minute,
+      endPeriod: endParts.period,
+    };
+  });
+};
+
 
 const EditServicePage: React.FC = () => {
   const router = useRouter();
@@ -75,7 +161,6 @@ const EditServicePage: React.FC = () => {
   const { isAuthenticated, currentIdentity } = useAuth();
 
   // Service Management Hook Integration
-  // missing availability
   const {
     getService,
     updateService,
@@ -83,6 +168,8 @@ const EditServicePage: React.FC = () => {
     createPackage,
     updatePackage,
     deletePackage,
+    updateAvailability,
+    getServiceAvailability,
     categories,
     loading: hookLoading,
     error: hookError,
@@ -222,8 +309,10 @@ const EditServicePage: React.FC = () => {
               setServiceToEdit(service);
             }
 
-            // Load service packages
+            // Load service packages and availability
             let loadedPackages: ServicePackage[] = [];
+            let serviceAvailability: ProviderAvailability | null = null;
+            
             try {
               console.log('Loading packages for service:', serviceId);
               loadedPackages = await getServicePackages(serviceId);
@@ -239,6 +328,15 @@ const EditServicePage: React.FC = () => {
               }
             }
 
+            // Load availability data
+            try {
+              console.log('Loading availability for service:', serviceId);
+              serviceAvailability = await getServiceAvailability(serviceId);
+              console.log('Availability loaded:', serviceAvailability);
+            } catch (availabilityError) {
+              console.error("Failed to load service availability:", availabilityError);
+            }
+
             // Populate form data
             if (mountedRef.current) {
               setFormData({
@@ -247,10 +345,14 @@ const EditServicePage: React.FC = () => {
                 locationAddress: service.location.address,
                 serviceRadius: '5', // Default value since this field may not exist in new schema
                 serviceRadiusUnit: 'km' as 'km' | 'mi',
-                availabilitySchedule: service.weeklySchedule ? service.weeklySchedule.map(item => item.day) : [],
+                // Populate availability from loaded data
+                instantBookingEnabled: serviceAvailability?.instantBookingEnabled || false,
+                bookingNoticeHours: serviceAvailability?.bookingNoticeHours || 24,
+                maxBookingsPerDay: serviceAvailability?.maxBookingsPerDay || 5,
+                availabilitySchedule: serviceAvailability?.weeklySchedule?.map(item => item.day) || [],
                 useSameTimeForAllDays: true,
-                commonTimeSlots: service.weeklySchedule && service.weeklySchedule.length > 0 
-                  ? convertServiceAvailabilityToUIData([])  // We'll need to adapt this
+                commonTimeSlots: serviceAvailability?.weeklySchedule && serviceAvailability.weeklySchedule.length > 0 
+                  ? convertBackendSlotsToUI(serviceAvailability.weeklySchedule[0].availability.slots)
                   : [{ id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM' as 'AM' | 'PM', endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }],
                 perDayTimeSlots: {
                   Monday: [],
@@ -364,6 +466,13 @@ const EditServicePage: React.FC = () => {
       return;
     }
 
+    // Validate availability schedule
+    if (formData.availabilitySchedule.length === 0) {
+      setError("Please select at least one working day.");
+      setIsLoading(false);
+      return;
+    }
+
     const selectedCategory = categories.find(c => c.id === formData.categoryId);
     if (!selectedCategory) {
       setError("Invalid category selected.");
@@ -379,6 +488,17 @@ const EditServicePage: React.FC = () => {
         formData.serviceOfferingTitle, // description
         parseFloat(validPackages[0].price) || 0
       );
+
+      // Update availability
+      try {
+        const availabilityData = convertUIAvailabilityToBackend(formData);
+        await updateAvailability(serviceToEdit.id, availabilityData);
+        console.log('Availability updated successfully');
+      } catch (availabilityError) {
+        console.error('Failed to update availability:', availabilityError);
+        // Don't fail the entire operation, just log the error
+        setError(`Service updated but availability update failed: ${availabilityError instanceof Error ? availabilityError.message : 'Unknown error'}`);
+      }
 
       // Handle package updates
       const existingPackageIds = packages.map(pkg => pkg.id);
@@ -434,6 +554,35 @@ const EditServicePage: React.FC = () => {
       hasLoadedSuccessfully.current = false; // Reset success flag for retry
       loadServiceDataRobust(id);
     }
+  };
+
+  // Availability handler functions (same as add.tsx)
+  const handleInstantBookingChange = (enabled: boolean) => {
+    setFormData(prev => ({ ...prev, instantBookingEnabled: enabled }));
+  };
+
+  const handleBookingNoticeHoursChange = (hours: number) => {
+    setFormData(prev => ({ ...prev, bookingNoticeHours: hours }));
+  };
+
+  const handleMaxBookingsPerDayChange = (count: number) => {
+    setFormData(prev => ({ ...prev, maxBookingsPerDay: count }));
+  };
+
+  const handleAvailabilityScheduleChange = (days: DayOfWeek[]) => {
+    setFormData(prev => ({ ...prev, availabilitySchedule: days }));
+  };
+
+  const handleUseSameTimeChange = (useSame: boolean) => {
+    setFormData(prev => ({ ...prev, useSameTimeForAllDays: useSame }));
+  };
+
+  const handleCommonTimeSlotsChange = (slots: TimeSlotUIData[]) => {
+    setFormData(prev => ({ ...prev, commonTimeSlots: slots }));
+  };
+
+  const handlePerDayTimeSlotsChange = (perDaySlots: Record<DayOfWeek, TimeSlotUIData[]>) => {
+    setFormData(prev => ({ ...prev, perDayTimeSlots: perDaySlots }));
   };
 
   // Show loading screen during initialization or data loading
@@ -579,70 +728,23 @@ const EditServicePage: React.FC = () => {
               <button type="button" onClick={addPackage} className="mt-3 px-4 py-2 border border-dashed border-blue-500 text-sm font-medium rounded-md text-blue-700 hover:bg-blue-50">+ Add Package</button>
             </fieldset>
 
-            {/* Availability Section (same as add.tsx) */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-                <legend className="text-sm font-medium text-gray-700 px-1">Availability*</legend>
-                <div className="mt-2 mb-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-2">Working Days</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2">
-                        {daysOfWeek.map(day => (
-                            <div key={day} className="flex items-center">
-                                <input type="checkbox" name="availabilitySchedule" id={`day-${day}`} value={day} checked={formData.availabilitySchedule.includes(day)} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
-                                <label htmlFor={`day-${day}`} className="ml-2 block text-sm text-gray-900">{day}</label>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <div className="mt-4 mb-3 flex items-center">
-                    <input type="checkbox" name="useSameTimeForAllDays" id="useSameTimeForAllDays" checked={formData.useSameTimeForAllDays} onChange={handleChange} className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
-                    <label htmlFor="useSameTimeForAllDays" className="ml-2 block text-sm text-gray-900">Use same time slots for all selected working days</label>
-                </div>
-                {formData.useSameTimeForAllDays ? (
-                     <div className="mt-2">
-                        <label className="block text-xs font-medium text-gray-600 mb-2">Common Time Slots</label>
-                        {formData.commonTimeSlots.map((slot, index) => (
-                        <div key={slot.id} className="p-3 mb-2 border border-gray-200 rounded-md bg-gray-50 space-y-2">
-                            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 items-center">
-                                <select name="startHour" aria-label={`Start hour for slot ${index+1}`} value={slot.startHour} onChange={(e) => handleCommonTimeSlotChange(index, 'startHour', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{hourOptions.map(h => <option key={`c_sh-${index}-${h}`} value={h}>{h}</option>)}</select>
-                                <select name="startMinute" aria-label={`Start minute for slot ${index+1}`} value={slot.startMinute} onChange={(e) => handleCommonTimeSlotChange(index, 'startMinute', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{minuteOptions.map(m => <option key={`c_sm-${index}-${m}`} value={m}>{m}</option>)}</select>
-                                <select name="startPeriod" aria-label={`Start period for slot ${index+1}`} value={slot.startPeriod} onChange={(e) => handleCommonTimeSlotChange(index, 'startPeriod', e.target.value as 'AM' | 'PM')} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{periodOptions.map(p => <option key={`c_sp-${index}-${p}`} value={p}>{p}</option>)}</select>
-                                <span className="hidden sm:inline-block text-center text-gray-500 sm:col-span-1">to</span>
-                                <select name="endHour" aria-label={`End hour for slot ${index+1}`} value={slot.endHour} onChange={(e) => handleCommonTimeSlotChange(index, 'endHour', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{hourOptions.map(h => <option key={`c_eh-${index}-${h}`} value={h}>{h}</option>)}</select>
-                                <select name="endMinute" aria-label={`End minute for slot ${index+1}`} value={slot.endMinute} onChange={(e) => handleCommonTimeSlotChange(index, 'endMinute', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{minuteOptions.map(m => <option key={`c_em-${index}-${m}`} value={m}>{m}</option>)}</select>
-                                <select name="endPeriod" aria-label={`End period for slot ${index+1}`} value={slot.endPeriod} onChange={(e) => handleCommonTimeSlotChange(index, 'endPeriod', e.target.value as 'AM' | 'PM')} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{periodOptions.map(p => <option key={`c_ep-${index}-${p}`} value={p}>{p}</option>)}</select>
-                            </div>
-                            {formData.commonTimeSlots.length > 1 && (<button type="button" onClick={() => removeCommonTimeSlot(slot.id)} className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center"><TrashIcon className="h-3 w-3 mr-1"/> Remove Slot</button> )}
-                        </div>
-                        ))}
-                        <button type="button" onClick={addCommonTimeSlot} className="mt-2 px-3 py-1.5 border border-dashed border-gray-400 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-50">+ Add Common Time Slot</button>
-                    </div>
-                ) : (
-                     <div className="mt-2 space-y-4">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Specific Time Slots per Selected Day</label>
-                        {formData.availabilitySchedule.length === 0 && <p className="text-xs text-gray-500">Select working days above.</p>}
-                        {formData.availabilitySchedule.map(day => (
-                        <div key={day} className="p-3 border border-gray-200 rounded-md bg-gray-50">
-                            <p className="text-sm font-medium text-gray-800 mb-2">{day}</p>
-                            {(formData.perDayTimeSlots[day] || []).map((slot, index) => (
-                            <div key={slot.id} className="p-2 mb-2 border border-gray-100 rounded-md bg-white space-y-2">
-                                <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 items-center">
-                                   <select name="startHour" value={slot.startHour} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startHour', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{hourOptions.map(h => <option key={`${day}_sh-${index}-${h}`} value={h}>{h}</option>)}</select>
-                                   <select name="startMinute" value={slot.startMinute} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startMinute', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{minuteOptions.map(m => <option key={`${day}_sm-${index}-${m}`} value={m}>{m}</option>)}</select>
-                                   <select name="startPeriod" value={slot.startPeriod} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startPeriod', e.target.value as 'AM' | 'PM')} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{periodOptions.map(p => <option key={`${day}_sp-${index}-${p}`} value={p}>{p}</option>)}</select>
-                                   <span className="hidden sm:inline-block text-center text-gray-500 sm:col-span-1">to</span>
-                                   <select name="endHour" value={slot.endHour} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endHour', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{hourOptions.map(h => <option key={`${day}_eh-${index}-${h}`} value={h}>{h}</option>)}</select>
-                                   <select name="endMinute" value={slot.endMinute} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endMinute', e.target.value)} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{minuteOptions.map(m => <option key={`${day}_em-${index}-${m}`} value={m}>{m}</option>)}</select>
-                                   <select name="endPeriod" value={slot.endPeriod} onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endPeriod', e.target.value as 'AM' | 'PM')} className="col-span-1 block w-full px-2 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{periodOptions.map(p => <option key={`${day}_ep-${index}-${p}`} value={p}>{p}</option>)}</select>
-                                </div>
-                                {(formData.perDayTimeSlots[day]?.length || 0) > 1 && (<button type="button" onClick={() => removePerDayTimeSlot(day, slot.id)} className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center"><TrashIcon className="h-3 w-3 mr-1"/> Remove Slot</button> )}
-                            </div>
-                            ))}
-                            <button type="button" onClick={() => addPerDayTimeSlot(day)} className="mt-2 px-3 py-1.5 border border-dashed border-gray-400 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-50">+ Add Time Slot for {day}</button>
-                        </div>
-                        ))}
-                    </div>
-                )}
-            </fieldset>
+            {/* Availability Configuration */}
+            <AvailabilityConfiguration
+              instantBookingEnabled={formData.instantBookingEnabled}
+              bookingNoticeHours={formData.bookingNoticeHours}
+              maxBookingsPerDay={formData.maxBookingsPerDay}
+              availabilitySchedule={formData.availabilitySchedule}
+              useSameTimeForAllDays={formData.useSameTimeForAllDays}
+              commonTimeSlots={formData.commonTimeSlots}
+              perDayTimeSlots={formData.perDayTimeSlots}
+              onInstantBookingChange={handleInstantBookingChange}
+              onBookingNoticeHoursChange={handleBookingNoticeHoursChange}
+              onMaxBookingsPerDayChange={handleMaxBookingsPerDayChange}
+              onAvailabilityScheduleChange={handleAvailabilityScheduleChange}
+              onUseSameTimeChange={handleUseSameTimeChange}
+              onCommonTimeSlotsChange={handleCommonTimeSlotsChange}
+              onPerDayTimeSlotsChange={handlePerDayTimeSlotsChange}
+            />
 
             {/* Service Location */}
             <fieldset className="border p-4 rounded-md border-gray-300">

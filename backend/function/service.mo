@@ -757,7 +757,25 @@ actor ServiceCanister {
                             return #ok(availability);
                         };
                         case (_, _, _, _) {
-                            return #err("Service availability not properly configured");
+                            // Handle partial availability data with defaults
+                            switch (service.weeklySchedule, service.instantBookingEnabled) {
+                                case (?schedule, ?instantBooking) {
+                                    let availability : ProviderAvailability = {
+                                        providerId = service.providerId;
+                                        weeklySchedule = schedule;
+                                        instantBookingEnabled = instantBooking;
+                                        bookingNoticeHours = switch (service.bookingNoticeHours) { case (?hours) hours; case (null) 2 }; // Default 2 hours
+                                        maxBookingsPerDay = switch (service.maxBookingsPerDay) { case (?max) max; case (null) 10 }; // Default 10 bookings
+                                        isActive = true;
+                                        createdAt = service.createdAt;
+                                        updatedAt = service.updatedAt;
+                                    };
+                                    return #ok(availability);
+                                };
+                                case (_, _) {
+                                    return #err("Service availability not properly configured");
+                                };
+                            };
                         };
                     };
                 };
@@ -832,7 +850,7 @@ actor ServiceCanister {
                 };
             };
         };
-        };
+        }; 
 
         if (not availability.isActive) {
             return #err("Service is not currently accepting bookings");

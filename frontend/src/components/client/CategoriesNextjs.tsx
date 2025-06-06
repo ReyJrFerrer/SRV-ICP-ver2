@@ -65,8 +65,8 @@ const Categories: React.FC<CategoriesProps> = ({
   };
 
   // Define responsive classes
-  const itemBaseClass = "flex flex-col items-center text-center p-1 sm:p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500";
-  const iconContainerBaseClass = "mb-1 sm:mb-2 p-2 rounded-full inline-flex justify-center items-center group-hover:bg-green-200 transition-colors";
+  const itemBaseClass = "flex flex-col items-center text-center p-1 sm:p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const iconContainerBaseClass = "mb-1 sm:mb-2 p-2 rounded-full inline-flex justify-center items-center group-hover:bg-blue-200 transition-colors";
   const iconSizeClass = "h-5 w-5 sm:h-6 sm:h-6 md:h-7 md:h-7"; // Mobile: 20px, sm: 24px, md: 28px
   const iconContainerSizeClass = "w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"; // Mobile: 40px, sm: 48px, md: 64px
   const textClass = "text-xs sm:text-sm font-medium text-gray-700";
@@ -86,7 +86,7 @@ const Categories: React.FC<CategoriesProps> = ({
             className={itemBaseClass}
             aria-label={`Category: ${category.name}`}
           >
-            <div className={`${iconContainerBaseClass} ${iconContainerSizeClass} bg-green-50 text-green-600`}>
+            <div className={`${iconContainerBaseClass} ${iconContainerSizeClass} bg-blue-50 text-blue-600`}>
               {renderIcon(category.icon, iconSizeClass)}
             </div>
             <span className={textClass}>{category.name}</span>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeftIcon, CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserCircleIcon, ChatBubbleLeftEllipsisIcon, XCircleIcon, ArrowPathIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 
 import { Order, OrderStatus } from 'frontend/assets/types/order/order';
 import { SERVICES } from 'frontend/assets/services';
@@ -140,30 +141,51 @@ const ClientBookingDetailPage: React.FC = () => {
           </div>
           
           {/* Action Buttons */}
-          <div className="bg-white p-4 rounded-xl shadow-lg space-y-3 sm:space-y-0 sm:flex sm:space-x-3">
-            <button
-              onClick={handleContactProvider}
-              className="w-full sm:flex-1 flex items-center justify-center bg-slate-600 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
-            >
-              <ChatBubbleLeftEllipsisIcon className="h-5 w-5 mr-2"/> Contact Provider
-            </button>
-
-            {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+            <div className="bg-white p-4 rounded-xl shadow-lg space-y-3 sm:space-y-0 sm:flex sm:space-x-3">
               <button
-                onClick={handleCancelBooking}
-                className="w-full sm:flex-1 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+                onClick={handleContactProvider}
+                className="w-full sm:flex-1 flex items-center justify-center bg-slate-600 hover:bg-slate-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
               >
-                <XCircleIcon className="h-5 w-5 mr-2"/> Cancel Booking
+                <ChatBubbleLeftEllipsisIcon className="h-5 w-5 mr-2" /> Contact Provider
               </button>
-            )}
-            {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED') && serviceSlug && (
-              <Link href={`/client/book/${serviceSlug}`} legacyBehavior>
-                <a className="w-full sm:flex-1 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
-                  <ArrowPathIcon className="h-5 w-5 mr-2"/> Book Again
-                </a>
-              </Link>
-            )}
-          </div>
+
+              {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                <button
+                  onClick={handleCancelBooking}
+                  className="w-full sm:flex-1 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+                >
+                  <XCircleIcon className="h-5 w-5 mr-2" /> Cancel Booking
+                </button>
+              )}
+
+              {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED') && (
+                <>
+                  {serviceSlug && (
+                    <Link href={`/client/book/${serviceSlug}`} legacyBehavior>
+                      <a className="w-full sm:flex-1 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
+                        <ArrowPathIcon className="h-5 w-5 mr-2" /> Book Again
+                      </a>
+                    </Link>
+                  )}
+
+                  {/* New Rate Provider Button */}
+                  <Link
+                    href={{
+                      pathname: '/client/bookings-ratings',
+                      query: {
+                        providerName: providerName,
+                        bookingId: booking.id
+                      },
+                    }}
+                    legacyBehavior
+                  >
+                    <a className="w-full sm:flex-1 flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
+                      <StarIcon className="h-5 w-5 mr-2" /> Rate Provider
+                    </a>
+                  </Link>
+                </>
+              )}
+            </div>
 
         </main>
         <div className="md:hidden"> {/* Show BottomNavigation only on smaller screens */}

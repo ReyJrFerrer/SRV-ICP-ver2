@@ -297,7 +297,7 @@ export const bookingCanisterService = {
       // Get the agent to check the principal being used
       const agent = await getHttpAgent();
       const principal = await agent.getPrincipal();
-      console.log('Calling createBooking with principal:', principal.toString());
+      console.log('Calling createBooking with requested time stamp:',requestedTimestamp);
       
       const result = await actor.createBooking(
         serviceId,

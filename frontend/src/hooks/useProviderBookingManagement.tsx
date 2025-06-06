@@ -326,6 +326,8 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Calculate booking properties
       const now = new Date();
       const scheduledDate = booking.scheduledDate ? new Date(booking.scheduledDate) : null;
+      console.log('scheduled date', scheduledDate)
+      console.log('now date', now)
       const isOverdue = scheduledDate ? scheduledDate < now && booking.status === 'Accepted' : false;
       
       const enhancedBooking: ProviderEnhancedBooking = {
@@ -339,7 +341,9 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         
         // Status flags
         isPending: booking.status === 'Requested',
-        isUpcoming: booking.status === 'Accepted' && !isOverdue,
+
+        // Removed is overdue
+        isUpcoming: booking.status === 'Accepted' ,
         isActive: booking.status === 'InProgress',
         isCompleted: booking.status === 'Completed',
         
@@ -356,15 +360,9 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         
         isClientDataLoaded: true
       };
+
+      console.log("This is the enhanced booking ", enhancedBooking);
       
-      console.log(`✅ Booking enriched:`, {
-        bookingId: booking.id,
-        clientName: enhancedBooking.clientName,
-        hasClientProfile: !!clientProfile,
-        formattedLocation,
-        isPending: enhancedBooking.isPending,
-        canAccept: enhancedBooking.canAccept
-      });
       
       return enhancedBooking;
     } catch (error) {
@@ -432,7 +430,9 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       const providerPrincipal = Principal.fromText(currentProviderId);
       const rawBookings = await bookingCanisterService.getProviderBookings(providerPrincipal);
       
+      
       console.log(`📋 Loaded ${rawBookings.length} raw provider bookings`);
+      console.log("Raw Bookings data format: ", rawBookings)
       
       // Enrich bookings with client data in parallel
       const enrichedBookings = await Promise.all(

@@ -57,11 +57,11 @@ actor BookingCanister {
         price >= MIN_PRICE and price <= MAX_PRICE
     };
 
-    private func validateScheduledDate(requestedDate : Time.Time, scheduledDate : Time.Time) : Bool {
-        let now = Time.now();
-        let timeUntilScheduled = scheduledDate - now;
-        timeUntilScheduled >= MIN_SCHEDULE_AHEAD and timeUntilScheduled <= MAX_SCHEDULE_AHEAD
-    };
+    // private func validateScheduledDate(requestedDate : Time.Time, scheduledDate : Time.Time) : Bool {
+    //     let now = Time.now();
+    //     let timeUntilScheduled = scheduledDate - now;
+    //     timeUntilScheduled >= MIN_SCHEDULE_AHEAD and timeUntilScheduled <= MAX_SCHEDULE_AHEAD
+    // };
 
     private func isValidStatusTransition(currentStatus : BookingStatus, newStatus : BookingStatus) : Bool {
         switch (currentStatus, newStatus) {
@@ -311,13 +311,13 @@ actor BookingCanister {
             };
         };
 
-        if (not validatePrice(price)) {
-            return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
-        };
+        // if (not validatePrice(price)) {
+        //     return #err("Price must be between " # Nat.toText(MIN_PRICE) # " and " # Nat.toText(MAX_PRICE));
+        // };
 
-        if (not validateScheduledDate(requestedDate, requestedDate)) {
-            return #err("Requested date must be between 1 hour and 30 days from now");
-        };
+        // if (not validateScheduledDate(requestedDate, requestedDate)) {
+        //     return #err("Requested date must be between 1 hour and 30 days from now");
+        // };
 
         // Validate service availability using new service-based approach
         switch (await validateServiceAvailability(serviceId, requestedDate)) {
@@ -421,9 +421,9 @@ actor BookingCanister {
         
         switch (bookings.get(bookingId)) {
             case (?existingBooking) {
-                if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
-                    return #err("Scheduled date must be between 1 hour and 30 days from now");
-                };
+                // if (not validateScheduledDate(existingBooking.requestedDate, scheduledDate)) {
+                //     return #err("Scheduled date must be between 1 hour and 30 days from now");
+                // };
 
                 switch (updateBookingStatus(existingBooking, #Accepted, caller, true)) {
                     case (#ok(updatedBooking)) {

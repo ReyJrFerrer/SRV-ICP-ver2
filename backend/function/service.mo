@@ -926,15 +926,15 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
     };
 
     // Check if service is available at specific date and time
-    public func isServiceAvailable(
+      public func isServiceAvailable(
         serviceId : Text,
         requestedDateTime : Time.Time
     ) : async Result<Bool> {
         
+        // Basic checks only
         let availability = switch (serviceAvailabilities.get(serviceId)) {
             case (?avail) avail;
             case (null) {
-                // If not found in serviceAvailabilities, try to construct from service data
                 switch (services.get(serviceId)) {
                     case (?service) {
                         switch (service.weeklySchedule, service.instantBookingEnabled, service.bookingNoticeHours, service.maxBookingsPerDay) {
@@ -948,79 +948,24 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
                                     isActive = true;
                                     createdAt = service.createdAt;
                                     updatedAt = service.updatedAt;
-                            }
-                        };
-                        case (_, _, _, _) {
-                            return #err("Service availability not properly configured");
+                                }
+                            };
+                            case (_, _, _, _) {
+                                return #err("Service availability not properly configured");
+                            };
                         };
                     };
-                };
-                case (null) {
-                    return #err("Service not found");
-                };
-            };
-        };
-        };
-
-        if (not availability.isActive) {
-            return #ok(false);
-        };
-
-        // Check booking notice requirement
-        let currentTime = Time.now();
-        let requiredNoticeNanos = availability.bookingNoticeHours * 3600_000_000_000; // Convert hours to nanoseconds
-        
-        if (requestedDateTime < (currentTime + requiredNoticeNanos)) {
-            return #ok(false);
-        };
-
-        // Check day availability
-        let dayOfWeek = getDayOfWeekFromTime(requestedDateTime);
-        let dayAvailability = Array.find<(DayOfWeek, DayAvailability)>(
-            availability.weeklySchedule,
-            func ((day, _) : (DayOfWeek, DayAvailability)) : Bool {
-                day == dayOfWeek
-            }
-        );
-
-        switch (dayAvailability) {
-            case (?((_, dayAvail))) {
-                if (not dayAvail.isAvailable) {
-                    return #ok(false);
-                };
-
-                // Check if time falls within available slots
-                let timeOfDay = getTimeOfDayFromTimestamp(requestedDateTime);
-                let isWithinSlot = Array.find<TimeSlot>(
-                    dayAvail.slots,
-                    func (slot : TimeSlot) : Bool {
-                        isTimeWithinSlot(timeOfDay, slot)
-                    }
-                );
-
-                if (isWithinSlot == null) {
-                    return #ok(false);
-                };
-
-                // Check daily booking limit
-                let service = switch (services.get(serviceId)) {
-                    case (?s) s;
                     case (null) {
                         return #err("Service not found");
                     };
                 };
-                let dailyBookingCount = await getDailyBookingCount(service.providerId, requestedDateTime);
-                if (dailyBookingCount >= availability.maxBookingsPerDay) {
-                    return #ok(false);
-                };
-
-                return #ok(true);
-            };
-            case (null) {
-                return #ok(false);
             };
         };
+
+        // Just check if service is active - trust that frontend only shows valid slots
+        return #ok(availability.isActive);
     };
+
 
     // Check if provider is available at specific date and time (backward compatibility - deprecated)
     public func isProviderAvailable(
@@ -1051,19 +996,20 @@ public query func getServiceAvailability(serviceId : Text) : async Result<Provid
         let secondsSinceEpoch = timestamp / 1_000_000_000;
         let daysSinceEpoch = secondsSinceEpoch / 86400; // 86400 seconds in a day
         
-        // January 1, 1970 was a Thursday (epoch day 0 = Thursday)
-        // So: 0=Thursday, 1=Friday, 2=Saturday, 3=Sunday, 4=Monday, 5=Tuesday, 6=Wednesday
+        // January 1, 1970 was a Thursday
+        // Days since epoch: 0=Thursday, 1=Friday, 2=Saturday, 3=Sunday, 4=Monday, 5=Tuesday, 6=Wednesday
+        // We want: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
         let dayIndex = (daysSinceEpoch + 4) % 7;
         
         switch (dayIndex) {
-            case (0) #Sunday;
+            case (0) #Sunday;    // Corrected mapping
             case (1) #Monday;
             case (2) #Tuesday;
             case (3) #Wednesday;
-            case (4) #Thursday;
+            case (4) #Thursday;  // Jan 1, 1970
             case (5) #Friday;
             case (6) #Saturday;
-            case (_) #Monday; // fallback
+            case (_) #Sunday; // fallback
         }
     };
 

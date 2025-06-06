@@ -280,7 +280,7 @@ actor ServiceCanister {
         
         services.put(serviceId, newService);
         
-        // Also add availability to serviceAvailabilities if provided
+        // ALWAYS add to serviceAvailabilities if ANY availability data is provided
         switch (weeklySchedule, instantBookingEnabled, bookingNoticeHours, maxBookingsPerDay) {
             case (?schedule, ?instantBooking, ?noticeHours, ?maxBookings) {
                 let availability : ProviderAvailability = {
@@ -295,8 +295,22 @@ actor ServiceCanister {
                 };
                 serviceAvailabilities.put(serviceId, availability);
             };
+            // ADD: Handle partial availability data with defaults
+            case (?schedule, ?instantBooking, _, _) {
+                let availability : ProviderAvailability = {
+                    providerId = caller;
+                    weeklySchedule = schedule;
+                    instantBookingEnabled = instantBooking;
+                    bookingNoticeHours = switch (bookingNoticeHours) { case (?hours) hours; case (null) 24 }; // Default 24 hours
+                    maxBookingsPerDay = switch (maxBookingsPerDay) { case (?max) max; case (null) 5 }; // Default 5 bookings
+                    isActive = true;
+                    createdAt = Time.now();
+                    updatedAt = Time.now();
+                };
+                serviceAvailabilities.put(serviceId, availability);
+            };
             case (_, _, _, _) {
-                // Availability not fully specified
+                // No availability data provided - this is fine
             };
         };
 
@@ -683,10 +697,34 @@ actor ServiceCanister {
 
         // Validate that the service exists and caller owns it
         switch (services.get(serviceId)) {
-            case (?service) {
-                if (service.providerId != caller) {
+            case (?existingService) {
+                if (existingService.providerId != caller) {
                     return #err("Not authorized to set availability for this service");
                 };
+                
+                // UPDATE: Also update the service record with new availability data
+                let updatedService : Service = {
+                    id = existingService.id;
+                    providerId = existingService.providerId;
+                    title = existingService.title;
+                    description = existingService.description;
+                    category = existingService.category;
+                    price = existingService.price;
+                    location = existingService.location;
+                    status = existingService.status;
+                    createdAt = existingService.createdAt;
+                    updatedAt = Time.now();
+                    rating = existingService.rating;
+                    reviewCount = existingService.reviewCount;
+                    // UPDATE: Sync availability information with the service record
+                    weeklySchedule = ?weeklySchedule;
+                    instantBookingEnabled = ?instantBookingEnabled;
+                    bookingNoticeHours = ?bookingNoticeHours;
+                    maxBookingsPerDay = ?maxBookingsPerDay;
+                };
+                
+                // Update the service record
+                services.put(serviceId, updatedService);
             };
             case (null) {
                 return #err("Service not found");
@@ -849,8 +887,8 @@ actor ServiceCanister {
                     return #err("Service not found");
                 };
             };
-        };
         }; 
+        };
 
         if (not availability.isActive) {
             return #err("Service is not currently accepting bookings");

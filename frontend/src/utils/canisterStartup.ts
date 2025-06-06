@@ -35,7 +35,7 @@ async function performInitialization(): Promise<void> {
       bookingCanisterId: process.env.NEXT_PUBLIC_BOOKING_CANISTER_ID!,
       serviceCanisterId: process.env.NEXT_PUBLIC_SERVICE_CANISTER_ID!,
       reviewCanisterId: process.env.NEXT_PUBLIC_REVIEW_CANISTER_ID!,
-      reputationCanisterId: process.env.NEXT_PUBLIC_REPUTATION_CANISTER_ID,
+      reputationCanisterId: process.env.NEXT_PUBLIC_REPUTATION_CANISTER_ID!,
     };
 
     // Validate required environment variables
@@ -48,7 +48,7 @@ async function performInitialization(): Promise<void> {
       reviewCanisterService.setCanisterReferences(
         config.bookingCanisterId,
         config.serviceCanisterId,
-        config.reputationCanisterId || '',
+        config.reputationCanisterId,
         config.authCanisterId
       ),
       serviceCanisterService.setCanisterReferences(
@@ -64,7 +64,7 @@ async function performInitialization(): Promise<void> {
         config.authCanisterId,
         config.serviceCanisterId,
         config.reviewCanisterId,
-        config.reputationCanisterId || ''
+        config.reputationCanisterId 
       ),
     ]);
 

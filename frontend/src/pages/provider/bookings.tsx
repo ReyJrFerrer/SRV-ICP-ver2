@@ -5,8 +5,8 @@ import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderBookingItemCard from '@app/components/provider/ProviderBookingItemCard';
 import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../hooks/useProviderBookingManagement';
 
-type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled';
-const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'Completed', 'Cancelled'];
+type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled' | 'InProgress';
+const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming','InProgress', 'Completed', 'Cancelled', ];
 
 const ProviderBookingsPage: React.FC = () => {
   const router = useRouter();
@@ -43,9 +43,10 @@ const ProviderBookingsPage: React.FC = () => {
       Pending: getPendingBookings(),
       Upcoming: getUpcomingBookings(),
       Completed: getCompletedBookings(),
-      Cancelled: getBookingsByStatus('Cancelled')
+      Cancelled: getBookingsByStatus('Cancelled'),
+      InProgress: bookings.filter(booking => booking.status === 'InProgress'), // ADD InProgress
     };
-  }, [getPendingBookings, getUpcomingBookings, getCompletedBookings, getBookingsByStatus]);
+  }, [getPendingBookings, getUpcomingBookings, getCompletedBookings, getBookingsByStatus, bookings]);
 
   const currentBookings: ProviderEnhancedBooking[] = categorizedBookings[activeTab] || [];
 
@@ -190,10 +191,20 @@ const ProviderBookingsPage: React.FC = () => {
           {currentBookings.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {currentBookings.map(booking => (
-                <ProviderBookingItemCard 
-                    key={booking.id} 
-                    booking={booking}
-                />
+                <div 
+                  key={booking.id}
+                  onClick={() => {
+                    // If it's an InProgress booking, navigate to active service page
+                    if (activeTab === 'InProgress' && booking.status === 'InProgress') {
+                      router.push(`/provider/active-service/${booking.id}`);
+                    }
+                  }}
+                  className={activeTab === 'InProgress' ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}
+                >
+                  <ProviderBookingItemCard 
+                      booking={booking}
+                  />
+                </div>
               ))}
             </div>
           ) : (
@@ -211,6 +222,9 @@ const ProviderBookingsPage: React.FC = () => {
                 {activeTab === 'Cancelled' && (
                   <div className="text-6xl mb-4">❌</div>
                 )}
+                {activeTab === 'InProgress' && (
+                  <div className="text-6xl mb-4">🔄</div>
+                )}
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No {activeTab.toLowerCase()} bookings
@@ -220,6 +234,7 @@ const ProviderBookingsPage: React.FC = () => {
                 {activeTab === 'Upcoming' && "You don't have any upcoming confirmed bookings."}
                 {activeTab === 'Completed' && "You haven't completed any bookings yet."}
                 {activeTab === 'Cancelled' && "You don't have any cancelled bookings."}
+                {activeTab === 'InProgress' && "You don't have any bookings in progress."}
               </p>
               {activeTab === 'Pending' && (
                 <p className="text-sm text-gray-400">

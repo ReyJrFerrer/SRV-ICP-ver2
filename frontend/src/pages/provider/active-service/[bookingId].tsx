@@ -71,18 +71,15 @@ const ActiveServicePage: React.FC = () => {
     return () => clearInterval(timerInterval);
   }, [actualStartTime]);
 
+  
   const handleMarkCompleted = async () => {
     if (!booking) return;
     
-    console.log(`Proceeding to complete and record payment for booking: ${booking.id}`);
+    console.log(`Redirecting to complete service page for booking: ${booking.id}`);
     
-    // Use the hook's complete function for better integration
-    const success = await completeBookingById(booking.id);
-    if (success) {
-      router.push(`/provider/complete-service/${booking.id}`);
-    } else {
-      alert('Failed to mark booking as completed. Please try again.');
-    }
+    // Just redirect to the complete service page without calling completeBookingById
+    // The actual completion will be handled in the complete-service page
+    router.push(`/provider/complete-service/${booking.id}`);
   };
 
   const handleUploadEvidence = () => { 

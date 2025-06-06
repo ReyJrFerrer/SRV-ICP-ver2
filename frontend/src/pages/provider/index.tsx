@@ -1,65 +1,29 @@
+// frontend/src/pages/provider/index.tsx
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth, useClient } from "@bundly/ares-react";
 import Head from 'next/head';
-import { Actor, HttpAgent } from '@dfinity/agent';
-import { idlFactory } from '../../declarations/auth/auth.did.js';
-import type { Profile } from '../../declarations/auth/auth.did.js';
 import Link from 'next/link';
-import { ArrowLeftIcon, FingerPrintIcon } from '@heroicons/react/24/solid';
-
-type Result<T> = {
-  ok?: T;
-  err?: string;
-};
+import { FingerPrintIcon } from '@heroicons/react/24/solid';
 
 export default function ProviderIndexPage() {
   const router = useRouter();
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const { isAuthenticated } = useAuth();
   const client = useClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('Please log in to access the provider portal.');
 
   useEffect(() => {
-    if (isAuthenticated && currentIdentity) {
-      setIsLoading(true);
-      setStatusMessage('Authenticated. Verifying profile...');
-      setError('');
-      const checkProfile = async () => {
-        try {
-          const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
-          const agent = new HttpAgent({ identity: currentIdentity, host });
-          if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
-          const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-          if (!authCanisterId) throw new Error('Auth canister ID not configured');
-
-          const authActor = Actor.createActor(idlFactory, { agent, canisterId: authCanisterId });
-          const profileResult = await authActor.getMyProfile() as Result<Profile>;
-          
-          if (profileResult.ok) {
-            if ('ServiceProvider' in profileResult.ok.role) {
-              router.push('/provider/home');
-            } else {
-              setError('Access denied. A Service Provider profile is required.');
-            }
-          } else if (profileResult.err?.includes("Profile not found")) {
-            router.push('/create-profile');
-          } else {
-            throw new Error(profileResult.err || 'Failed to retrieve profile.');
-          }
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'Failed to check profile.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      checkProfile();
+    if (isAuthenticated) {
+      setStatusMessage('Login successful! Redirecting to your dashboard...');
+      setIsLoading(true); 
+      router.push('/provider/home');
     } else {
-      setIsLoading(false);
       setStatusMessage('Please log in to access the provider portal.');
+      setIsLoading(false);
     }
-  }, [isAuthenticated, currentIdentity, router]);
+  }, [isAuthenticated, router]);
 
   const handleIILogin = async () => {
     try {
@@ -73,7 +37,7 @@ export default function ProviderIndexPage() {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
     } finally {
-      setIsLoading(false);
+      if (error) setIsLoading(false);
     }
   };
 
@@ -84,13 +48,11 @@ export default function ProviderIndexPage() {
         <meta name="description" content="Access your provider portal or log in." />
       </Head>
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        {/* Yellow top border to distinguish from the client page */}
         <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-2xl p-8 text-center border-t-4 border-yellow-300">
           <h2 className="text-2xl font-bold text-blue-600 mb-4">
             Provider Portal
           </h2>
           
-          {/* Status/Error Message Area */}
           <div className="min-h-[4rem] flex items-center justify-center mb-6">
             {error ? (
               <p className="text-red-600 text-sm">{error}</p>
@@ -98,8 +60,7 @@ export default function ProviderIndexPage() {
               <p className="text-slate-600">{statusMessage}</p>
             )}
           </div>
-          
-          {/* Styled Login Button - Always Visible */}
+
           <button
             onClick={handleIILogin}
             disabled={isLoading}

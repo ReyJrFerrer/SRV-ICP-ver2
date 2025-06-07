@@ -33,13 +33,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     isBookingActionInProgress,
     getStatusColor,
     formatBookingDate,
-    formatBookingTime
+    formatBookingTime,
+    refreshBookings // Add this if it exists in your hook
   } = useProviderBookingManagement();
 
   // Extract booking data with proper property names for ProviderEnhancedBooking
   const clientName = booking.clientName || 'Unknown Client';
   const clientContact = booking.clientPhone || booking.clientProfile?.phone || 'Contact not available';
-  const serviceTitle = booking.serviceId || 'Service'; // TODO: Add serviceTitle to the interface when service data is available
+  const serviceTitle = booking.serviceName || 'Service'; // TODO: Add serviceTitle to the interface when service data is available
   const scheduledDate = booking.scheduledDate ? new Date(booking.scheduledDate) : null;
   const duration = booking.serviceDuration || 'N/A';
   const price = booking.price;
@@ -52,6 +53,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     const success = await acceptBookingById(booking.id);
     if (success) {
       console.log(`✅ Booking ${booking.id} accepted successfully`);
+      // Force refresh the bookings list
+        await refreshBookings();
+      
     } else {
       console.error(`❌ Failed to accept booking ${booking.id}`);
     }
@@ -61,6 +65,9 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     const success = await declineBookingById(booking.id, 'Declined by provider');
     if (success) {
       console.log(`✅ Booking ${booking.id} declined successfully`);
+      // Force refresh the bookings list
+        await refreshBookings();
+      
     } else {
       console.error(`❌ Failed to decline booking ${booking.id}`);
     }
@@ -156,13 +163,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
           <div className="flex items-center">
             <CalendarIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             <span>Date: <span className="font-medium">
-              {booking.scheduledDate ? formatBookingDate(booking.scheduledDate) : 'TBD'}
+              {booking.scheduledDate ? formatBookingDate(booking.scheduledDate) : booking.bookingDate}
             </span></span>
           </div>
           <div className="flex items-center">
             <ClockIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             <span>Time: <span className="font-medium">
-              {booking.scheduledDate ? formatBookingTime(booking.scheduledDate) : 'TBD'}
+              {booking.scheduledDate ? formatBookingTime(booking.scheduledDate) : booking.bookingTime}
             </span></span>
           </div>
           {duration !== 'N/A' && (

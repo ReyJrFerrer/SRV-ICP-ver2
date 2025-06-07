@@ -20,6 +20,7 @@ actor BookingCanister {
     type Evidence = Types.Evidence;
     type Location = Types.Location;
     type Result<T> = Types.Result<T>;
+    type ReputationScore = Types.ReputationScore;
 
     // State variables
     private stable var bookingEntries : [(Text, Booking)] = [];
@@ -516,7 +517,7 @@ actor BookingCanister {
                         switch (reputationCanisterId) {
                             case (?repId) {
                                 let reputationCanister = actor(Principal.toText(repId)) : actor {
-                                    updateUserReputation : (Principal) -> async Types.Result<Types.ReputationScore>;
+                                    updateUserReputation : (Principal) -> async Result<ReputationScore>;
                                 };
                                 // Update provider reputation
                                 ignore await reputationCanister.updateUserReputation(updatedBooking.providerId);

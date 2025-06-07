@@ -24,16 +24,6 @@ export const idlFactory = ({ IDL }) => {
     'completedBookings' : IDL.Nat,
   });
   const Result = IDL.Variant({ 'ok' : ReputationScore, 'err' : IDL.Text });
-  const Evidence = IDL.Record({
-    'id' : IDL.Text,
-    'bookingId' : IDL.Text,
-    'createdAt' : Time,
-    'submitterId' : IDL.Principal,
-    'description' : IDL.Text,
-    'fileUrls' : IDL.Vec(IDL.Text),
-    'qualityScore' : IDL.Opt(IDL.Float64),
-  });
-  const Result_3 = IDL.Variant({ 'ok' : Evidence, 'err' : IDL.Text });
   const ReviewStatus = IDL.Variant({
     'Visible' : IDL.Null,
     'Hidden' : IDL.Null,
@@ -68,7 +58,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'initializeReputation' : IDL.Func([IDL.Principal, Time], [Result], []),
-    'processEvidence' : IDL.Func([Evidence], [Result_3], []),
     'processReview' : IDL.Func([Review], [Result_2], []),
     'setCanisterReferences' : IDL.Func(
         [IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal],

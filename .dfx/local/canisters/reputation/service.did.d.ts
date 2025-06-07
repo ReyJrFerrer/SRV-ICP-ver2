@@ -7,15 +7,6 @@ export type DetectionFlag = { 'ReviewBomb' : null } |
   { 'FakeEvidence' : null } |
   { 'CompetitiveManipulation' : null } |
   { 'IdentityFraud' : null };
-export interface Evidence {
-  'id' : string,
-  'bookingId' : string,
-  'createdAt' : Time,
-  'submitterId' : Principal,
-  'description' : string,
-  'fileUrls' : Array<string>,
-  'qualityScore' : [] | [number],
-}
 export interface ReputationScore {
   'detectionFlags' : Array<DetectionFlag>,
   'userId' : Principal,
@@ -30,8 +21,6 @@ export type Result = { 'ok' : ReputationScore } |
 export type Result_1 = { 'ok' : string } |
   { 'err' : string };
 export type Result_2 = { 'ok' : Review } |
-  { 'err' : string };
-export type Result_3 = { 'ok' : Evidence } |
   { 'err' : string };
 export interface Review {
   'id' : string,
@@ -66,7 +55,6 @@ export interface _SERVICE {
     }
   >,
   'initializeReputation' : ActorMethod<[Principal, Time], Result>,
-  'processEvidence' : ActorMethod<[Evidence], Result_3>,
   'processReview' : ActorMethod<[Review], Result_2>,
   'setCanisterReferences' : ActorMethod<
     [Principal, Principal, Principal, Principal],

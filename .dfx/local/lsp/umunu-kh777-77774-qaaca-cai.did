@@ -27,11 +27,6 @@ type Review =
    status: ReviewStatus;
    updatedAt: Time;
  };
-type Result_3 = 
- variant {
-   err: text;
-   ok: Evidence;
- };
 type Result_2 = 
  variant {
    err: text;
@@ -57,16 +52,6 @@ type ReputationScore =
    trustScore: float64;
    userId: principal;
  };
-type Evidence = 
- record {
-   bookingId: text;
-   createdAt: Time;
-   description: text;
-   fileUrls: vec text;
-   id: text;
-   qualityScore: opt float64;
-   submitterId: principal;
- };
 type DetectionFlag = 
  variant {
    CompetitiveManipulation;
@@ -87,7 +72,6 @@ service : {
                                   };
     }) query;
   initializeReputation: (userId: principal, creationTime: Time) -> (Result);
-  processEvidence: (evidence: Evidence) -> (Result_3);
   processReview: (review: Review) -> (Result_2);
   setCanisterReferences: (auth: principal, booking: principal, review:
    principal, "service": principal) -> (Result_1);

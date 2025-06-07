@@ -51,12 +51,45 @@ module {
         }),
         ("cat-005", {
             id = "cat-005";
+            name = "Beauty Services";
+            description = "Professional beauty and grooming services";
+            parentId = null;
+            slug = "beauty-services";
+            imageUrl = "/images/BeautyServices-CoverImage.jpg";
+        }),
+        ("cat-006", {
+            id = "cat-006";
+            name = "Delivery and Errands";
+            description = "Professional delivery and errand running services";
+            parentId = null;
+            slug = "delivery-errands";
+            imageUrl = "/images/Delivery-CoverImage.jpg";
+        }),
+        ("cat-007", {
+            id = "cat-007";
             name = "Beauty & Wellness";
-            description = "Professional beauty and wellness services";
+            description = "Professional wellness and spa services";
             parentId = null;
             slug = "beauty-wellness";
             imageUrl = "/images/Beauty&Wellness-CoverImage.jpg";
-        })
+        }),
+        ("cat-008", {
+            id = "cat-008";
+            name = "Tutoring";
+            description = "Professional educational tutoring services";
+            parentId = null;
+            slug = "tutoring";
+            imageUrl = "/images/Tutoring-CoverImage.jpg";
+        }),
+         ("cat-009", {
+            id = "cat-009";
+            name = "Photographer";
+            description = "Professional photography services";
+            parentId = null;
+            slug = "photographer";
+            imageUrl = "/images/BPhotographer-CoverImage.jpg";
+        }),
+
     ];
 
     // Default Location (Baguio City, Philippines)

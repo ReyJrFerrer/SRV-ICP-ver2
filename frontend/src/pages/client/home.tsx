@@ -75,7 +75,7 @@ const ClientHomePage: React.FC = () => {
           <Categories 
             categories={adaptedCategories} 
             className="mb-8"
-            initialItemCount={4}
+            initialItemCount={3}
           />
 
           <TopPicks 

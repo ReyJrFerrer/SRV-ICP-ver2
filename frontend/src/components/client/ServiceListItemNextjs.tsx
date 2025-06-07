@@ -56,11 +56,11 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           </div>
           
           {/* Category badge */}
-          {service.category && (
+          {/* {service.category && (
             <div className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold text-white rounded-full shadow bg-blue-600">
               {service.category.name}
             </div>
-          )}
+          )} */}
           
           {/* Availability badge */}
           <div 

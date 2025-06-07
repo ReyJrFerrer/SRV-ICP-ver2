@@ -61,7 +61,10 @@ export const getCategoryIcon = (categoryName: string): string => {
   if (lowerName.includes('clean')) return 'broom';
   if (lowerName.includes('auto') || lowerName.includes('car')) return 'car'; 
   if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) return 'computer';
-  if (lowerName.includes('beauty') || lowerName.includes('wellness')) return 'sparkles';
+  if (lowerName.includes('beauty') && lowerName.includes('wellness')) return 'sparkles';
+  if (lowerName.includes('beauty') && lowerName.includes('services')) return 'scissors';
+  if (lowerName.includes('photographer')) return 'camera';
+  if (lowerName.includes('tutoring')) return 'acads';
   
   // Additional categories
   if (lowerName.includes('delivery') || lowerName.includes('courier')) return 'truck';
@@ -88,11 +91,16 @@ export const getCategoryImage = (categoryName: string): string => {
     return '/images/AutomobileRepairs-CoverImage.jpg';
   if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) 
     return '/images/GadgetTechnician-CoverImage1.jpg';
-  if (lowerName.includes('beauty') || lowerName.includes('wellness')) 
+  if (lowerName.includes('beauty') && lowerName.includes('wellness')) 
     return '/images/Beauty&Wellness-CoverImage.jpg';
   if (lowerName.includes('delivery')) 
     return '/images/Delivery-CoverImage.jpg';
-  
+  if (lowerName.includes('beauty') && lowerName.includes('services')) 
+    return '/images/BeautyServices-CoverImage.jpg'
+  if (lowerName.includes('photography'))
+    return '/images/Photographer-CoverImage.jpg' 
+  if (lowerName.includes('tutoring'))
+    return '/images/Tutoring-CoverImage.jpg'
   // Default image
   return '/images/default-service.jpg';
 };

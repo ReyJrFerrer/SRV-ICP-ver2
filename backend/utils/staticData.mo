@@ -87,7 +87,7 @@ module {
             description = "Professional photography services";
             parentId = null;
             slug = "photographer";
-            imageUrl = "/images/BPhotographer-CoverImage.jpg";
+            imageUrl = "/images/Photographer-CoverImage.jpg";
         }),
 
     ];

@@ -10,8 +10,27 @@ import {
   ComputerDesktopIcon,
   SparklesIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  CameraIcon,
+  AcademicCapIcon,
+  ScissorsIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/solid';
+
+const iconMap: { [key: string]: React.ElementType } = {
+  home: HomeIcon,
+  broom: PaintBrushIcon,
+  car: WrenchScrewdriverIcon,
+  truck: TruckIcon,
+  computer: ComputerDesktopIcon,
+  bolt: BoltIcon,
+  wrench: WrenchScrewdriverIcon,
+  sparkles: SparklesIcon,
+  scissors: ScissorsIcon,
+  camera: CameraIcon,
+  acads: AcademicCapIcon,
+  default: EllipsisHorizontalCircleIcon,
+};
 
 interface Category {
   id: string;
@@ -34,10 +53,13 @@ const getCategoryDisplayName = (name: string): string => {
   if (lowerName.includes('clean')) return 'Cleaning';
   if (lowerName.includes('auto') || lowerName.includes('car')) return 'Automobile';
   if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) return 'Gadget';
-  if (lowerName.includes('beauty') || lowerName.includes('wellness')) return 'Beauty';
+  if (lowerName.includes('beauty') && lowerName.includes('wellness')) return 'Spa';
+  if (lowerName.includes('beauty') && lowerName.includes('services')) return 'Beauty';
   if (lowerName.includes('delivery')) return 'Delivery';
   if (lowerName.includes('electric')) return 'Electrical';
   if (lowerName.includes('repair') || lowerName.includes('maintenance')) return 'Repair';
+  if (lowerName.includes('photographer')) return 'Photography';
+  if (lowerName.includes('tutoring')) return 'Tutoring';
   
   return name; // Return original if no match
 };
@@ -45,7 +67,7 @@ const getCategoryDisplayName = (name: string): string => {
 const Categories: React.FC<CategoriesProps> = ({ 
   categories, 
   className = '',
-  initialItemCount = 4
+  initialItemCount = 3
 }) => {
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
@@ -54,27 +76,9 @@ const Categories: React.FC<CategoriesProps> = ({
   const shouldShowToggleButton = categories.length > initialItemCount;
 
   // Function to render the appropriate icon based on category
-  const renderIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'home':
-        return <HomeIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" />;
-      case 'broom':
-        return <SparklesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />;
-      case 'car':
-        return <WrenchScrewdriverIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />;
-      case 'truck':
-        return <TruckIcon className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />;
-      case 'computer':
-        return <ComputerDesktopIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />;
-      case 'bolt':
-        return <BoltIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />;
-      case 'wrench':
-        return <WrenchScrewdriverIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />;
-      case 'sparkles':
-        return <SparklesIcon className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600" />;
-      default:
-        return <EllipsisHorizontalCircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />;
-    }
+  const renderIcon = (iconKey: string, baseClass: string) => {
+    const IconComponent = iconMap[iconKey] || iconMap.default;
+    return <IconComponent className={baseClass} />;
   };
 
   const handleToggleShowAll = () => {
@@ -86,8 +90,9 @@ const Categories: React.FC<CategoriesProps> = ({
   };
 
   // Define responsive classes
-  const itemBaseClass = "flex flex-col items-center text-center p-1 sm:p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500";
-  const iconContainerBaseClass = "mb-1 sm:mb-2 p-2 rounded-full inline-flex justify-center items-center group-hover:bg-green-200 transition-colors";
+  const itemBaseClass = "flex flex-col items-center text-center p-1 sm:p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const iconContainerBaseClass = "mb-1 sm:mb-2 p-2 rounded-full inline-flex justify-center items-center group-hover:bg-blue-200 transition-colors";
+  const iconSizeClass = "h-5 w-5 sm:h-6 sm:h-6 md:h-7 md:h-7";
   const iconContainerSizeClass = "w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"; // Mobile: 40px, sm: 48px, md: 64px
   const textClass = "text-xs sm:text-sm font-medium text-gray-700";
 
@@ -106,8 +111,8 @@ const Categories: React.FC<CategoriesProps> = ({
             className={itemBaseClass}
             aria-label={`Category: ${category.name}`}
           >
-            <div className={`${iconContainerBaseClass} ${iconContainerSizeClass} bg-green-50 text-green-600`}>
-              {renderIcon(category.icon)}
+            <div className={`${iconContainerBaseClass} ${iconContainerSizeClass} bg-blue-50 text-blue-600`}>
+              {renderIcon(category.icon, iconSizeClass)}
             </div>
             <span className={textClass}>{getCategoryDisplayName(category.name)}</span>
           </button>

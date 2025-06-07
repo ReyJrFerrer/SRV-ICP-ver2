@@ -8,6 +8,7 @@ import {
   BanknotesIcon
 } from '@heroicons/react/24/solid';
 import { useProviderBookingManagement } from '@app/hooks/useProviderBookingManagement';
+import { useProviderReviews } from '@app/hooks/reviewManagement';
 
 interface ProviderStatsProps {
   className?: string;
@@ -27,20 +28,45 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
     isProviderAuthenticated
   } = useProviderBookingManagement();
 
-  // Add debugging
-  React.useEffect(() => {
-    console.log('ProviderStatsNextjs Debug:', {
-      analytics,
-      bookingLoading,
-      providerProfile: !!providerProfile,
-      error,
-      isAuthenticated: isProviderAuthenticated()
-    });
-  }, [analytics, bookingLoading, providerProfile, error, isProviderAuthenticated]);
+  // Add review management hook for getting rating and reviews
+  const {
+    analytics: reviewAnalytics,
+    loading: reviewsLoading,
+    error: reviewsError,
+    getCurrentUserId
+  } = useProviderReviews(); // This will automatically load provider reviews
 
-  // Improved loading logic - don't wait for analytics if there are no bookings
-  const isLoading = externalLoading || bookingLoading;
-  const hasNoData = !analytics && !bookingLoading && !error;
+  // // Add debugging
+  // React.useEffect(() => {
+  //   console.log('ProviderStatsNextjs Debug:', {
+  //     analytics,
+  //     reviewAnalytics,
+  //     bookingLoading,
+  //     reviewsLoading,
+  //     providerProfile: !!providerProfile,
+  //     error,
+  //     reviewsError,
+  //     isAuthenticated: isProviderAuthenticated()
+  //   });
+  // }, [analytics, reviewAnalytics, bookingLoading, reviewsLoading, providerProfile, error, reviewsError, isProviderAuthenticated]);
+
+  // Improved loading logic - wait for both analytics and reviews
+  const isLoading = externalLoading || bookingLoading || reviewsLoading;
+  const hasError = error || reviewsError;
+
+  // Calculate rating data from review analytics
+  const ratingData = React.useMemo(() => {
+    if (reviewAnalytics) {
+      return {
+        averageRating: reviewAnalytics.averageRating || 0,
+        totalReviews: reviewAnalytics.totalReviews || 0
+      };
+    }
+    return {
+      averageRating: 0,
+      totalReviews: 0
+    };
+  }, [reviewAnalytics]);
 
   // Calculate stats from real data
   const stats = React.useMemo(() => {
@@ -68,6 +94,13 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
         bgColor: 'bg-black'
       },
       {
+        title: 'Customer Rating',
+        value: '0 (0)',
+        icon: <StarIcon className="h-6 w-6 text-white" />,
+        borderColor: 'border-yellow-500',
+        bgColor: 'bg-yellow-500'
+      },
+      {
         title: 'Completion Rate',
         value: '0%',
         icon: <ChartBarIcon className="h-6 w-6 text-blue-600" />,
@@ -84,7 +117,16 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
     ];
 
     if (!analytics) {
-      return defaultStats;
+      // Return default stats but with rating data if available
+      return defaultStats.map(stat => {
+        if (stat.title === 'Customer Rating') {
+          return {
+            ...stat,
+            value: `${ratingData.averageRating.toFixed(1)} (${ratingData.totalReviews})`
+          };
+        }
+        return stat;
+      });
     }
 
     try {
@@ -114,6 +156,13 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
           bgColor: 'bg-black'
         },
         {
+          title: 'Customer Rating',
+          value: `${ratingData.averageRating.toFixed(1)} (${ratingData.totalReviews})`,
+          icon: <StarIcon className="h-6 w-6 text-white" />,
+          borderColor: 'border-yellow-500',
+          bgColor: 'bg-yellow-500'
+        },
+        {
           title: 'Completion Rate',
           value: `${(analytics.completionRate || 0).toFixed(0)}%`,
           icon: <ChartBarIcon className="h-6 w-6 text-blue-600" />,
@@ -132,14 +181,16 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
       console.error('Error calculating stats:', err);
       return defaultStats;
     }
-  }, [analytics, getRevenueByPeriod]);
+  }, [analytics, getRevenueByPeriod, ratingData]);
 
   // Show error state
-  if (error) {
+  if (hasError) {
     return (
       <div className={`${className} p-4`}>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600 text-sm">Error loading stats: {error}</p>
+          <p className="text-red-600 text-sm">
+            Error loading stats: {error || reviewsError}
+          </p>
         </div>
       </div>
     );
@@ -149,7 +200,7 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
   if (isLoading) {
     return (
       <div className={`stats-grid ${className}`}>
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: 6 }).map((_, index) => (
           <div key={index} className="stat-card border-l-4 border-gray-300 animate-pulse">
             <div className="stat-icon bg-gray-300">
               <div className="h-6 w-6 bg-gray-400 rounded"></div>
@@ -180,13 +231,6 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
           </div>
         </div>
       ))}
-      
-      {/* Debug info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="col-span-full text-xs text-gray-400 mt-2">
-          Debug: Loading={isLoading.toString()}, HasData={!!analytics}, Error={!!error}
-        </div>
-      )}
     </div>
   );
 };

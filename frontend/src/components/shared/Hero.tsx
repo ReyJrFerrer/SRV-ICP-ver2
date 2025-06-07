@@ -70,7 +70,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
           </div>
 
           <p className="text-lg text-gray-600 max-w-4xl mx-auto">
-            Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers, right here in Angeles, Central Luzon, Philippines.
+            Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers.
           </p>
 
           {/* 3. The Action Buttons */}

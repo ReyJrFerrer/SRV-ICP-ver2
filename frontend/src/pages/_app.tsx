@@ -1,4 +1,5 @@
 import type { AppProps } from "next/app";
+import Head from 'next/head'; 
 import { useEffect } from "react";
 import "tailwindcss/tailwind.css";
 import "@app/styles/globals.css";
@@ -41,6 +42,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <IcpConnectContextProvider client={client}>
+      <Head>
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+      </Head>
       <AuthWrapper>
         <Component {...pageProps} />
       </AuthWrapper>

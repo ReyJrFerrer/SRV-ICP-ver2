@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from "@bundly/ares-react";
+import { useAuth, useClient } from "@bundly/ares-react";
 import Head from 'next/head';
+import Link from 'next/link';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from '../../declarations/auth/auth.did.js';
-import type { Profile } from '../../declarations/auth/auth.did';
-import Header from '@app/components/header';
-import Footer from '@app/components/shared/Footer';
+import type { Profile } from '../../declarations/auth/auth.did.js';
+import { FingerPrintIcon, UserPlusIcon } from '@heroicons/react/24/solid';
 
 type Result<T> = {
   ok?: T;
@@ -16,94 +16,132 @@ type Result<T> = {
 export default function ClientIndexPage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
+  const client = useClient();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [statusMessage, setStatusMessage] = useState('Initializing...');
+
   useEffect(() => {
     const checkProfile = async () => {
-      if (!isAuthenticated || !currentIdentity) {
-        router.push('/');
-        return;
-      }
+      if (isAuthenticated && currentIdentity) {
+        setIsLoading(true);
+        setStatusMessage('Authenticated. Verifying your profile...');
+        setError('');
 
-      try {
-        // Create agent and actor for auth canister
-        const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
-        const agent = new HttpAgent({ 
-          identity: currentIdentity,
-          host 
-        });
-        
-        // Only fetch root key in development
-        if (process.env.NODE_ENV === 'development') {
-          await agent.fetchRootKey();
-        }
+        try {
+          const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+          const agent = new HttpAgent({ identity: currentIdentity, host });
+          if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
 
-        const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-        
-        if (!authCanisterId) {
-          throw new Error('Auth canister ID not found');
-        }
+          const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
+          if (!authCanisterId) throw new Error('Auth canister ID not configured');
 
-        const authActor = Actor.createActor(idlFactory, {
-          agent,
-          canisterId: authCanisterId,
-        });
+          const authActor = Actor.createActor(idlFactory, { agent, canisterId: authCanisterId });
+          const profileResult = await authActor.getMyProfile() as Result<Profile>;
 
-        // Check if user has a profile
-        const profileResult = await authActor.getMyProfile() as Result<Profile>;
-        
-        if ('err' in profileResult) {
-          // No profile exists, redirect to profile creation
-          router.push('/create-profile');
-        } else if (profileResult.ok) {
-          // Profile exists, check if it's a client profile
-          const profile = profileResult.ok;
-          if ('Client' in profile.role) {
-            router.push('/client/home');
+          if ('ok' in profileResult && profileResult.ok) {
+            if ('Client' in profileResult.ok.role) {
+              router.push('/client/home');
+            } else {
+              setError('Access denied. A Client profile is required to access this section.');
+            }
+          } else if ('err' in profileResult && profileResult.err?.includes("Profile not found")) {
+            router.push('/create-profile');
           } else {
-            // If not a client profile, redirect to root
-            setError('You need a client profile to access this page');
-            setTimeout(() => router.push('/'), 3000);
+            throw new Error(profileResult.err || 'Failed to retrieve profile.');
           }
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Failed to check profile.');
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Error checking profile:', error);
-        setError('Failed to check profile. Please try again.');
-      } finally {
+      } else {
         setIsLoading(false);
+        setStatusMessage('Please log in or create an account to access the client portal.');
       }
     };
 
     checkProfile();
   }, [isAuthenticated, currentIdentity, router]);
 
+  const handleAuthAction = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      setStatusMessage('Connecting to Internet Identity...');
+      const provider = client.getProvider("internet-identity");
+      if (!provider) throw new Error('Internet Identity provider not found');
+      await provider.connect();
+    } catch (err) {
+      console.error('Authentication error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
+      setIsLoading(false);
+    }
+  };
+
+  const renderStatus = () => {
+    if (error) {
+      return <p className="text-red-600 text-sm font-medium">{error}</p>;
+    }
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-600 mr-2"></div>
+          <span className="text-slate-600">{statusMessage}</span>
+        </div>
+      );
+    }
+    return <p className="text-slate-600">{statusMessage}</p>;
+  };
+
   return (
     <>
       <Head>
-        <title>Client Portal | Service Provider App</title>
-        <meta name="description" content="Access your client portal" />
+        <title>SRV Client Portal</title>
+        <meta name="description" content="Access your client portal or log in." />
       </Head>
-      
-      <Header />
-      <main className="min-h-screen py-16 px-6">
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-8">
-          {error ? (
-            <div className="text-center">
-              <div className="text-red-600 text-xl mb-4">{error}</div>
-              <p className="text-gray-600">Redirecting to home page...</p>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">
-                {isLoading ? 'Checking your profile...' : 'Redirecting...'}
-              </p>
-            </div>
-          )}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-2xl p-8 text-center border-t-4 border-blue-600">
+          <h2 className="text-2xl font-bold text-blue-600 mb-4">
+            Client Portal
+          </h2>
+          
+          <div className="min-h-[4rem] flex items-center justify-center mb-6">
+            {renderStatus()}
+          </div>
+
+          <div className="space-y-4">
+            <button
+              onClick={handleAuthAction}
+              disabled={isLoading}
+              className={`w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg 
+                          transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105
+                          ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isLoading ? 'Processing...' : (
+                <>
+                  <FingerPrintIcon className="h-6 w-6 mr-2" />
+                  Login with Internet Identity
+                </>
+              )}
+            </button>
+
+            <Link href="/create-profile" legacyBehavior>
+              <a
+                className={`w-full flex items-center justify-center bg-yellow-300 hover:bg-yellow-400 text-slate-800 font-bold py-3 px-6 rounded-lg 
+                            transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105`}
+              >
+                <UserPlusIcon className="h-6 w-6 mr-2" />
+                Create an Account
+              </a>
+            </Link>
+          </div>
+
+          <Link href="/" className="mt-6 block text-sm text-blue-500 hover:underline">
+            Back to Homepage
+          </Link>
         </div>
-      </main>
-      <Footer />
+      </div>
     </>
   );
 }

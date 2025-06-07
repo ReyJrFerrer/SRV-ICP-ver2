@@ -15,7 +15,6 @@ const BookingDetailsPage: NextPage = () => {
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Use the booking management hook - same pattern as index.tsx
   const bookingManagement = useBookingManagement();
   
   const {

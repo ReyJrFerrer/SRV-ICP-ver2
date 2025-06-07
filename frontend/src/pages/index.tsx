@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useAuth, useClient } from "@bundly/ares-react";
+import { useAuth, useClient } from "@bundly/ares-react"; 
+import Head from 'next/head';
 import { Actor, HttpAgent } from '@dfinity/agent';
-import { idlFactory } from '../declarations/auth/auth.did.js';
-import type { Profile } from '../declarations/auth/auth.did';
-
-import Header from "@app/components/header";
+import { idlFactory as authIdlFactory } from '../declarations/auth/auth.did.js';
+import type { Profile as UserProfile } from '../declarations/auth/auth.did.js';
 import Hero from "@app/components/shared/Hero";
 import Features from "@app/components/shared/Features";
+import WhyChooseSRV from "@app/components/shared/WhyChooseSRV";
+import AboutUs from "@app/components/shared/AboutUs";
+import SDGSection from "@app/components/shared/SDGSection";
 import Footer from "@app/components/shared/Footer";
 
 type Result<T> = {
@@ -19,155 +21,109 @@ export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
   const client = useClient();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const checkProfile = async () => {
-      if (!isAuthenticated || !currentIdentity) return;
+    const checkProfileAndRedirect = async () => {
+     if (isAuthenticated && currentIdentity) {
+       setIsCheckingProfile(true);
+       setError('');
+       try {
+         const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+         const agent = new HttpAgent({ identity: currentIdentity, host });
+         if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
+         
+         const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
+         if (!authCanisterId) throw new Error('Auth canister ID not configured');
 
-      try {
-        setIsLoading(true);
-        // Create agent and actor for auth canister
-        const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
-        const agent = new HttpAgent({ 
-          identity: currentIdentity,
-          host 
-        });
-        
-        // Only fetch root key in development
-        if (process.env.NODE_ENV === 'development') {
-          await agent.fetchRootKey();
-        }
+         const authActor = Actor.createActor(authIdlFactory, { agent, canisterId: authCanisterId });
+         const profileResult = await authActor.getMyProfile() as Result<UserProfile>;
 
-        const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-        
-        if (!authCanisterId) {
-          throw new Error('Auth canister ID not found');
-        }
-
-        const authActor = Actor.createActor(idlFactory, {
-          agent,
-          canisterId: authCanisterId,
-        });
-
-        // Check if user has a profile
-        const profileResult = await authActor.getMyProfile() as Result<Profile>;
-        
-        if ('err' in profileResult) {
-          // No profile exists, redirect to profile creation
-          router.push('/create-profile');
-        } else if (profileResult.ok) {
-          // Profile exists, redirect based on role
-          const profile = profileResult.ok;
-          if ('Client' in profile.role) {
-            router.push('/client/home');
-          } else {
-            router.push('/provider/home');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking profile:', error);
-        setError('Failed to check profile. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkProfile();
+         if (profileResult.ok) {
+           if ('Client' in profileResult.ok.role) router.push('/client/home');
+           else if ('ServiceProvider' in profileResult.ok.role) router.push('/provider/home');
+           else router.push('/create-profile');
+         } else if (profileResult.err === "Profile not found") {
+           router.push('/create-profile');
+         } else {
+           throw new Error(profileResult.err || 'Failed to retrieve profile.');
+         }
+       } catch (err) {
+         console.error('Profile check error:', err);
+         setError(err instanceof Error ? err.message : 'Error checking profile.');
+       } finally {
+         setIsCheckingProfile(false);
+       }
+     } else {
+       setIsCheckingProfile(false);
+     }
+   };
+   checkProfileAndRedirect();
   }, [isAuthenticated, currentIdentity, router]);
-
+  
   const handleIILogin = async () => {
     try {
       setIsLoading(true);
       setError('');
-      
       const provider = client.getProvider("internet-identity");
-      if (!provider) {
-        throw new Error('Internet Identity provider not found');
-      }
-
-      // Connect to Internet Identity
+      if (!provider) throw new Error('Internet Identity provider not found');
       await provider.connect();
-    } catch (err) {
+          } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
     } finally {
       setIsLoading(false);
     }
   };
+  
+  if (isCheckingProfile && isAuthenticated) {
+     return (
+       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+         <p className="mt-4 text-lg text-gray-700">Checking your profile...</p>
+       </div>
+     );
+  }
 
   return (
     <>
-      <Header />
-      <main>
-        <Hero />
+      <Head>
+        <title>SRV - Your Service Hub</title>
+        <meta name="description" content="Find and book local services with ease on the Internet Computer." />
+        <link rel="icon" href="/logo.jpeg" /> 
+      </Head>
+      
+      <main className="bg-gray-50">
+        <Hero onLoginClick={handleIILogin} isLoginLoading={isLoading} />
         <Features />
+        <WhyChooseSRV />
+        <SDGSection />
+        <AboutUs />
         
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8">Ready to get started?</h2>
-            {error && (
-              <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-md mx-auto">
-                {error}
+              {(!isAuthenticated && error) && (
+          <section className="py-16 lg:py-24 bg-yellow-100">
+            <div className="container mx-auto px-6 text-center">
+              <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-6">
+                Login to Continue
+              </h2>
+              <div className="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-md mx-auto">
+                Error: {error}
               </div>
-            )}
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              {!isAuthenticated ? (
-                <button
-                  onClick={handleIILogin}
-                  disabled={isLoading}
-                  className={`btn-primary ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Logging in...
-                    </div>
-                  ) : (
-                    'Login with Internet Identity'
-                  )}
-                </button>
-              ) : (
-                <div className="text-center">
-                  <p className="text-xl mb-4">Checking your profile...</p>
-                  <div className="flex justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                  </div>
-                </div>
-              )}
+               <button
+                 onClick={handleIILogin}
+                 disabled={isLoading}
+                 className={`bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg
+                             ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+               >
+                 {isLoading ? 'Connecting...' : 'Retry Login'}
+               </button>
             </div>
-          </div>
-        </section>
-        
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="bg-blue-600 text-white rounded-xl p-8 md:p-12 shadow-lg">
-              <div className="md:flex items-center justify-between">
-                <div className="mb-6 md:mb-0 md:w-2/3">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-4">Join the SRV community today</h2>
-                  <p className="text-blue-100">
-                    Whether you need services or provide them, SRV is your trusted platform built on the Internet Computer.
-                  </p>
-                </div>
-                <div>
-                  {isAuthenticated ? (
-                    <p className="text-xl">You're already signed in!</p>
-                  ) : (
-                    <button
-                      onClick={handleIILogin}
-                      className="bg-white text-blue-600 hover:bg-blue-50 font-bold py-3 px-8 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-                    >
-                      Get Started
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
-      <Footer />
+      <Footer/>
     </>
   );
 }

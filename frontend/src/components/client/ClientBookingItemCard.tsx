@@ -43,10 +43,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     );
   }
 
+
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
-  const serviceImage = booking.serviceImage || '/images/default-service.jpg';
+  const serviceImage = booking.providerProfile?.profilePicture?.imageUrl;
   const providerName = booking.providerProfile?.name 
+  console.log("This is from the Client Booking Item Card", booking)
     
   
   const bookingLocation = booking.formattedLocation || 
@@ -142,7 +144,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               <div className="relative h-48 w-full object-cover md:w-48">
                 <Image
                   src={serviceImage}
-                  alt={serviceTitle}
+                  alt={serviceTitle!}
                   layout="fill"
                   objectFit="cover"
                   onError={(e) => {
@@ -175,7 +177,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               <div className="mt-3 space-y-1.5 text-xs text-gray-600">
                 <p className="flex items-center">
                   <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-gray-400" />
-                  {formatDate(booking.scheduledDate || booking.createdAt)}
+                  {formatDate(booking.requestedDate || booking.createdAt)}
                 </p>
                 
                 <p className="flex items-center">

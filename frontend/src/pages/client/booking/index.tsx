@@ -71,6 +71,7 @@ const MyBookingsPage: NextPage = () => {
     });
 
     if (activeTab === 'ALL') {
+     
       return validBookings;
     }
 
@@ -114,29 +115,6 @@ const MyBookingsPage: NextPage = () => {
     ).length;
   };
 
-  // Convert EnhancedBooking to Order format for ClientBookingItemCard
-  const convertBookingToOrder = (booking: EnhancedBooking) => {
-    return {
-      id: booking.id,
-      serviceId: booking.serviceId || 'unknown',
-      providerId: booking.providerId?.toString() || 'unknown',
-      status: booking.status.toUpperCase() as any,
-      schedule: {
-        startDate: booking.scheduledDate || booking.createdAt || new Date(),
-        endDate: booking.scheduledDate || booking.createdAt || new Date(),
-      },
-      location: {
-        address: booking.formattedLocation || 'Location not specified',
-        latitude: 0,
-        longitude: 0,
-      },
-      payment: {
-        amount: booking.price || 0,
-      },
-      createdAt: booking.createdAt || new Date(),
-      updatedAt: booking.updatedAt || new Date(),
-    };
-  };
 
   // Handle cancel booking
   const handleCancelBookingOnListPage = async (bookingId: string) => {
@@ -219,7 +197,9 @@ const MyBookingsPage: NextPage = () => {
                   booking={booking}
                   onCancelBooking={handleCancelBookingOnListPage}
                 />
-              ))}
+        
+              )
+              )}
             </div>
           ) : (
             <div className="text-center py-16 bg-white rounded-lg shadow mt-4">

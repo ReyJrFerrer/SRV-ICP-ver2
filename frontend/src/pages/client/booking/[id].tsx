@@ -256,7 +256,7 @@ const BookingDetailsPage: NextPage = () => {
             <div className="border-t border-gray-200 pt-4 space-y-3 text-sm">
               <div className="flex items-start">
                 <CalendarDaysIcon className="h-5 w-5 mr-2 text-blue-500 mt-0.5 flex-shrink-0"/>
-                <span><strong className="font-medium text-gray-700">Scheduled:</strong> {formatDate(specificBooking?.scheduledDate || specificBooking?.createdAt)}</span>
+                <span><strong className="font-medium text-gray-700">Scheduled:</strong> {formatDate(specificBooking?.requestedDate || specificBooking?.createdAt)}</span>
               </div>
               
               <div className="flex items-start">

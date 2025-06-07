@@ -1,10 +1,12 @@
 // frontend/src/components/client/ClientBookingItemCard.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { EnhancedBooking } from '../../hooks/bookingManagement';
-import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon, StarIcon } from '@heroicons/react/24/solid';
+import { reviewCanisterService } from '../../services/reviewCanisterService'; // ✅ Add this import
+import { authCanisterService } from '../../services/authCanisterService'; // ✅ Add this import
+import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon, StarIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 interface ClientBookingItemCardProps {
   booking: EnhancedBooking;
@@ -18,6 +20,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   onUpdateStatus 
 }) => {
   const router = useRouter();
+  
+  // ✅ Add state for review status
+  const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
+  const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
   // Debug validation
   if (!booking) {
@@ -43,13 +49,49 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     );
   }
 
+  // ✅ Check review status when booking is finished
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      // Only check for completed bookings
+      if (!isFinished || !booking.id) return;
+      
+      try {
+        setCheckingReviewStatus(true);
+        
+        // Get current user ID
+        const userProfile = await authCanisterService.getMyProfile();
+        if (!userProfile?.id) {
+          setCanUserReview(false);
+          return;
+        }
+        
+        // Check if user can review this booking
+        const canReview = await reviewCanisterService.canUserReviewBooking(booking.id, userProfile.id);
+        setCanUserReview(canReview);
+        
+        console.log(`Review status for booking ${booking.id}:`, {
+          canReview,
+          userId: userProfile.id,
+          bookingStatus: booking.status
+        });
+        
+      } catch (error) {
+        console.error('Error checking review status:', error);
+        // Default to allowing review if check fails
+        setCanUserReview(true);
+      } finally {
+        setCheckingReviewStatus(false);
+      }
+    };
+
+    checkReviewStatus();
+  }, [booking.id]);
 
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
-  const serviceImage = booking.providerProfile?.profilePicture?.imageUrl || "/images/Tutoring-MathTutor1.jpg" ;
-  const providerName = booking.providerProfile?.name 
-  console.log("This is from the Client Booking Item Card", booking)
-    
+  const serviceImage = booking.providerProfile?.profilePicture?.imageUrl || "/images/Tutoring-MathTutor1.jpg";
+  const providerName = booking.providerProfile?.name;
+  console.log("This is from the Client Booking Item Card", booking);
   
   const bookingLocation = booking.formattedLocation || 
     (typeof booking.location === 'string' ? booking.location : 'Location not specified');
@@ -129,11 +171,79 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     }
   };
 
+  // ✅ Add handler for viewing reviews when already reviewed
+  const handleViewReviews = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (booking.serviceId) {
+      router.push(`/client/service/reviews/${booking.serviceId}`);
+    } else {
+      alert("Service information not available.");
+    }
+  };
+
   // Check if booking can be cancelled
   const canCancel = ['Requested', 'Pending', 'Accepted', 'Confirmed'].includes(booking.status);
   
   // Check if booking is completed/cancelled for actions
   const isFinished = ['Completed', 'Cancelled'].includes(booking.status);
+
+  // ✅ Determine the review button state and content
+  const getReviewButtonContent = () => {
+    if (checkingReviewStatus) {
+      return {
+        text: 'Checking...',
+        icon: <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>,
+        className: 'bg-gray-400 cursor-not-allowed',
+        disabled: true,
+        onClick: undefined,
+        href: undefined
+      };
+    }
+    
+    if (canUserReview === false) {  
+      // User has already reviewed
+      return {
+        text: 'View Reviews',
+        icon: <CheckCircleIcon className="h-4 w-4 mr-1.5" />,
+        className: 'bg-green-500 hover:bg-green-600',
+        disabled: false,
+        onClick: handleViewReviews,
+        href: undefined
+      };
+    }
+    
+    if (canUserReview === true) {
+      // User can submit a review
+      return {
+        text: 'Rate Provider',
+        icon: <StarIcon className="h-4 w-4 mr-1.5" />,
+        className: 'bg-yellow-500 hover:bg-yellow-600',
+        disabled: false,
+        onClick: undefined,
+        href: {
+          pathname: `/client/review/${booking.id}`,
+          query: { providerName: providerName }
+        }
+      };
+    }
+    
+    // Default state (null - still loading or error)
+    return {
+      text: 'Rate Provider',
+      icon: <StarIcon className="h-4 w-4 mr-1.5" />,
+      className: 'bg-yellow-500 hover:bg-yellow-600',
+      disabled: false,
+      onClick: undefined,
+      href: {
+        pathname: `/client/review/${booking.id}`,
+        query: { providerName: providerName }
+      }
+    };
+  };
+
+  const reviewButtonContent = getReviewButtonContent();
 
   return (
     <Link href={`/client/booking/${booking.id}`} legacyBehavior>
@@ -213,20 +323,25 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 </button>
               )}
               
+              {/* ✅ Enhanced review button with smart state handling */}
               {isFinished && (
-                  <Link
-                    href={{
-                      pathname: `/client/review/${booking.id}`,  // ✅ Routes to [id].tsx
-                      query: {
-                        providerName: providerName  
-                      },
-                    }}
-                    legacyBehavior
-                  >
-                  <a className="flex items-center justify-center text-xs w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-md transition-colors">
-                    <StarIcon className="h-4 w-4 mr-1.5" /> Rate Provider
-                  </a>
-                </Link>
+                <>
+                  {reviewButtonContent.href ? (
+                    <Link href={reviewButtonContent.href} legacyBehavior>
+                      <a className={`flex items-center justify-center text-xs w-full sm:w-auto text-white font-medium py-2 px-3 rounded-md transition-colors ${reviewButtonContent.className}`}>
+                        {reviewButtonContent.icon} {reviewButtonContent.text}
+                      </a>
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={reviewButtonContent.onClick}
+                      disabled={reviewButtonContent.disabled}
+                      className={`flex items-center justify-center text-xs w-full sm:w-auto text-white font-medium py-2 px-3 rounded-md transition-colors ${reviewButtonContent.className} ${reviewButtonContent.disabled ? 'cursor-not-allowed' : ''}`}
+                    >
+                      {reviewButtonContent.icon} {reviewButtonContent.text}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

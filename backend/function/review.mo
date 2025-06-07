@@ -126,7 +126,6 @@ actor ReviewCanister {
             case (?canisterId) {
                 let bookingCanister = actor(Principal.toText(canisterId)) : actor {
                     isEligibleForReview : (Text, Principal) -> async Result<Bool>;
-                    getBookingCompletionTime : (Text) -> async Result<Time.Time>;
                     getBooking : (Text) -> async Result<Types.Booking>;
                 };
                 
@@ -135,9 +134,9 @@ actor ReviewCanister {
                         // Get booking details
                         switch (await bookingCanister.getBooking(bookingId)) {
                             case (#ok(booking)) {
-                                // Get booking completion time to check review window
-                                switch (await bookingCanister.getBookingCompletionTime(bookingId)) {
-                                    case (#ok(completionTime)) {
+                                // Get completion time from booking record instead of separate call
+                                switch (booking.completedDate) {
+                                    case (?completionTime) {
                                         if (not isWithinReviewWindow(completionTime)) {
                                             return #err("Review window has expired. Reviews must be submitted within " # Nat.toText(REVIEW_WINDOW_DAYS) # " days of service completion");
                                         };
@@ -207,14 +206,15 @@ actor ReviewCanister {
                                         switch (reputationCanisterId) {
                                             case (?reputationId) {
                                                 let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                                                    analyzeReview : (Review) -> async Result<Text>;
+                                                    processReview : (Review) -> async Result<Review>;  // ✅ Use existing public method
                                                 };
-                                                switch (await reputationCanister.analyzeReview(newReview)) {
-                                                    case (#ok(_)) {
-                                                        Debug.print("Review analysis completed successfully");
+                                                switch (await reputationCanister.processReview(newReview)) {
+                                                    case (#ok(processedReview)) {
+                                                        Debug.print("Review processing completed successfully");
+                                                        // You could use the processed review's status and quality score here
                                                     };
                                                     case (#err(msg)) {
-                                                        Debug.print("Review analysis failed: " # msg);
+                                                        Debug.print("Review processing failed: " # msg);
                                                     };
                                                 };
                                             };
@@ -223,8 +223,8 @@ actor ReviewCanister {
                                         
                                         return #ok(newReview);
                                     };
-                                    case (#err(msg)) {
-                                        return #err("Failed to get booking completion time: " # msg);
+                                    case (null) {
+                                        return #err("Booking is not completed yet. Cannot submit review until service is completed.");
                                     };
                                 };
                             };
@@ -363,14 +363,15 @@ actor ReviewCanister {
                 switch (reputationCanisterId) {
                     case (?reputationId) {
                         let reputationCanister = actor(Principal.toText(reputationId)) : actor {
-                            analyzeReview : (Review) -> async Result<Text>;
+                            processReview : (Review) -> async Result<Review>;  // ✅ Use consistent method name
                         };
-                        switch (await reputationCanister.analyzeReview(updatedReview)) {
-                            case (#ok(_)) {
-                                Debug.print("Review analysis completed successfully");
+                        switch (await reputationCanister.processReview(updatedReview)) {
+                            case (#ok(processedReview)) {
+                                Debug.print("Review processing completed successfully");
+                                // You could use the processed review's status and quality score here
                             };
                             case (#err(msg)) {
-                                Debug.print("Review analysis failed: " # msg);
+                                Debug.print("Review processing failed: " # msg);
                             };
                         };
                     };

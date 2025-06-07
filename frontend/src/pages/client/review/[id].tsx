@@ -39,6 +39,7 @@ export default function BookingRating() {
     clearError
   } = useBookingRating(bookingId as string); // Pass bookingId to the hook
 
+
   const handleRating = useCallback((value: number) => {
     setRating(value);
   }, []);

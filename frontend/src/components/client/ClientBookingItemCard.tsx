@@ -7,7 +7,7 @@ import { Order, OrderStatus } from '../../../assets/types/order/order';
 import { SERVICES } from '../../../assets/services';
 import { SERVICE_PROVIDERS } from '../../../assets/serviceProviders';
 import { adaptServiceData } from '../../utils/serviceDataAdapter';
-import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon, StarIcon } from '@heroicons/react/24/solid';
 
 interface ClientBookingItemCardProps {
   booking: Order; // Assuming booking should always be a valid Order object when this card is rendered
@@ -120,6 +120,22 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({ booking, 
                 >
                   <ArrowPathIcon className="h-4 w-4 mr-1.5" /> Book Again
                 </button>
+              )}
+              {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED') && (
+                <Link
+                  href={{
+                    pathname: '/client/bookings-ratings',
+                    query: {
+                      providerName: providerName,
+                      bookingId: booking.id,
+                    },
+                  }}
+                  legacyBehavior
+                >
+                  <a className="flex items-center justify-center text-xs w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-md transition-colors">
+                    <StarIcon className="h-4 w-4 mr-1.5" /> Rate Provider
+                  </a>
+                </Link>
               )}
             </div>
           </div>

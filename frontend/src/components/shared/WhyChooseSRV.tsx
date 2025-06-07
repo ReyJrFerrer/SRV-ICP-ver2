@@ -1,64 +1,67 @@
 import React from 'react';
-import { ShieldCheckIcon, UsersIcon, BuildingStorefrontIcon, SparklesIcon } from '@heroicons/react/24/outline'; // Added SparklesIcon
+import Image from "next/image"; 
+import { ShieldCheckIcon, UserGroupIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
 
-interface ReasonInfo {
-  icon: JSX.Element;
-  title: string;
-  description: string;
-}
 
-const reasons: ReasonInfo[] = [
-  {
-    icon: <ShieldCheckIcon className="h-10 w-10 text-yellow-300" />,
-    title: "Verified & Reliable",
-    description: "Connect with local freelance providers. SRV helps you trust their credibility and competence, moving away from informal channels."
-  },
-  {
-    icon: <BuildingStorefrontIcon className="h-10 w-10 text-yellow-300" />,
-    title: "Client-Focused Platform",
-    description: "Easily discover, compare, and book providers based on your specific needs, location, and authentic user ratings."
-  },
-  {
-    icon: <UsersIcon className="h-10 w-10 text-yellow-300" />,
-    title: "Empowering Providers", 
-    description: "Service providers can showcase skills, manage availability, and build a verifiable reputation through genuine client feedback."
-  },
+const WhyChooseUsSection: React.FC = () => {
+    const reasons = [
+      {
+        icon: <ShieldCheckIcon className="h-10 w-10 text-blue-600 mb-4" />,
+        title: "Verified and Reliable",
+        description: "Connect with freelance providers, SRV helps you trust their credibility and competence, moving away from informal channels."
+      },
+      {
+        icon: <UserGroupIcon className="h-10 w-10 text-blue-600 mb-4" />,
+        title: "Client-Focused Platform",
+        description: "Easily discover, compare, and look providers based on your specific needs, location, and authentic user ratings."
+      },
+      {
+        icon: <RocketLaunchIcon className="h-10 w-10 text-blue-600 mb-4" />,
+        title: "Empowering Providers",
+        description: "Service providers can showcase skills, manage availability and build a verifiable reputation through genuine client feedbacks."
+      }
+    ];
 
-  {
-    icon: <SparklesIcon className="h-10 w-10 text-yellow-300" />,
-    title: "Championing Local Talent",
-    description: "Here in SRV, we champion the independent, starting-off, skilled service providers. It doesn't matter if they manage their business on their own or are part of a team – we provide the platform for them to connect with clients and grow."
-  }
-];
 
-const WhyChooseSRV: React.FC = () => {
-  return (
-    <section className="py-16 lg:py-24 bg-blue-600">
-      <div className="container mx-auto px-6 text-center">
-        <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-          Why Choose SRV?
-        </h2>
-        <p className="text-blue-100 max-w-2xl mx-auto mb-12 lg:mb-16 text-lg">
-          Experience the difference of a service platform built for trust, transparency, and user empowerment.
-        </p>
-       
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 lg:gap-10">
-          {reasons.map((reason, index) => (
-            <div 
-              key={index} 
-              className="bg-blue-700 p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 flex flex-col items-center"
-            >
-              <div className="mb-6 p-3 rounded-full bg-slate-800"> 
-                {reason.icon}
-              </div>
-              <h3 className="text-2xl font-semibold text-yellow-300 mb-3">{reason.title}</h3>
-              <p className="text-blue-200 text-sm leading-relaxed">{reason.description}</p>
+    return (
+        <section className="relative bg-blue-500 py-20 lg:py-28 overflow-hidden">
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="flex justify-center mb-12">
+                <div className="bg-yellow-400 rounded-full py-3 px-8 shadow-lg">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
+                        Why Choose SRV?
+                    </h2>
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+            
+            <div className="relative mt-16 flex flex-col items-center">
+
+              <div className="relative w-48 lg:absolute lg:w-64 lg:-top-24 lg:-left-0 z-20 -mb-20 lg:mx-0 lg:-mb-0">
+                <Image
+                  src="/cp.png" 
+                  alt="SRV application on a smartphone"
+                  width={700}
+                  height={520}
+                />
+              </div>
+              
+              <div className="w-full bg-white rounded-2xl shadow-2xl pt-28 pb-12 px-6 lg:pt-8 lg:pl-64 lg:pr-12 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {reasons.map((reason, index) => (
+                       <div key={index} className="text-center flex flex-col items-center">
+                      <div className="bg-blue-100 p-4 rounded-full mb-4">
+                        {reason.icon}
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-800 mb-3">{reason.title}</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">{reason.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+    );
 };
 
-export default WhyChooseSRV;
+export default WhyChooseUsSection;

@@ -3,8 +3,10 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import { ArrowLeftIcon, CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserCircleIcon, ChatBubbleLeftEllipsisIcon, XCircleIcon, ArrowPathIcon, ClockIcon, InformationCircleIcon, StarIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, CalendarDaysIcon, MapPinIcon, CurrencyDollarIcon, UserCircleIcon, ChatBubbleLeftEllipsisIcon, XCircleIcon, ArrowPathIcon, ClockIcon, InformationCircleIcon, StarIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { EnhancedBooking, useBookingManagement } from '../../../hooks/bookingManagement';
+import { reviewCanisterService } from '../../../services/reviewCanisterService'; // ✅ Add this import
+import { authCanisterService } from '../../../services/authCanisterService'; // ✅ Add this import
 import BottomNavigationNextjs from '../../../components/client/BottomNavigationNextjs';
 
 // Import BookingStatus from the hook's types if it's exported, or define it locally
@@ -16,6 +18,10 @@ const BookingDetailsPage: NextPage = () => {
   const [specificBooking, setSpecificBooking] = useState<EnhancedBooking | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // ✅ Add state for review status
+  const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
+  const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
   const bookingManagement = useBookingManagement();
   
@@ -51,6 +57,52 @@ const BookingDetailsPage: NextPage = () => {
       }
     }
   }, [id, bookings, hookLoading]);
+
+  // ✅ Check review status when booking is found
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      if (!specificBooking?.id) return;
+      
+      // ✅ Only check for completed bookings (exclude cancelled)
+      if (specificBooking.status !== 'Completed') {
+        // For cancelled bookings, explicitly set to false
+        if (specificBooking.status === 'Cancelled') {
+          setCanUserReview(false);
+        }
+        return;
+      }
+      
+      try {
+        setCheckingReviewStatus(true);
+        
+        // Get current user ID
+        const userProfile = await authCanisterService.getMyProfile();
+        if (!userProfile?.id) {
+          setCanUserReview(false);
+          return;
+        }
+        
+        // Check if user can review this booking
+        const canReview = await reviewCanisterService.canUserReviewBooking(specificBooking.id, userProfile.id);
+        setCanUserReview(canReview);
+        
+        console.log(`Review status for booking ${specificBooking.id}:`, {
+          canReview,
+          userId: userProfile.id,
+          bookingStatus: specificBooking.status
+        });
+        
+      } catch (error) {
+        console.error('Error checking review status:', error);
+        // Default to allowing review if check fails (only for completed bookings)
+        setCanUserReview(true);
+      } finally {
+        setCheckingReviewStatus(false);
+      }
+    };
+
+    checkReviewStatus();
+  }, [specificBooking]);
 
   // Handle booking status updates using the hook
   const handleUpdateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => {
@@ -104,6 +156,15 @@ const BookingDetailsPage: NextPage = () => {
     alert(`Mock: Contacting provider ${providerName}. Contact functionality would be implemented here.`);
   };
 
+  // ✅ Add handler for viewing reviews when already reviewed
+  const handleViewReviews = () => {
+    if (specificBooking?.serviceId) {
+      router.push(`/client/service/reviews/${specificBooking.serviceId}`);
+    } else {
+      alert("Service information not available.");
+    }
+  };
+
   // Utility functions
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return 'N/A';
@@ -142,6 +203,59 @@ const BookingDetailsPage: NextPage = () => {
       default:
         return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  // ✅ Add function to determine review button content
+  const getReviewButtonContent = () => {
+    if (!specificBooking) return null;
+    
+    const providerName = specificBooking.providerProfile?.name;
+    
+    // ✅ Handle cancelled bookings first
+    if (specificBooking.status === 'Cancelled') {
+      return null;
+    }
+    
+    // Only show review options for completed bookings
+    if (specificBooking.status !== 'Completed') {
+      return null; // Don't show review button for non-completed bookings
+    }
+    
+    if (checkingReviewStatus) {
+      return {
+        text: 'Checking...',
+        icon: <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>,
+        className: 'bg-gray-400 cursor-not-allowed',
+        disabled: true,
+        onClick: undefined,
+        href: undefined
+      };
+    }
+    
+    if (canUserReview === false) {  
+      // User has already reviewed
+      return {
+        text: 'View Reviews',
+        icon: <CheckCircleIcon className="h-5 w-5 mr-2" />,
+        className: 'bg-green-500 hover:bg-green-600',
+        disabled: false,
+        onClick: handleViewReviews,
+        href: undefined
+      };
+    }
+    
+    // User can submit a review (canUserReview === true or null)
+    return {
+      text: 'Rate Provider',
+      icon: <StarIcon className="h-5 w-5 mr-2" />,
+      className: 'bg-yellow-500 hover:bg-yellow-600',
+      disabled: false,
+      onClick: undefined,
+      href: {
+        pathname: `/client/review/${specificBooking.id}`,
+        query: { providerName: providerName }
+      }
+    };
   };
 
   // Determine loading state
@@ -217,6 +331,9 @@ const BookingDetailsPage: NextPage = () => {
   // Check if booking is completed/cancelled for actions
   const isFinished = ['Completed', 'Cancelled'].includes(specificBooking?.status || '');
 
+  // ✅ Get review button content
+  const reviewButtonContent = getReviewButtonContent();
+
   // Show booking details
   return (
     <>
@@ -270,13 +387,6 @@ const BookingDetailsPage: NextPage = () => {
                   <span><strong className="font-medium text-gray-700">Payment:</strong> ₱{specificBooking.price.toFixed(2)}</span>
                 </div>
               )}
-              
-              {/* {specificBooking?.notes && (
-                <div className="flex items-start">
-                  <InformationCircleIcon className="h-5 w-5 mr-2 text-gray-500 mt-0.5 flex-shrink-0"/>
-                  <span><strong className="font-medium text-gray-700">Notes:</strong> {specificBooking.notes}</span>
-                </div>
-              )} */}
             </div>
           </div>
           
@@ -302,6 +412,7 @@ const BookingDetailsPage: NextPage = () => {
 
             {isFinished && (
               <>
+                {/* ✅ Keep "Book Again" button for both completed and cancelled bookings */}
                 {specificBooking?.serviceId && (
                   <Link href={`/client/book/${specificBooking.serviceId}`} legacyBehavior>
                     <a className="w-full sm:flex-1 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
@@ -310,19 +421,28 @@ const BookingDetailsPage: NextPage = () => {
                   </Link>
                 )}
 
-                <Link
-                    href={{
-                      pathname: `/client/review/${specificBooking?.id}`,  // ✅ Routes to [id].tsx
-                      query: {
-                        providerName: providerName  
-                      },
-                    }}
-                    legacyBehavior
-                  >
-                  <a className="w-full sm:flex-1 flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
-                    <StarIcon className="h-5 w-5 mr-2" /> Rate Provider
-                  </a>
-                </Link>
+                {/* ✅ Enhanced review button with validation */}
+                {reviewButtonContent && (
+                  <div className="w-full sm:flex-1">
+                    {reviewButtonContent.href ? (
+                      <Link href={reviewButtonContent.href} legacyBehavior>
+                        <a 
+                          className={`w-full flex items-center justify-center text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center ${reviewButtonContent.className}`}
+                        >
+                          {reviewButtonContent.icon} {reviewButtonContent.text}
+                        </a>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={reviewButtonContent.onClick}
+                        disabled={reviewButtonContent.disabled}
+                        className={`w-full flex items-center justify-center text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm ${reviewButtonContent.className} ${reviewButtonContent.disabled ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {reviewButtonContent.icon} {reviewButtonContent.text}
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

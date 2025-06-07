@@ -52,8 +52,14 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   // ✅ Check review status when booking is finished
   useEffect(() => {
     const checkReviewStatus = async () => {
-      // Only check for completed bookings
-      if (!isFinished || !booking.id) return;
+      // ✅ Only check for completed bookings (exclude cancelled)
+      if (booking.status !== 'Completed' || !booking.id) {
+        // For cancelled bookings, explicitly set to false
+        if (booking.status === 'Cancelled') {
+          setCanUserReview(false);
+        }
+        return;
+      }
       
       try {
         setCheckingReviewStatus(true);
@@ -77,7 +83,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         
       } catch (error) {
         console.error('Error checking review status:', error);
-        // Default to allowing review if check fails
+        // Default to allowing review if check fails (only for completed bookings)
         setCanUserReview(true);
       } finally {
         setCheckingReviewStatus(false);
@@ -85,7 +91,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
     };
 
     checkReviewStatus();
-  }, [booking.id]);
+  }, [booking.id, booking.status]); // ✅ Add booking.status to dependencies
 
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
@@ -187,10 +193,30 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const canCancel = ['Requested', 'Pending', 'Accepted', 'Confirmed'].includes(booking.status);
   
   // Check if booking is completed/cancelled for actions
-  const isFinished = ['Completed', 'Cancelled'].includes(booking.status);
+  const isCompleted = booking.status === 'Completed';
+  const isCancelled = booking.status === 'Cancelled';
+  const isFinished = isCompleted || isCancelled;
 
-  // ✅ Determine the review button state and content
+  // ✅ Update the review button content logic
   const getReviewButtonContent = () => {
+    // ✅ Handle cancelled bookings first
+    if (isCancelled) {
+      return {
+        text: 'Service Cancelled',
+        icon: <XCircleIcon className="h-4 w-4 mr-1.5" />,
+        className: 'bg-gray-400 cursor-not-allowed',
+        disabled: true,
+        onClick: undefined,
+        href: undefined,
+        tooltip: 'Cannot review cancelled bookings'
+      };
+    }
+    
+    // Only show review options for completed bookings
+    if (!isCompleted) {
+      return null; // Don't show review button for non-completed bookings
+    }
+    
     if (checkingReviewStatus) {
       return {
         text: 'Checking...',
@@ -245,6 +271,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   const reviewButtonContent = getReviewButtonContent();
 
+  // Update the render logic for the buttons section
   return (
     <Link href={`/client/booking/${booking.id}`} legacyBehavior>
       <a className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-shadow duration-300 cursor-pointer">
@@ -314,7 +341,8 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 </button>
               )}
               
-              {isFinished && booking.serviceId && (
+              {/* ✅ Only show "Book Again" for completed bookings, not cancelled */}
+              {isCompleted && booking.serviceId && (
                 <button
                   onClick={handleBookAgainClick}
                   className="flex items-center justify-center text-xs w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-md transition-colors"
@@ -323,12 +351,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                 </button>
               )}
               
-              {/* ✅ Enhanced review button with smart state handling */}
-              {isFinished && (
-                <>
+              {/* ✅ Enhanced review button with validation for cancelled bookings */}
+              {isFinished && reviewButtonContent && (
+                <div className="relative">
                   {reviewButtonContent.href ? (
                     <Link href={reviewButtonContent.href} legacyBehavior>
-                      <a className={`flex items-center justify-center text-xs w-full sm:w-auto text-white font-medium py-2 px-3 rounded-md transition-colors ${reviewButtonContent.className}`}>
+                      <a 
+                        className={`flex items-center justify-center text-xs w-full sm:w-auto text-white font-medium py-2 px-3 rounded-md transition-colors ${reviewButtonContent.className}`}
+                        title={reviewButtonContent.tooltip}
+                      >
                         {reviewButtonContent.icon} {reviewButtonContent.text}
                       </a>
                     </Link>
@@ -337,11 +368,12 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                       onClick={reviewButtonContent.onClick}
                       disabled={reviewButtonContent.disabled}
                       className={`flex items-center justify-center text-xs w-full sm:w-auto text-white font-medium py-2 px-3 rounded-md transition-colors ${reviewButtonContent.className} ${reviewButtonContent.disabled ? 'cursor-not-allowed' : ''}`}
+                      title={reviewButtonContent.tooltip}
                     >
                       {reviewButtonContent.icon} {reviewButtonContent.text}
                     </button>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>

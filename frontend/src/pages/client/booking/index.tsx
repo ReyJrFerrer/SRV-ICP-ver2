@@ -216,7 +216,7 @@ const MyBookingsPage: NextPage = () => {
               {filteredBookings.map(booking => (
                 <ClientBookingItemCard 
                   key={booking.id}
-                  booking={convertBookingToOrder(booking)}
+                  booking={booking}
                   onCancelBooking={handleCancelBookingOnListPage}
                 />
               ))}

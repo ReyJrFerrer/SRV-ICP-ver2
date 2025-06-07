@@ -89,7 +89,7 @@ const BookingDetailsPage: NextPage = () => {
   const handleCancelBooking = async () => {
     if (!specificBooking) return;
     
-    const serviceName = specificBooking.serviceName || specificBooking.serviceTitle || 'this service';
+    const serviceName = specificBooking.serviceName  || 'this service';
     if (window.confirm(`Are you sure you want to cancel your booking for "${serviceName}"?`)) {
       await handleUpdateBookingStatus(specificBooking.id, 'Cancelled');
       alert(`Booking for "${serviceName}" has been cancelled successfully.`);
@@ -98,9 +98,7 @@ const BookingDetailsPage: NextPage = () => {
 
   const handleContactProvider = () => {
     if (!specificBooking) return;
-    const providerName = specificBooking.providerProfile 
-      ? `${specificBooking.providerProfile.firstName || ''} ${specificBooking.providerProfile.lastName || ''}`.trim()
-      : specificBooking.providerName || 'Provider';
+    const providerName = specificBooking.providerProfile?.name;
     
     // You can integrate actual contact functionality here
     alert(`Mock: Contacting provider ${providerName}. Contact functionality would be implemented here.`);
@@ -209,10 +207,8 @@ const BookingDetailsPage: NextPage = () => {
   }
 
   // Extract booking data
-  const serviceName = specificBooking?.serviceName || specificBooking?.serviceTitle || 'Service Unknown';
-  const providerName = specificBooking?.providerProfile 
-    ? `${specificBooking.providerProfile.firstName || ''} ${specificBooking.providerProfile.lastName || ''}`.trim()
-    : specificBooking?.providerName || 'Provider Unknown';
+  const serviceName = specificBooking?.serviceName;
+  const providerName = specificBooking?.providerProfile?.name;
   const bookingLocation = specificBooking?.formattedLocation || 'Location not specified';
 
   // Check if booking can be cancelled
@@ -271,16 +267,16 @@ const BookingDetailsPage: NextPage = () => {
               {specificBooking?.price && (
                 <div className="flex items-start">
                   <CurrencyDollarIcon className="h-5 w-5 mr-2 text-green-500 mt-0.5 flex-shrink-0"/>
-                  <span><strong className="font-medium text-gray-700">Payment:</strong> ₱{specificBooking.price.toFixed(2)} {specificBooking.paymentMethod && `via ${specificBooking.paymentMethod.replace('_', ' ')}`}</span>
+                  <span><strong className="font-medium text-gray-700">Payment:</strong> ₱{specificBooking.price.toFixed(2)}</span>
                 </div>
               )}
               
-              {specificBooking?.notes && (
+              {/* {specificBooking?.notes && (
                 <div className="flex items-start">
                   <InformationCircleIcon className="h-5 w-5 mr-2 text-gray-500 mt-0.5 flex-shrink-0"/>
                   <span><strong className="font-medium text-gray-700">Notes:</strong> {specificBooking.notes}</span>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
           

@@ -44,7 +44,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   }
 
   // Extract booking data with fallbacks
-  const serviceTitle = booking.serviceName || 'Service details not found';
+  const serviceTitle = booking.serviceName;
   const serviceImage = booking.serviceImage || '/images/default-service.jpg';
   const providerName = booking.providerProfile?.name 
     
@@ -134,7 +134,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const isFinished = ['Completed', 'Cancelled'].includes(booking.status);
 
   return (
-    <Link href={`/client/bookings/${booking.id}`} legacyBehavior>
+    <Link href={`/client/booking/${booking.id}`} legacyBehavior>
       <a className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-shadow duration-300 cursor-pointer">
         <div className="md:flex">
           {serviceImage && (
@@ -157,7 +157,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <div>
               <div className="flex justify-between items-start">
                 <p className="text-xs text-indigo-500 uppercase tracking-wider font-semibold">
-                  {booking.category || 'Service'}
+                  {'Service'}
                 </p>
                 <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
                   {booking.status.replace('_', ' ')}

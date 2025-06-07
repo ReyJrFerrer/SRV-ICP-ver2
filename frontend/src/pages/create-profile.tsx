@@ -47,7 +47,7 @@ export default function CreateProfilePage() {
       setError('Please select a role.');
       return;
     }
-    // Required fields check
+    // Required fields checks
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
         setError('All fields are required. Please fill out your name, email, and phone number.');
         return;

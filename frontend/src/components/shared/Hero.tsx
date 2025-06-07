@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,9 +13,9 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
   const { isAuthenticated } = useAuth();
 
   return (
-    <section className="relative bg-blue-600 text-white py-20 lg:py-28 pt-28 lg:pt-36"> 
+    <section className="relative bg-white text-slate-800 py-20 pt-36"> 
       
-      <div className="absolute top-1 left-6 z-20">
+      <div className="absolute top-6 left-6 z-20">
         <Link href="/" legacyBehavior>
           <a className="block" aria-label="SRV Home">
             <Image
@@ -56,42 +55,40 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
       )}
 
       <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 mb-12 md:mb-0 text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold leading-tight mb-6">
-              Here in SRV, <span className="text-yellow-300">Serbisyo, Rito, Valued!</span>
-            </h1>
-            <p className="text-lg md:text-xl text-blue-100 mb-10">
-              Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link href="/client" legacyBehavior>
-                <a className="flex items-center justify-center bg-yellow-300 text-slate-800 hover:bg-yellow-400 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 text-center text-base">
-                  <UserIcon className="h-5 w-5 mr-2" />
-                  I Need a Service
-                </a>
-              </Link>
-              <Link href="/provider" legacyBehavior>
-                <a className="flex items-center justify-center bg-blue-700 text-yellow-300 hover:bg-blue-800 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg border-2 border-yellow-300 transform hover:scale-105 text-center text-base">
-                  <WrenchScrewdriverIcon className="h-5 w-5 mr-2" />
-                  I Provide Services
-                </a>
-              </Link>
-            </div>
+        <div className="flex flex-col items-center text-center">
+        
+          <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mb-8">
+            <Image
+              src="/heroImage.png"
+              alt="Ang serbisyo rito ay always valued!"
+              width={1000}
+              height={500}
+              layout="responsive"
+              objectFit="contain"
+              priority
+            />
           </div>
-          <div className="md:w-1/2 flex justify-center items-center mt-10 md:mt-0 px-4">
-            <div className="w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
-              <Image
-                src="/HeroPlacerImage.svg"
-                alt="Laptop and phone showcasing srv"
-                width={1000}
-                height={760}
-                layout="responsive"
-                objectFit="contain"
-                priority
-              />
-            </div>
+
+          <p className="text-lg text-gray-600 max-w-4xl mx-auto">
+            Finding reliable help for everyday tasks can be a challenge. SRV is your user-friendly platform to easily discover, compare, and book a wide range of local on-demand service providers, right here in Angeles, Central Luzon, Philippines.
+          </p>
+
+          {/* 3. The Action Buttons */}
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/client" legacyBehavior>
+              <a className="flex items-center justify-center bg-yellow-400 text-slate-800 hover:bg-yellow-500 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center text-base">
+                <UserIcon className="h-5 w-5 mr-2" />
+                I Need a Service
+              </a>
+            </Link>
+            <Link href="/provider" legacyBehavior>
+              <a className="flex items-center justify-center bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 text-center text-base">
+                <WrenchScrewdriverIcon className="h-5 w-5 mr-2" />
+                I Provide Services
+              </a>
+            </Link>
           </div>
+        
         </div>
       </div>
     </section>

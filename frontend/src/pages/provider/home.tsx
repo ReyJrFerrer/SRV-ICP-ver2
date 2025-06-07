@@ -7,7 +7,7 @@ import ServiceManagementNextjs from '@app/components/provider/ServiceManagementN
 import CredentialsDisplayNextjs from '@app/components/provider/CredentialsDisplayNextjs';
 import BottomNavigationNextjs from '@app/components/provider/BottomNavigationNextjs';
 import { useServiceManagement } from '@app/hooks/serviceManagement';
-import { PROVIDER_ORDERS, PROVIDER_BOOKING_REQUESTS } from '../../../assets/providerOrders';
+import { useProviderBookingManagement } from '@app/hooks/useProviderBookingManagement';
 
 interface ProviderHomePageProps {
   // Props if needed
@@ -20,13 +20,24 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   // Use the service management hook
   const {
     userServices,
-    userProfile, // Use userProfile directly from hook
+    userProfile,
     getProviderStats,
     loading: servicesLoading,
     error: servicesError,
     refreshServices,
     isUserAuthenticated
   } = useServiceManagement();
+
+  // Use the provider booking management hook
+  const {
+    bookings,
+    loading: bookingsLoading,
+    error: bookingsError,
+    getPendingBookings,
+    getUpcomingBookings,
+    refreshBookings,
+    isProviderAuthenticated
+  } = useProviderBookingManagement();
 
   // Provider stats state
   const [providerStats, setProviderStats] = useState({
@@ -103,16 +114,28 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     loadProviderData();
   }, [isUserAuthenticated, getProviderStats, initializationAttempts]);
 
-  // Calculate counts for pending and upcoming jobs
+  // Calculate counts for pending and upcoming jobs using real booking data
   const bookingCounts = useMemo(() => {
-    const now = new Date();
-    const pendingCount = PROVIDER_BOOKING_REQUESTS.length; 
-    const upcomingCount = PROVIDER_ORDERS.filter(
-      order => order.status === 'CONFIRMED' && new Date(order.scheduledStartTime) >= now
-    ).length;
+    const pendingBookings = getPendingBookings();
+    const upcomingBookings = getUpcomingBookings();
+    
+    const pendingCount = pendingBookings.length;
+    const upcomingCount = upcomingBookings.length;
+
+    console.log('Booking counts calculated:', {
+      pendingCount,
+      upcomingCount,
+      totalBookings: bookings.length,
+      pendingBookings: pendingBookings.map(b => ({ id: b.id, status: b.status })),
+      upcomingBookings: upcomingBookings.map(b => ({ id: b.id, status: b.status, scheduledDate: b.scheduledDate }))
+    });
 
     return { pendingCount, upcomingCount };
-  }, []); 
+  }, [bookings, getPendingBookings, getUpcomingBookings]);
+
+  // Combined loading state
+  const isDataLoading = servicesLoading || bookingsLoading;
+  const hasError = servicesError || bookingsError;
 
   // Show loading state while authentication is being established
   if (pageLoading) {
@@ -137,9 +160,9 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
           <p className="text-gray-600 mb-6">
             Please log in to access your provider dashboard.
           </p>
-          {servicesError && (
+          {hasError && (
             <p className="text-red-600 text-sm mb-4">
-              Error: {servicesError}
+              Error: {servicesError || bookingsError}
             </p>
           )}
           <button 
@@ -170,9 +193,9 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         <div className="p-4 max-w-7xl mx-auto"> 
           {/* Use legacyProvider for components that still need the old interface */}
           {legacyProvider && (
-              <ProviderStatsNextjs 
-                loading={servicesLoading}
-              />
+            <ProviderStatsNextjs 
+              loading={isDataLoading}
+            />
           )}
           
           <BookingRequestsNextjs 
@@ -190,7 +213,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
           {userProfile && (
             <CredentialsDisplayNextjs provider={userProfile} />
           )}
-
         </div>
         
         <BottomNavigationNextjs />

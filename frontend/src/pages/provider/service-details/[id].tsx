@@ -24,6 +24,7 @@ import {
 import { useServiceManagement, EnhancedService } from '../../../hooks/serviceManagement';
 import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import { ServicePackage } from '../../../services/serviceCanisterService';
+import ViewReviewsButton from '@app/components/common/ViewReviewsButton';
 
 const ProviderServiceDetailPage: React.FC = () => {
   const router = useRouter();
@@ -458,10 +459,17 @@ const ProviderServiceDetailPage: React.FC = () => {
                 <CurrencyDollarIcon className="h-5 w-5 mr-2 text-green-500"/>
                 Price: <span className="font-medium ml-1">{service.formattedPrice || formatServicePrice(service.price)}</span>
               </p>
-              <p className="flex items-center text-sm">
+              {/* <p className="flex items-center text-sm">
                 <StarSolid className="h-5 w-5 mr-2 text-yellow-400"/>
                 Rating: <span className="font-medium ml-1">{service.averageRating?.toFixed(1) || '0.0'} ({service.totalReviews || 0} reviews)</span>
-              </p>
+              </p> */}
+                <ViewReviewsButton
+                  serviceId={service.id}
+                  averageRating={service.averageRating!}
+                  totalReviews={service.totalReviews!}
+                  variant="card"
+                  className="mt-2"
+                />
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-3">
@@ -495,11 +503,11 @@ const ProviderServiceDetailPage: React.FC = () => {
                   </p>
                 )}
               </div>
-              {service.providerProfile && (
+              {/* {service.providerProfile && (
                 <p className="flex items-center text-sm">
                   Provider: <span className="font-medium ml-1">{service.providerProfile.name}</span>
                 </p>
-              )}
+              )} */}
               {service.weeklySchedule && service.weeklySchedule.length > 0 && (
                 <>
                   <p className="flex items-center text-sm">

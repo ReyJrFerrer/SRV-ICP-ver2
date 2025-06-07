@@ -50,14 +50,6 @@
         "output": "frontend/src/declarations/review"
       }
     },
-    "review-test": {
-      "type": "motoko",
-      "main": "backend/function/review-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/review-test"
-      }
-    },
     "service": {
       "type": "motoko",
       "main": "backend/function/service.mo",

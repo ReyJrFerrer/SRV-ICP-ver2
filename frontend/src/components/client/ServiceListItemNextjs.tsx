@@ -46,7 +46,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
         <div className="relative"> {/* Image container */}
           <div className="aspect-video w-full">
             <Image 
-              src={service.providerAvatar}
+              src={service.providerAvatar || "/images/Tutoring-MathTutor1.jpg"}
               alt={service.title}
               className="service-image group-hover:scale-105 transition-transform duration-300"
               style={{ objectFit: 'cover' }}

@@ -13,7 +13,8 @@ import type {
   Result,
   Result_1,
   Result_2,
-  Result_3
+  Result_3,
+  Time
 } from '../declarations/review/review.did';
 
 // Canister configuration
@@ -54,6 +55,7 @@ export interface ReviewStatistics {
   activeReviews: number;
   hiddenReviews: number;
   flaggedReviews: number;
+  deletedReviews: number;
 }
 
 // Type conversion functions
@@ -69,7 +71,7 @@ const convertCanisterReviewToFrontend = (canisterReview: CanisterReview): Review
     createdAt: Number(canisterReview.createdAt) / 1_000_000, // Convert nanoseconds to milliseconds
     updatedAt: Number(canisterReview.updatedAt) / 1_000_000,
     status: Object.keys(canisterReview.status)[0] as 'Visible' | 'Hidden' | 'Flagged',
-    qualityScore: canisterReview.qualityScore[0] ? Number(canisterReview.qualityScore[0]) : undefined,
+    qualityScore: canisterReview.qualityScore.length > 0 ? Number(canisterReview.qualityScore[0]) : undefined,
   };
 };
 
@@ -89,7 +91,7 @@ const convertFrontendReviewToCanister = (review: Partial<Review>): Partial<Canis
     canisterReview.status = { [review.status]: null };
   }
   if (review.qualityScore !== undefined) {
-    canisterReview.qualityScore = review.qualityScore ? [review.qualityScore] : [];
+    canisterReview.qualityScore = review.qualityScore !== undefined ? [review.qualityScore] : [];
   }
   
   return canisterReview;
@@ -293,6 +295,7 @@ class ReviewCanisterService {
         activeReviews: Number(stats.activeReviews),
         hiddenReviews: Number(stats.hiddenReviews),
         flaggedReviews: Number(stats.flaggedReviews),
+        deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
       console.error('Error getting review statistics:', error);
@@ -441,6 +444,12 @@ class ReviewCanisterService {
   }
 }
 
+// Export the class for advanced usage
+export { ReviewCanisterService };
+
+// Create a singleton instance for the default export
+const serviceInstance = new ReviewCanisterService();
+
 // Review Canister Service Functions (consistent with other services)
 export const reviewCanisterService = {
   /**
@@ -500,6 +509,140 @@ export const reviewCanisterService = {
     }
   },
 
+  /**
+   * Get reviews by a user
+   */
+  async getUserReviews(userId: string): Promise<Review[]> {
+    try {
+      const actor = await getReviewActor();
+      const userPrincipal = Principal.fromText(userId);
+      const canisterReviews = await actor.getUserReviews(userPrincipal);
+      
+      return canisterReviews.map(convertCanisterReviewToFrontend);
+    } catch (error) {
+      console.error('Error getting user reviews:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update a review
+   */
+  async updateReview(
+    reviewId: string,
+    rating: number,
+    comment: string
+  ): Promise<Review> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.updateReview(reviewId, BigInt(rating), comment);
+      
+      if ('ok' in result) {
+        return convertCanisterReviewToFrontend(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error updating review:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a review (actually hides it)
+   */
+  async deleteReview(reviewId: string): Promise<void> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.deleteReview(reviewId);
+      
+      if ('err' in result) {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Calculate average rating for a provider
+   */
+  async calculateProviderRating(providerId: string): Promise<number> {
+    try {
+      const actor = await getReviewActor();
+      const providerPrincipal = Principal.fromText(providerId);
+      const result = await actor.calculateProviderRating(providerPrincipal);
+      
+      if ('ok' in result) {
+        return Number(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error calculating provider rating:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Calculate average rating for a service
+   */
+  async calculateServiceRating(serviceId: string): Promise<number> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.calculateServiceRating(serviceId);
+      
+      if ('ok' in result) {
+        return Number(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error calculating service rating:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Calculate user average rating
+   */
+  async calculateUserAverageRating(userId: string): Promise<number> {
+    try {
+      const actor = await getReviewActor();
+      const userPrincipal = Principal.fromText(userId);
+      const result = await actor.calculateUserAverageRating(userPrincipal);
+      
+      if ('ok' in result) {
+        return Number(result.ok);
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error calculating user average rating:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Initialize static reviews manually (admin function)
+   */
+  async initializeStaticReviewsManually(): Promise<string> {
+    try {
+      const actor = await getReviewActor();
+      const result = await actor.initializeStaticReviewsManually();
+      
+      if ('ok' in result) {
+        return result.ok;
+      } else {
+        throw new Error(result.err);
+      }
+    } catch (error) {
+      console.error('Error initializing static reviews:', error);
+      throw error;
+    }
+  },
+
 
   /**
    * Get all reviews
@@ -529,6 +672,7 @@ export const reviewCanisterService = {
         activeReviews: Number(stats.activeReviews),
         hiddenReviews: Number(stats.hiddenReviews),
         flaggedReviews: Number(stats.flaggedReviews),
+        deletedReviews: Number(stats.deletedReviews),
       };
     } catch (error) {
       console.error('Error getting review statistics:', error);
@@ -625,6 +769,53 @@ export const reviewCanisterService = {
     } catch (error) {
       console.error('Error getting top rated reviews:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Get reviews for a specific provider
+   */
+  async getProviderReviews(providerId: string): Promise<Review[]> {
+    try {
+      const allReviews = await this.getAllReviews();
+      return allReviews.filter(review => 
+        review.providerId === providerId && review.status === 'Visible'
+      );
+    } catch (error) {
+      console.error('Error getting provider reviews:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get reviews for a specific service
+   */
+  async getServiceReviews(serviceId: string): Promise<Review[]> {
+    try {
+      const allReviews = await this.getAllReviews();
+      return allReviews.filter(review => 
+        review.serviceId === serviceId && review.status === 'Visible'
+      );
+    } catch (error) {
+      console.error('Error getting service reviews:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if user can review a booking
+   */
+  async canUserReviewBooking(bookingId: string, userId: string): Promise<boolean> {
+    try {
+      // Get existing reviews for this booking by this user
+      const bookingReviews = await this.getBookingReviews(bookingId);
+      const userReview = bookingReviews.find(review => review.clientId === userId);
+      
+      // User can review if they haven't already reviewed this booking
+      return !userReview;
+    } catch (error) {
+      console.error('Error checking if user can review booking:', error);
+      return false;
     }
   }
 };

@@ -32,7 +32,7 @@ actor ReviewCanister {
 
     // Constants
     private let REVIEW_WINDOW_DAYS : Nat = 30;
-    private let MIN_COMMENT_LENGTH : Nat = 10;
+    private let MIN_COMMENT_LENGTH : Nat = 5;
     private let MAX_COMMENT_LENGTH : Nat = 500;
     private let MIN_RATING : Nat = 1;
     private let MAX_RATING : Nat = 5;

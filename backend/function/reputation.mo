@@ -257,39 +257,39 @@ actor ReputationCanister {
     };
 
     // Enhanced evidence quality evaluation
-    private func evaluateEvidenceQuality(evidence : Evidence) : Float {
-        var qualityScore : Float = 0.75; // Base quality score
+    // private func evaluateEvidenceQuality(evidence : Evidence) : Float {
+    //     var qualityScore : Float = 0.75; // Base quality score
         
-        // 1. Description length and quality
-        if (Text.size(evidence.description) > 100) {
-            qualityScore += 0.1;
-        };
+    //     // 1. Description length and quality
+    //     if (Text.size(evidence.description) > 100) {
+    //         qualityScore += 0.1;
+    //     };
         
-        // 2. File evidence
-        if (evidence.fileUrls.size() > 0) {
-            qualityScore += 0.1;
-            // Bonus for multiple files
-            if (evidence.fileUrls.size() > 1) {
-                qualityScore += 0.05;
-            };
-        };
+    //     // 2. File evidence
+    //     if (evidence.fileUrls.size() > 0) {
+    //         qualityScore += 0.1;
+    //         // Bonus for multiple files
+    //         if (evidence.fileUrls.size() > 1) {
+    //             qualityScore += 0.05;
+    //         };
+    //     };
         
-        // 3. Keyword analysis
-        let description = Text.toLowercase(evidence.description);
-        if (Text.contains(description, #text "proof") or 
-            Text.contains(description, #text "evidence") or 
-            Text.contains(description, #text "photo")) {
-            qualityScore += 0.05;
-        };
+    //     // 3. Keyword analysis
+    //     let description = Text.toLowercase(evidence.description);
+    //     if (Text.contains(description, #text "proof") or 
+    //         Text.contains(description, #text "evidence") or 
+    //         Text.contains(description, #text "photo")) {
+    //         qualityScore += 0.05;
+    //     };
         
-        // 4. Timeliness
-        let ageInHours = Float.fromInt(Time.now() - evidence.createdAt) / (60.0 * 60.0 * 1_000_000_000.0);
-        if (ageInHours <= 24.0) { // Within 24 hours
-            qualityScore += 0.1;
-        };
+    //     // 4. Timeliness
+    //     let ageInHours = Float.fromInt(Time.now() - evidence.createdAt) / (60.0 * 60.0 * 1_000_000_000.0);
+    //     if (ageInHours <= 24.0) { // Within 24 hours
+    //         qualityScore += 0.1;
+    //     };
         
-        return Float.min(1.0, qualityScore);
-    };
+    //     return Float.min(1.0, qualityScore);
+    // };
 
     // Enhanced reputation history tracking
     private func updateReputationHistory(userId : Principal, newScore : Float) {
@@ -446,26 +446,26 @@ actor ReputationCanister {
     };
     
     // Process evidence submission
-    public func processEvidence(evidence : Evidence) : async Result<Evidence> {
-        // 1. Evaluate evidence quality
-        let qualityScore = evaluateEvidenceQuality(evidence);
+    // public func processEvidence(evidence : Evidence) : async Result<Evidence> {
+    //     // 1. Evaluate evidence quality
+    //     let qualityScore = evaluateEvidenceQuality(evidence);
         
-        // 2. Update evidence with quality score
-        let updatedEvidence : Evidence = {
-            id = evidence.id;
-            bookingId = evidence.bookingId;
-            submitterId = evidence.submitterId;
-            description = evidence.description;
-            fileUrls = evidence.fileUrls;
-            qualityScore = ?qualityScore;
-            createdAt = evidence.createdAt;
-        };
+    //     // 2. Update evidence with quality score
+    //     let updatedEvidence : Evidence = {
+    //         id = evidence.id;
+    //         bookingId = evidence.bookingId;
+    //         submitterId = evidence.submitterId;
+    //         description = evidence.description;
+    //         fileUrls = evidence.fileUrls;
+    //         qualityScore = ?qualityScore;
+    //         createdAt = evidence.createdAt;
+    //     };
         
-        // 3. Update submitter reputation
-        ignore await updateUserReputation(evidence.submitterId);
+    //     // 3. Update submitter reputation
+    //     ignore await updateUserReputation(evidence.submitterId);
         
-        return #ok(updatedEvidence);
-    };
+    //     return #ok(updatedEvidence);
+    // };
     
     // Set canister references (admin function)
     public shared(msg) func setCanisterReferences(

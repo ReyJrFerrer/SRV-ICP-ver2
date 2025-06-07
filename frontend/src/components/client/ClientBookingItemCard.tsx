@@ -46,7 +46,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
 
   // Extract booking data with fallbacks
   const serviceTitle = booking.serviceName;
-  const serviceImage = booking.providerProfile?.profilePicture?.imageUrl;
+  const serviceImage = booking.providerProfile?.profilePicture?.imageUrl || "/images/Tutoring-MathTutor1.jpg" ;
   const providerName = booking.providerProfile?.name 
   console.log("This is from the Client Booking Item Card", booking)
     

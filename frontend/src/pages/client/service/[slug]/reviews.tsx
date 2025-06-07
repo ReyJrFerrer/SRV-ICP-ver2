@@ -87,8 +87,8 @@ const ServiceReviewsPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>SRV | Reviews for {service.title} by {providerName}</title>
-        <meta name="description" content={`Read reviews for ${service.title} offered by ${providerName}`} />
+        <title>SRV | Reviews for {service.name} by {providerName}</title>
+        <meta name="description" content={`Read reviews for ${service.name} offered by ${providerName}`} />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -102,7 +102,7 @@ const ServiceReviewsPage: React.FC = () => {
               <ArrowLeftIcon className="h-6 w-6 text-gray-700" />
             </button>
             <h1 className="text-lg font-semibold text-gray-800 truncate">
-              Reviews for {service.title}
+              Reviews for {service.name}
             </h1>
           </div>
         </header>

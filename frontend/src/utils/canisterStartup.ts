@@ -3,6 +3,7 @@ import authCanisterService from '../services/authCanisterService';
 import serviceCanisterService from '../services/serviceCanisterService';
 import reviewCanisterService from '../services/reviewCanisterService';
 import bookingCanisterService from '../services/bookingCanisterService';
+import reputationCanisterService from '../services/reputationCanisterService';
 
 let isInitialized = false;
 let initializationPromise: Promise<void> | null = null;
@@ -39,7 +40,7 @@ async function performInitialization(): Promise<void> {
     };
 
     // Validate required environment variables
-    if (!config.authCanisterId || !config.bookingCanisterId || !config.serviceCanisterId || !config.reviewCanisterId) {
+    if (!config.authCanisterId || !config.bookingCanisterId || !config.serviceCanisterId || !config.reviewCanisterId || !config.reputationCanisterId) {
       throw new Error('Missing required canister IDs in environment variables');
     }
 
@@ -65,6 +66,12 @@ async function performInitialization(): Promise<void> {
         config.serviceCanisterId,
         config.reviewCanisterId,
         config.reputationCanisterId 
+      ),
+      reputationCanisterService.setCanisterReferences(
+        config.authCanisterId,
+        config.bookingCanisterId,
+        config.reviewCanisterId,
+        config.serviceCanisterId
       ),
     ]);
 

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { enrichServiceWithProvider } from '@app/utils/serviceHelpers';
 import { FrontendProfile } from '@app/services/authCanisterService';
 import { Service } from '@app/services/serviceCanisterService';
 import { FormattedServiceDetail } from '@app/hooks/serviceDetail';
+import { useServiceReviews } from '@app/hooks/reviewManagement';
 
 interface ServiceDetailPageComponentProps {
   service: FormattedServiceDetail | null; 
@@ -134,10 +135,120 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => 
 const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
   const router = useRouter();
   
+  // Use the review management hook to get real rating data
+  const {
+    reviews,
+    loading: reviewsLoading,
+    error: reviewsError,
+    getAverageRating,
+    getRatingDistribution,
+    calculateServiceRating
+  } = useServiceReviews(service?.id);
+
+  // Local state for calculated rating data
+  const [serviceRating, setServiceRating] = useState<{
+    average: number;
+    count: number;
+    distribution: Record<number, number>;
+  }>({
+    average: service?.rating?.average || 0,
+    count: service?.rating?.count || 0,
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  });
+
+  // Calculate real rating when reviews are loaded
+  useEffect(() => {
+    if (reviews && reviews.length > 0) {
+      const visibleReviews = reviews.filter(review => review.status === 'Visible');
+      const average = getAverageRating(visibleReviews);
+      const count = visibleReviews.length;
+      const distribution = getRatingDistribution(visibleReviews);
+      
+      setServiceRating({
+        average,
+        count,
+        distribution
+      });
+    } else if (!reviewsLoading && reviews) {
+      // No reviews found - set to zero
+      setServiceRating({
+        average: 0,
+        count: 0,
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      });
+    }
+  }, [reviews, reviewsLoading, getAverageRating, getRatingDistribution]);
+
   const handleViewReviews = () => {
     // Navigate to reviews page with service ID
     router.push(`/client/service/reviews/${service.id}`);
   };
+
+  // Show loading state
+  if (reviewsLoading) {
+    return (
+      <div className="card mb-6">
+        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <span className="text-xl mr-2">⭐</span>
+          Rating & Reviews
+        </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-12 h-8 bg-gray-200 animate-pulse rounded mr-2"></div>
+            <div>
+              <div className="flex mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-gray-300 animate-pulse">★</span>
+                ))}
+              </div>
+              <div className="w-20 h-4 bg-gray-200 animate-pulse rounded"></div>
+            </div>
+          </div>
+          <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state (fallback to service data)
+  if (reviewsError) {
+    console.warn('Error loading reviews, falling back to service data:', reviewsError);
+    // Use original service data as fallback
+    const fallbackRating = service?.rating || { average: 0, count: 0 };
+    
+    return (
+      <div className="card mb-6">
+        <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <span className="text-xl mr-2">⭐</span>
+          Rating & Reviews
+        </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-3xl font-bold text-yellow-500 mr-2">
+              {fallbackRating.average.toFixed(1)}
+            </span>
+            <div>
+              <div className="flex text-yellow-400 mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className={i < Math.floor(fallbackRating.average) ? 'text-yellow-400' : 'text-gray-300'}>
+                    ★
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-gray-600">{fallbackRating.count} reviews</p>
+              <p className="text-xs text-red-500">Unable to load latest reviews</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleViewReviews}
+            className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+          >
+            View Reviews
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card mb-6">
@@ -147,24 +258,75 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
       </h3>
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <span className="text-3xl font-bold text-yellow-500 mr-2">{service.rating.average.toFixed(1)}</span>
+          <span className="text-3xl font-bold text-yellow-500 mr-2">
+            {serviceRating.average > 0 ? serviceRating.average.toFixed(1) : '0.0'}
+          </span>
           <div>
             <div className="flex text-yellow-400 mb-1">
               {[...Array(5)].map((_, i) => (
-                <span key={i} className={i < Math.floor(service.rating.average) ? 'text-yellow-400' : 'text-gray-300'}>
+                <span 
+                  key={i} 
+                  className={i < Math.floor(serviceRating.average) ? 'text-yellow-400' : 'text-gray-300'}
+                >
                   ★
                 </span>
               ))}
             </div>
-            <p className="text-sm text-gray-600">{service.rating.count} reviews</p>
+            <p className="text-sm text-gray-600">
+              {serviceRating.count} {serviceRating.count === 1 ? 'review' : 'reviews'}
+            </p>
+            {/* ✅ Add real-time indicator */}
+            {serviceRating.count > 0 && (
+              <p className="text-xs text-green-600 mt-1">
+                ✅ Live data from {serviceRating.count} verified reviews
+              </p>
+            )}
+            {serviceRating.count === 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                No reviews yet - be the first to review!
+              </p>
+            )}
           </div>
         </div>
-        <button 
-          onClick={handleViewReviews}
-          className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
-        >
-          View Reviews
-        </button>
+        
+        <div className="flex flex-col items-end">
+          <button 
+            onClick={handleViewReviews}
+            className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors mb-2"
+          >
+            {serviceRating.count > 0 ? 'View Reviews' : 'See Details'}
+          </button>
+          
+          {/* ✅ Show rating distribution preview */}
+          {serviceRating.count > 0 && (
+            <div className="text-xs text-gray-500">
+              <div className="flex items-center space-x-1">
+                <span>5★</span>
+                <div className="w-8 h-1 bg-gray-200 rounded">
+                  <div 
+                    className="h-1 bg-yellow-400 rounded"
+                    style={{ 
+                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[5] / serviceRating.count) * 100 : 0}%` 
+                    }}
+                  ></div>
+                </div>
+                <span>{serviceRating.distribution[5]}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <span>4★</span>
+                <div className="w-8 h-1 bg-gray-200 rounded">
+                  <div 
+                    className="h-1 bg-yellow-400 rounded"
+                    style={{ 
+                      width: `${serviceRating.count > 0 ? (serviceRating.distribution[4] / serviceRating.count) * 100 : 0}%` 
+                    }}
+                  ></div>
+                </div>
+                <span>{serviceRating.distribution[4]}</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -64,6 +64,7 @@ export interface UseReviewManagementOptions {
   autoRefresh?: boolean;
   refreshInterval?: number;
   enableProfileCaching?: boolean;
+  autoLoadUserReviews?: boolean; // ✅ Add this new option
 }
 
 export interface ReviewFormData {
@@ -147,7 +148,8 @@ export const useReviewManagement = (
   const { 
     autoRefresh = false, 
     refreshInterval = 30000,
-    enableProfileCaching = true 
+    enableProfileCaching = true,
+    autoLoadUserReviews = true // ✅ Default to true for backward compatibility
   } = options;
   
   // Core state management
@@ -875,11 +877,12 @@ export const useReviewManagement = (
     loadUserProfile();
   }, [loadUserProfile]);
 
+  // ✅ Fix the auto-loading effect to be conditional
   useEffect(() => {
-    if (isUserAuthenticated()) {
+    if (autoLoadUserReviews && isUserAuthenticated()) {
       loadUserReviews();
     }
-  }, [isUserAuthenticated, loadUserReviews]);
+  }, [autoLoadUserReviews, isUserAuthenticated, loadUserReviews]);
 
   return {
     // Data states
@@ -945,43 +948,49 @@ export const useReviewManagement = (
 
 // Hook for service review page
 export const useServiceReviews = (serviceId: string | null) => {
-  const reviewManagement = useReviewManagement({ autoRefresh: true });
+  const reviewManagement = useReviewManagement({ 
+    autoRefresh: true,
+    autoLoadUserReviews: false // ✅ Disable auto-loading of user reviews
+  });
   
   useEffect(() => {
     if (serviceId) {
       reviewManagement.getServiceReviews(serviceId);
     }
-  }, [serviceId]);
+  }, [serviceId, reviewManagement.getServiceReviews]); // ✅ Add dependency
   
   return reviewManagement;
 };
-
+ 
 // Hook for provider dashboard
 export const useProviderReviews = (providerId?: string) => {
-  const reviewManagement = useReviewManagement({ autoRefresh: true });
+  const reviewManagement = useReviewManagement({ 
+    autoRefresh: true,
+    autoLoadUserReviews: false // ✅ Disable auto-loading
+  });
   
   useEffect(() => {
     reviewManagement.getProviderReviews(providerId);
-  }, [providerId]);
+  }, [providerId, reviewManagement.getProviderReviews]);
   
   return reviewManagement;
 };
 
 // Hook for booking rating
 export const useBookingRating = (bookingId: string | null) => {
-  const reviewManagement = useReviewManagement();
+  const reviewManagement = useReviewManagement({
+    autoLoadUserReviews: true // ✅ Keep auto-loading for authenticated scenarios
+  });
   const [canReview, setCanReview] = useState<boolean | null>(null);
   
   useEffect(() => {
     if (bookingId) {
       reviewManagement.canUserReviewBooking(bookingId).then(setCanReview);
     }
-  }, [bookingId]);
+  }, [bookingId, reviewManagement.canUserReviewBooking]);
   
   return {
     ...reviewManagement,
     canReview,
   };
 };
-
-export default useReviewManagement;

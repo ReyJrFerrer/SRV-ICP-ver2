@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ArrowLeftIcon, StarIcon as StarSolid, UserIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 import { useServiceReviews } from '../../../../hooks/reviewManagement';
 import { useServiceById } from '../../../../hooks/serviceInformation';
+import { review } from '@app/declarations/review';
 
 const StarRatingDisplay: React.FC<{ rating: number; maxStars?: number }> = ({ 
   rating, 
@@ -48,6 +49,8 @@ const ServiceReviewsPage: React.FC = () => {
     getRelativeTime,
     refreshReviews
   } = useServiceReviews(serviceId as string);
+
+  console.log("These are the reviews: ", reviews)
 
   // Local state for filtering and sorting
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');

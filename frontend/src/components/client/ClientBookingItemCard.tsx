@@ -214,16 +214,15 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               )}
               
               {isFinished && (
-                <Link
-                  href={{
-                    pathname: '/client/bookings-ratings',
-                    query: {
-                      providerName: providerName,
-                      bookingId: booking.id,
-                    },
-                  }}
-                  legacyBehavior
-                >
+                  <Link
+                    href={{
+                      pathname: `/client/review/${booking.id}`,  // ✅ Routes to [id].tsx
+                      query: {
+                        providerName: providerName  
+                      },
+                    }}
+                    legacyBehavior
+                  >
                   <a className="flex items-center justify-center text-xs w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-md transition-colors">
                     <StarIcon className="h-4 w-4 mr-1.5" /> Rate Provider
                   </a>

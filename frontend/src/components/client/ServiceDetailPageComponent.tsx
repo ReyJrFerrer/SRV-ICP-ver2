@@ -131,32 +131,44 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => 
 );
 
 // Service Rating Section Component
-const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => (
-  <div className="card mb-6">
-    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
-      <span className="text-xl mr-2">⭐</span>
-      Rating & Reviews
-    </h3>
-    <div className="flex items-center justify-between">
-      <div className="flex items-center">
-        <span className="text-3xl font-bold text-yellow-500 mr-2">{service.rating.average.toFixed(1)}</span>
-        <div>
-          <div className="flex text-yellow-400 mb-1">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className={i < Math.floor(service.rating.average) ? 'text-yellow-400' : 'text-gray-300'}>
-                ★
-              </span>
-            ))}
+const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
+  const router = useRouter();
+  
+  const handleViewReviews = () => {
+    // Navigate to reviews page with service ID
+    router.push(`/client/service/reviews/${service.id}`);
+  };
+
+  return (
+    <div className="card mb-6">
+      <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        <span className="text-xl mr-2">⭐</span>
+        Rating & Reviews
+      </h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <span className="text-3xl font-bold text-yellow-500 mr-2">{service.rating.average.toFixed(1)}</span>
+          <div>
+            <div className="flex text-yellow-400 mb-1">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className={i < Math.floor(service.rating.average) ? 'text-yellow-400' : 'text-gray-300'}>
+                  ★
+                </span>
+              ))}
+            </div>
+            <p className="text-sm text-gray-600">{service.rating.count} reviews</p>
           </div>
-          <p className="text-sm text-gray-600">{service.rating.count} reviews</p>
         </div>
+        <button 
+          onClick={handleViewReviews}
+          className="btn-secondary text-sm px-4 py-2 hover:bg-blue-600 hover:text-white transition-colors"
+        >
+          View Reviews
+        </button>
       </div>
-      <button className="btn-secondary text-sm px-4 py-2">
-        View Reviews
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 // // Service Requirements Section Component
 // const ServiceRequirementsSection: React.FC<{ service: any }> = ({ service }) => (

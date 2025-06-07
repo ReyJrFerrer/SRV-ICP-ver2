@@ -311,15 +311,14 @@ const BookingDetailsPage: NextPage = () => {
                 )}
 
                 <Link
-                  href={{
-                    pathname: '/client/bookings-ratings',
-                    query: {
-                      providerName: providerName,
-                      bookingId: specificBooking?.id
-                    },
-                  }}
-                  legacyBehavior
-                >
+                    href={{
+                      pathname: `/client/review/${specificBooking?.id}`,  // ✅ Routes to [id].tsx
+                      query: {
+                        providerName: providerName  
+                      },
+                    }}
+                    legacyBehavior
+                  >
                   <a className="w-full sm:flex-1 flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
                     <StarIcon className="h-5 w-5 mr-2" /> Rate Provider
                   </a>

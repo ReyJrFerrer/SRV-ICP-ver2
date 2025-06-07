@@ -30,7 +30,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
       </div>
 
       {!isAuthenticated && (
-        <div className="absolute top-6 right-6 z-20">
+        <div className="absolute top-9 right-6 z-20">
           <button
             onClick={onLoginClick}
             disabled={isLoginLoading}
@@ -47,7 +47,7 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
             ) : (
               <>
                 <FingerPrintIcon className="h-5 w-5 mr-2" />
-                Login with Internet Identity
+                Login 
               </>
             )}
           </button>

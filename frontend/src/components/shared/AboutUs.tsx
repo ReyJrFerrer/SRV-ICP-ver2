@@ -6,7 +6,7 @@ const teamMembers = [
   { name: "Jan Dale Zarate", title: "Project Manager | Business Strategist | Frontend Developer", imageUrl: "/jd.png" },
   { name: "Don Daryll Dela Concha", title: "Frontend Developer", imageUrl: "/don.jpg" },
   { name: "Hyaeni Gayle Ferrer", title: "UI/UX Designer", imageUrl: "/yanni.jpg" },
-  { name: "Princess Hannah Azradon", title: "Frontend Developer", imageUrl: "/images/team/member5.jpg" },
+  { name: "Princess Hannah Azradon", title: "Frontend Developer", imageUrl: "/hannah.jpg" },
 ];
 
 const AboutUs: React.FC = () => {

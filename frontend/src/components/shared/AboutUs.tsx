@@ -20,7 +20,7 @@ const AboutUs: React.FC = () => {
           SRV is the product of a creative and driven team focused on harnessing the power of the Internet Computer to build smart, scalable solutions.
         </p>
   
-        <div className="flex flex-wrap justify-center gap-20 lg:gap-10">
+        <div className="flex flex-wrap justify-center gap-8 lg:gap-20">
           {teamMembers.map((member) => (
             <div key={member.name} className="text-center group max-w-[200px] w-full">
               {/* Arched Frame Container */}

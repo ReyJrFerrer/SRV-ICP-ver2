@@ -90,7 +90,7 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>SRV - Your Service Hub</title>
+        <title>SRV | Your Local On-Demand Service Hub</title>
         <meta name="description" content="Find and book local services with ease on the Internet Computer." />
         <link rel="icon" href="/logo.jpeg" /> 
       </Head>

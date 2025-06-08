@@ -4,6 +4,7 @@ import { HttpAgent, Identity } from '@dfinity/agent';
 // Global variables to store the current authentication state
 let currentIdentity: Identity | null = null;
 let httpAgent: HttpAgent | null = null;
+let identityInitialized = false;
 
 /**
  * Set the current identity from the ICP Connect context
@@ -11,6 +12,7 @@ let httpAgent: HttpAgent | null = null;
  */
 export const setCurrentIdentity = (identity: Identity | null) => {
   currentIdentity = identity;
+  identityInitialized = true;
   // Reset agent when identity changes
   httpAgent = null;
 };
@@ -23,9 +25,34 @@ export const getCurrentIdentity = (): Identity | null => {
 };
 
 /**
+ * Initialize identity from authentication context (for page reloads)
+ * This should be called before making any authenticated requests
+ */
+export const initializeIdentity = async (): Promise<void> => {
+  if (identityInitialized) return;
+
+  // Try to get identity from your auth context/provider
+  // This will depend on your authentication setup (ICP Connect, Internet Identity, etc.)
+  // You might need to access your auth context here
+  
+  // For now, we'll mark as initialized to prevent infinite loops
+  identityInitialized = true;
+  
+  // If you're using ICP Connect or similar, you would do something like:
+  // const authClient = await AuthClient.create();
+  // const identity = authClient.getIdentity();
+  // if (identity && !identity.getPrincipal().isAnonymous()) {
+  //   currentIdentity = identity;
+  // }
+};
+
+/**
  * Create or get the HTTP agent with the current identity
  */
 export const getHttpAgent = async (): Promise<HttpAgent> => {
+  // Initialize identity if not already done
+  await initializeIdentity();
+  
   if (!httpAgent) {
     // Check if we're in development or production
     const isDevelopment = process.env.NODE_ENV === 'development' || 
@@ -95,15 +122,25 @@ export const getAdminHttpAgent = async (): Promise<HttpAgent> => {
 };
 
 /**
- * Reset the agent (useful when identity changes)
+ * Reset the agent and identity state (useful when identity changes or user logs out)
  */
 export const resetAgent = () => {
   httpAgent = null;
+  identityInitialized = false;
 };
 
 /**
  * Check if user is currently authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return currentIdentity !== null;
+  return currentIdentity !== null && !currentIdentity.getPrincipal().isAnonymous();
+};
+
+/**
+ * Force re-initialization of identity (useful for debugging)
+ */
+export const reinitializeIdentity = async (): Promise<void> => {
+  identityInitialized = false;
+  httpAgent = null;
+  await initializeIdentity();
 };

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPinIcon, CheckCircleIcon, BellIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { MapPinIcon, CheckCircleIcon, BellIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ const Header: React.FC<HeaderProps> = ({
   const [profile, setProfile] = useState<FrontendProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState<boolean>(false);
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Use the hook to fetch all services
   const { services, loading, error } = useAllServicesWithProviders();
@@ -55,24 +56,30 @@ const Header: React.FC<HeaderProps> = ({
   }, [isAuthenticated, currentIdentity]);
 
   const handleLocationClick = () => {
-    // setLocationSheetOpen(true);
+     setLocationSheetOpen(true);
   };
 
   const handleAddressMapClick = () => {
-    // setLocationSheetOpen(false);
-    // router.push('/client/service-maps');
+     setLocationSheetOpen(false);
+     router.push('/client/service-maps');
   };
 
   const handleProfileClick = () => {
-    // if (isAuthenticated) {
-    //   router.push('/client/profile');
-    // } else {
-    //   router.push('/auth/login');
-    // }
+     if (isAuthenticated) {
+       router.push('/client/profile');
+     } else {
+       router.push('/auth/login');
+     }
   };
 
   const handleNotificationClick = () => {
     router.push('/client/notifications');
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    // dito moo ilagay logic rey
+    router.push('/kung ano man location nito, preferbly sa landing');
   };
 
   // Extract first name from profile
@@ -137,6 +144,22 @@ const Header: React.FC<HeaderProps> = ({
               <UserCircleIcon className="h-6 w-6 text-gray-600" />
             )}
           </button>
+
+          {/* Logout Button */}
+          {isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
+              title="Logout"
+            >
+              {isLoggingOut ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+              ) : (
+                <ArrowRightOnRectangleIcon className="h-6 w-6" />
+              )}
+            </button>
+          )}
 
           {/* Notifications */}
           {isAuthenticated && notificationCount > 0 && (

@@ -1,7 +1,9 @@
-import React from 'react';
-import { MapPinIcon, BellIcon } from '@heroicons/react/24/solid';
+import React, { useState } from 'react';
+import { MapPinIcon, BellIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { FrontendProfile } from '../../services/authCanisterService';
+import { useAuth } from '@bundly/ares-react';
 
 interface SPHeaderProps {
   provider: FrontendProfile | null;
@@ -14,6 +16,16 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   notificationCount = 0,
   className = ''
 }) => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    // lagay mo dito rey
+    router.push('/');
+  };
+
   if (!provider) {
     return (
       <header className={`provider-header bg-white ${className}`}>
@@ -54,7 +66,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
               <MapPinIcon className="h-4 w-4 text-white" />
             </span>
             <span className="text-sm font-medium truncate max-w-[120px] text-black">
-              {/* {displayLocation} */}
+              Baguio City
             </span>
           </button>
 
@@ -65,6 +77,22 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {notificationCount > 99 ? '99+' : notificationCount}
               </span>
+            </button>
+          )}
+
+          {/* Logout Button */}
+          {isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2 w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
+              title="Logout"
+            >
+              {isLoggingOut ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                ) : (
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              )}
             </button>
           )}
         </div>

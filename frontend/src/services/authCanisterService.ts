@@ -25,6 +25,7 @@ const getAuthActor = async (): Promise<AuthService> => {
 
 // Frontend-compatible Profile interface
 export interface FrontendProfile {
+  location: any;
   id: string;
   name: string;
   email: string;

@@ -158,6 +158,7 @@ interface ServiceManagementHook {
   isUserAuthenticated: () => boolean;
   retryOperation: (operation: string) => Promise<void>;
   isOperationInProgress: (operation: string) => boolean;
+  organizeWeeklySchedule: (weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>) => OrganizedWeeklySchedule;
   
   // Category management
   getCategories: () => Promise<ServiceCategory[]>;
@@ -171,6 +172,17 @@ interface ServiceManagementHook {
     totalBookings: number;
     averageRating: number;
   }>;
+}
+
+// Add this interface near the other type definitions
+export interface OrganizedWeeklySchedule {
+  monday?: DayAvailability;
+  tuesday?: DayAvailability;
+  wednesday?: DayAvailability;
+  thursday?: DayAvailability;
+  friday?: DayAvailability;
+  saturday?: DayAvailability;
+  sunday?: DayAvailability;
 }
 
 export const useServiceManagement = (): ServiceManagementHook => {
@@ -240,8 +252,9 @@ export const useServiceManagement = (): ServiceManagementHook => {
         newOperations.delete(operation);
       }
       return { ...prev, operations: newOperations };
-    });
-  }, []);
+ 
+  })
+     }, []);
 
   // Error handling
   const handleError = useCallback((error: any, operation: string) => {
@@ -977,6 +990,45 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [isInitialized, handleError]);
 
+  // Add this function in the useServiceManagement hook, after the other utility functions
+  const organizeWeeklySchedule = useCallback((
+    weeklySchedule?: Array<{ day: DayOfWeek; availability: DayAvailability }>
+  ): OrganizedWeeklySchedule => {
+    const organized: OrganizedWeeklySchedule = {};
+    
+    if (!weeklySchedule || weeklySchedule.length === 0) {
+      return organized;
+    }
+
+    // Map each day to its corresponding property
+    weeklySchedule.forEach(({ day, availability }) => {
+      switch (day) {
+        case 'Monday':
+          organized.monday = availability;
+          break;
+        case 'Tuesday':
+          organized.tuesday = availability;
+          break;
+        case 'Wednesday':
+          organized.wednesday = availability;
+          break;
+        case 'Thursday':
+          organized.thursday = availability;
+          break;
+        case 'Friday':
+          organized.friday = availability;
+          break;
+        case 'Saturday':
+          organized.saturday = availability;
+          break;
+        case 'Sunday':
+          organized.sunday = availability;
+          break;
+      }
+    });
+
+    return organized;
+  }, []);
   // Return the hook interface
   return {
     // Core data states
@@ -1039,7 +1091,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
     isUserAuthenticated,
     retryOperation,
     isOperationInProgress,
-    
+    organizeWeeklySchedule,
     // Category management
     getCategories,
     refreshCategories,

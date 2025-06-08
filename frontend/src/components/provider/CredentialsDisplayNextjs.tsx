@@ -91,20 +91,20 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
       <div className="verification-badges flex gap-3 mb-4 flex-wrap">
         {verificationData.identityVerified && (
           <div className="verification-badge flex items-center bg-blue-600 text-white px-3 py-1 rounded-full">
-            <UserIcon className="h-4 w-4 text-white mr-1" />
+            <UserIcon className="h-4 w-4 text-yellow-400 mr-1" />
             <span className="text-sm font-medium">Identity Verified</span>
           </div>
         )}
         
         {verificationData.backgroundCheckPassed && (
-          <div className="verification-badge flex items-center bg-yellow-200 text-black px-3 py-1 rounded-full">
-            <ShieldCheckIcon className="h-4 w-4 text-black mr-1" />
+          <div className="verification-badge flex items-center bg-blue-600 text-white px-3 py-1 rounded-full">
+            <ShieldCheckIcon className="h-4 w-4 text-yellow-400 mr-1" />
             <span className="text-sm font-medium">Background Verified</span>
           </div>
         )}
         
         {verificationData.verificationStatus === 'VERIFIED' && (
-          <div className="verification-badge flex items-center bg-black text-white px-3 py-1 rounded-full">
+            <div className="verification-badge flex items-center bg-blue-600 text-white px-3 py-1 rounded-full">
             <CheckBadgeIcon className="h-4 w-4 text-yellow-400 mr-1" />
             <span className="text-sm font-medium">{verificationData.verificationStatus}</span>
           </div>

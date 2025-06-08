@@ -26,7 +26,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ className = '', limit = 4 }) => {
         <h2 className="text-lg sm:text-xl font-bold">Top Picks!</h2>
         <Link 
           href="/client/service/view-all"
-          className="text-green-600 flex items-center hover:text-green-700 transition-colors"
+          className="text-blue-600 flex items-center hover:text-amber-700 transition-colors"
         >
           <span className="mr-1">View All</span>
           <ArrowRightIcon className="h-4 w-4" />

@@ -43,70 +43,69 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   // const displayLocation = provider.address || 'Location not set';
 
   return (
-      <header className={`provider-header bg-yellow-300 text-gray-900 p-4 ${className}`}>
-      {/* Top Row: Logo, Location, Notifications */}
-      <div className="flex justify-between items-center mb-2">
-        {/* Logo */}
-        <div className="flex items-center">
+      <header className={`provider-header bg-white p-4 ${className} space-y-4`}>
+      {/* Top Row: Welcome Info & Actions */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
           <Image
             src="/logo.svg"
             alt="Logo"
-            width={40}
-            height={40}
-            className="rounded-full mr-3 bg-white"
+            width={60}
+            height={60}
+            className="rounded-full bg-white flex-shrink-0"
             priority
           />
+          <div className="welcome-section">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Welcome, {displayName}!
+            </h1>
+            <p className="text-gray-600">
+              {provider.isVerified ? '✓ Verified Provider' : 'Manage your services and bookings'}
+            </p>
+          </div>
+
         </div>
-        
-        {/* Location Badge and Notifications */}
-        <div className="flex items-center space-x-3">
-          {/* Location Badge */}
-          <button className="location-badge flex items-center bg-yellow-100 px-3 py-1 rounded-full shadow-sm">
-            <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
-              <MapPinIcon className="h-4 w-4 text-white" />
-            </span>
-            <span className="text-sm font-medium truncate max-w-[120px] text-black">
-              Baguio City
-            </span>
-          </button>
+      
 
-          {/* Notifications */}
-          {notificationCount > 0 && (
-            <button className="relative p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-              <BellIcon className="h-5 w-5 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {notificationCount > 99 ? '99+' : notificationCount}
+        <div className="flex items-center space-x-4">
+            <button className="location-badge flex items-center bg-yellow-200 px-4 py-2 rounded-full shadow-sm hover:bg-yellow-300 transition-colors">
+              <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-3">
+                <MapPinIcon className="h-5 w-5 text-white" />
               </span>
-            </button>
-          )}
+              <span className="text-base font-medium text-black">
+                Current Location: <span className="font-bold">Baguio City</span>
+              </span>
 
-          {/* Logout Button */}
-          {isAuthenticated && (
+            </button>
+            {notificationCount > 0 && (
+              <button className="relative p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                <BellIcon className="h-6 w-6 text-gray-700" />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+              </button>
+            )}
+            {isAuthenticated && (
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 w-9 h-9 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
-              title="Logout"
+               className="p-3 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
             >
               {isLoggingOut ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 ) : (
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  <ArrowRightOnRectangleIcon className="h-8 w-8" />
               )}
             </button>
           )}
+        
         </div>
-      </div>
+        </div>
+         
+  
 
-      {/* Welcome message */}
-      <div className="welcome-section">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Welcome, {displayName}!
-        </h1>
-        <p className="text-gray-700">
-          {provider.isVerified ? '✓ Verified Provider' : 'Manage your services and bookings'}
-        </p>
-      </div>
+      {/* Bottom Row: Expanded Location Bar */}
+    
     </header>
   );
 };

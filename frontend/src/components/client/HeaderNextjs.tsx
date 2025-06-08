@@ -87,60 +87,20 @@ const Header: React.FC<HeaderProps> = ({
     <header className={`bg-white rounded-lg shadow-sm p-4 space-y-4 ${className}`}>
       {/* Top Row: Logo, Location, Profile & Notifications */}
       <div className="flex justify-between items-center">
-        {/* Logo on the left */}
-        <div className="flex-shrink-0">
           <Link href="/client/home" legacyBehavior>
-            <a aria-label="Home">
-              <Image 
-                src="/logo.svg"
-                alt="SRV Logo"
-                width={40}
-                height={40}
-                className="rounded-full bg-white"
-                priority
-              />
+              <a aria-label="Home" className="flex items-center">
+                <div className="relative w-48 h-20">
+                <Image 
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  width={100}
+                  height={40}
+                  className="object-contain"
+                />
+                </div>
             </a>
-          </Link>
-        </div>
-        
-        {/* Right side: Location, Profile, Notifications */}
-        <div className="flex items-center space-x-3">
-          {/* Location Badge */}
-          <button 
-            onClick={handleLocationClick}
-            className="location-badge flex items-center bg-yellow-200 px-3 py-1 rounded-full shadow-sm hover:bg-yellow-300 transition-colors"
-          >
-            <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
-              <MapPinIcon className="h-4 w-4 text-white" />
-            </span>
-            <div className="flex items-center overflow-hidden">
-              <span className="text-sm font-medium truncate max-w-[120px] text-black">
-                San Vicente, Baguio
-              </span>
-              <CheckCircleIcon className="h-3 w-3 text-green-500 ml-1 flex-shrink-0" />
-            </div>
-          </button>
 
-          {/* Profile Button */}
-          <button 
-            onClick={handleProfileClick}
-            className="flex items-center space-x-2 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-            disabled={profileLoading}
-          >
-            {profileLoading ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-400"></div>
-            ) : profile?.profilePicture ? (
-              <Image
-                src={profile.profilePicture.imageUrl}
-                alt="Profile"
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-            ) : (
-              <UserCircleIcon className="h-6 w-6 text-gray-600" />
-            )}
-          </button>
+          </Link>
 
           {/* Logout Button */}
           {isAuthenticated && (
@@ -157,6 +117,27 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </button>
           )}
+        </div>
+
+
+
+          {/* Location Section */}
+          <div className="bg-yellow-200 p-4 rounded-lg">
+            <p className="text-sm font-medium text-gray-800">My Location</p>
+            <div className="flex items-center">
+              <MapPinIcon className="h-5 w-5 text-gray-700 mr-2" />
+              <span className="text-gray-800">
+                San Vicente, Baguio, Cordillera Administrative Region
+              </span>
+                {/* Search Bar */}
+            <div className="w-full">
+              <SearchBar 
+                placeholder="Search for services"
+                redirectToSearchResultsPage={true}
+                servicesList={services}
+              />
+            </div>
+            </div>
 
           {/* Notifications */}
           {isAuthenticated && notificationCount > 0 && (
@@ -171,67 +152,12 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           )}
         </div>
-      </div>
+    
 
-      {/* Welcome Message */}
-      {isAuthenticated && profile && !profileLoading && (
-        <div className="welcome-section">
-          <h1 className="font-nordique text-xl sm:text-2xl font-bold text-gray-800">
-            Hello, {displayName}!
-          </h1>
-          <p className="font-nordique text-gray-600 text-sm">
-            {isVerified ? '✓ Verified Client' : 'Find the perfect service for you'}
-          </p>
-        </div>
-      )}
+      
 
-      {/* Guest Welcome Message */}
-      {!isAuthenticated && (
-        <div className="welcome-section">
-          <h1 className="font-nordique text-xl sm:text-2xl font-bold text-gray-800">
-            Welcome to SRV!
-          </h1>
-          <p className="font-nordique text-gray-600 text-sm">
-            Discover amazing local services
-          </p>
-        </div>
-      )}
+    
 
-      {/* Loading state for profile */}
-      {isAuthenticated && profileLoading && (
-        <div className="welcome-section">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-          </div>
-        </div>
-      )}
-
-      {/* Search Bar */}
-      <div className="w-full">
-        <SearchBar 
-          placeholder="Search for services"
-          redirectToSearchResultsPage={true}
-          servicesList={services}
-        />
-      </div>
-
-      {/* Location Bottom Sheet */}
-      <BottomSheet 
-        isOpen={locationSheetOpen}
-        onClose={() => setLocationSheetOpen(false)}
-        title="Where do you like to meet your service provider?"
-        height="large"
-      >
-        <div className="h-96 mb-4">
-          <ServiceLocationMap onClick={handleAddressMapClick} />
-        </div>
-        
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
-          <h3 className="font-nordique font-medium text-gray-800 mb-1">Current Location</h3>
-          <p className="font-nordique text-gray-600">San Vicente, Baguio, Cordillera Administrative Region</p>
-        </div>
-      </BottomSheet>
     </header>
   );
 };

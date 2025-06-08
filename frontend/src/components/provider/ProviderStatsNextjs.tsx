@@ -35,21 +35,6 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
     error: reviewsError,
     getCurrentUserId
   } = useProviderReviews(); // This will automatically load provider reviews
-
-  // // Add debugging
-  // React.useEffect(() => {
-  //   console.log('ProviderStatsNextjs Debug:', {
-  //     analytics,
-  //     reviewAnalytics,
-  //     bookingLoading,
-  //     reviewsLoading,
-  //     providerProfile: !!providerProfile,
-  //     error,
-  //     reviewsError,
-  //     isAuthenticated: isProviderAuthenticated()
-  //   });
-  // }, [analytics, reviewAnalytics, bookingLoading, reviewsLoading, providerProfile, error, reviewsError, isProviderAuthenticated]);
-
   // Improved loading logic - wait for both analytics and reviews
   const isLoading = externalLoading || bookingLoading || reviewsLoading;
   const hasError = error || reviewsError;
@@ -76,13 +61,13 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
         title: 'Earnings This Month',
         value: '₱0.00',
         icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
-        borderColor: 'border-blue-600',
-        bgColor: 'bg-blue-600'
+        borderColor: 'border-yellow-400',
+        bgColor: 'bg-yellow-400'
       },
       {
         title: 'Pending Payout',
         value: '₱0.00',
-        icon: <ClockIcon className="h-6 w-6 text-black" />,
+        icon: <ClockIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
@@ -90,29 +75,29 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
         title: 'Completed Jobs',
         value: '0',
         icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
-        borderColor: 'border-black',
-        bgColor: 'bg-black'
+        borderColor: 'border-yellow-400',
+        bgColor: 'bg-yellow-400'
       },
       {
         title: 'Customer Rating',
         value: '0 (0)',
         icon: <StarIcon className="h-6 w-6 text-white" />,
-        borderColor: 'border-yellow-500',
-        bgColor: 'bg-yellow-500'
+        borderColor: 'border-yellow-400',
+        bgColor: 'bg-yellow-400'
       },
       {
         title: 'Completion Rate',
         value: '0%',
-        icon: <ChartBarIcon className="h-6 w-6 text-blue-600" />,
+        icon: <ChartBarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-yellow-100'
+        bgColor: 'bg-yellow-400'
       },
       {
         title: 'Total Earnings',
         value: '₱0.00',
         icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-        borderColor: 'border-blue-600',
-        bgColor: 'bg-blue-600'
+        borderColor: 'border-yellow-400',
+        bgColor: 'bg-yellow-400'
       }
     ];
 
@@ -138,13 +123,13 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
           title: 'Earnings This Month',
           value: `₱${monthlyRevenue.toFixed(2)}`,
           icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
-          borderColor: 'border-blue-600',
-          bgColor: 'bg-blue-600'
+          borderColor: 'border-yellow-400',
+          bgColor: 'bg-yellow-400'
         },
         {
           title: 'Pending Payout',
           value: `₱${pendingPayout.toFixed(2)}`,
-          icon: <ClockIcon className="h-6 w-6 text-black" />,
+           icon: <ClockIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
@@ -152,29 +137,29 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
           title: 'Completed Jobs',
           value: (analytics.completedBookings || 0).toString(),
           icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
-          borderColor: 'border-black',
-          bgColor: 'bg-black'
+          borderColor: 'border-yellow-400',
+          bgColor: 'bg-yellow-400'
         },
         {
           title: 'Customer Rating',
           value: `${ratingData.averageRating.toFixed(1)} (${ratingData.totalReviews})`,
           icon: <StarIcon className="h-6 w-6 text-white" />,
-          borderColor: 'border-yellow-500',
-          bgColor: 'bg-yellow-500'
+          borderColor: 'border-yellow-400',
+          bgColor: 'bg-yellow-400'
         },
         {
           title: 'Completion Rate',
           value: `${(analytics.completionRate || 0).toFixed(0)}%`,
-          icon: <ChartBarIcon className="h-6 w-6 text-blue-600" />,
+          icon: <ChartBarIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
-          bgColor: 'bg-yellow-100'
+          bgColor: 'bg-yellow-400'
         },
         {
           title: 'Total Earnings',
           value: `₱${(analytics.totalRevenue || 0).toFixed(2)}`,
           icon: <BanknotesIcon className="h-6 w-6 text-white" />,
-          borderColor: 'border-blue-600',
-          bgColor: 'bg-blue-600'
+          borderColor: 'border-yellow-400',
+          bgColor: 'bg-yellow-400'
         }
       ];
     } catch (err) {

@@ -9,14 +9,25 @@ import {
   FrontendProfile, 
   authCanisterService 
 } from '../services/authCanisterService';
+import {
+  Service,
+  ServicePackage,
+  serviceCanisterService
+} from '../services/serviceCanisterService';
 
-// Enhanced Provider Booking interface with client data enrichment
+// Enhanced Provider Booking interface with client data enrichment and package support
 export interface ProviderEnhancedBooking extends Booking {
   // Client data enrichment
   clientProfile?: FrontendProfile;
   clientName?: string;
   clientPhone?: string;
   formattedLocation?: string;
+  
+  // Service and package data enrichment
+  serviceDetails?: Service;
+  packageDetails?: ServicePackage;
+  packageName?: string;
+  description?: string;
   
   // Provider-specific computed fields
   isPending?: boolean;
@@ -40,6 +51,8 @@ export interface ProviderEnhancedBooking extends Booking {
   
   // Data loading status
   isClientDataLoaded?: boolean;
+  isServiceDataLoaded?: boolean;
+  isPackageDataLoaded?: boolean;
 }
 
 // Provider booking analytics interface
@@ -74,6 +87,8 @@ interface ProviderLoadingStates {
   bookings: boolean;
   profile: boolean;
   clients: boolean;
+  services: boolean;
+  packages: boolean;
   analytics: boolean;
   operations: Map<string, boolean>;
 }
@@ -84,11 +99,14 @@ interface ProviderBookingManagementHook {
   bookings: ProviderEnhancedBooking[];
   providerProfile: FrontendProfile | null;
   clientProfiles: Map<string, FrontendProfile>;
+  serviceDetails: Map<string, Service>;
+  packageDetails: Map<string, ServicePackage>;
   analytics: ProviderBookingAnalytics | null;
   
   // Loading states
   loading: boolean;
   loadingClients: boolean;
+  loadingServices: boolean;
   loadingAnalytics: boolean;
   refreshing: boolean;
   
@@ -143,6 +161,12 @@ interface ProviderBookingManagementHook {
   clearError: () => void;
   isOperationInProgress: (operation: string) => boolean;
   retryOperation: (operation: () => Promise<void>) => Promise<void>;
+  // Package helper functions
+  getPackageDisplayName: (booking: ProviderEnhancedBooking) => string;
+  hasPackage: (booking: ProviderEnhancedBooking) => boolean;
+  // Service helper functions
+  getServiceDisplayName: (booking: ProviderEnhancedBooking) => string;
+  hasServiceDetails: (booking: ProviderEnhancedBooking) => boolean;
 }
 
 export const useProviderBookingManagement = (): ProviderBookingManagementHook => {
@@ -150,6 +174,8 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
   const [providerBookings, setProviderBookings] = useState<ProviderEnhancedBooking[]>([]);
   const [providerProfile, setProviderProfile] = useState<FrontendProfile | null>(null);
   const [clientProfiles, setClientProfiles] = useState<Map<string, FrontendProfile>>(new Map());
+  const [serviceDetails, setServiceDetails] = useState<Map<string, Service>>(new Map());
+  const [packageDetails, setPackageDetails] = useState<Map<string, ServicePackage>>(new Map());
   const [analytics, setAnalytics] = useState<ProviderBookingAnalytics | null>(null);
   
   // Loading states
@@ -157,6 +183,8 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     bookings: false,
     profile: false,
     clients: false,
+    services: false,
+    packages: false,
     analytics: false,
     operations: new Map()
   });
@@ -173,6 +201,11 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
   const loadingClients = useMemo(() => 
     loadingStates.clients,
     [loadingStates.clients]
+  );
+
+  const loadingServices = useMemo(() => 
+    loadingStates.services || loadingStates.packages,
+    [loadingStates.services, loadingStates.packages]
   );
 
   const loadingAnalytics = useMemo(() => 
@@ -236,32 +269,27 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     setClientProfiles(prev => new Map(prev).set(clientId, profile));
   }, []);
 
-  // Location formatting function
-  const formatLocationString = useCallback((location: any): string => {
-    if (!location) return 'Location not specified';
-    
-    if (typeof location === 'string') return location;
-    
-    if (typeof location === 'object') {
-      const { address, city, state, country, latitude, longitude } = location;
-      
-      if (address) {
-        const parts = [address];
-        if (city) parts.push(city);
-        if (state) parts.push(state);
-        if (country) parts.push(country);
-        return parts.join(', ');
-      }
-      
-      if (latitude && longitude) {
-        return `${parseFloat(latitude).toFixed(4)}°, ${parseFloat(longitude).toFixed(4)}°`;
-      }
-      
-      if (country) return country;
-    }
-
-    return 'Location not available';
+  // Service and package caching functions
+  const cacheServiceDetails = useCallback((serviceId: string, service: Service) => {
+    setServiceDetails(prev => new Map(prev.set(serviceId, service)));
   }, []);
+
+  const getCachedServiceDetails = useCallback((serviceId: string): Service | null => {
+    return serviceDetails.get(serviceId) || null;
+  }, [serviceDetails]);
+
+  const cachePackageDetails = useCallback((packageId: string, pkg: ServicePackage) => {
+    setPackageDetails(prev => new Map(prev.set(packageId, pkg)));
+  }, []);
+
+  const getCachedPackageDetails = useCallback((packageId: string): ServicePackage | null => {
+    return packageDetails.get(packageId) || null;
+  }, [packageDetails]);
+
+  // Utility functions for loading states
+  const isAnyLoading = useCallback((): boolean => {
+    return loadingStates.bookings || loadingStates.profile || loadingStates.clients || loadingStates.services || loadingStates.packages || loadingStates.analytics;
+  }, [loadingStates]);
 
   // Enhanced client profile loading
   const loadClientProfile = useCallback(async (clientId: string): Promise<FrontendProfile | null> => {
@@ -294,6 +322,67 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     }
   }, [getCachedClientProfile, setLoadingState, cacheClientProfile]);
 
+  // Service data loading functions
+  const loadServiceDetails = useCallback(async (serviceId: string): Promise<Service | null> => {
+    try {
+      // Check cache first
+      const cached = getCachedServiceDetails(serviceId);
+      if (cached) {
+        console.log(`📋 Using cached service details for ${serviceId}`);
+        return cached;
+      }
+
+      console.log(`🔄 Loading service details for ${serviceId}`);
+      setLoadingState('services', true);
+      
+      const service = await serviceCanisterService.getService(serviceId);
+      
+      if (service) {
+        console.log(`✅ Service details loaded:`, service);
+        cacheServiceDetails(serviceId, service);
+        return service;
+      } else {
+        console.log(`⚠️ No service found for ${serviceId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`❌ Error loading service details for ${serviceId}:`, error);
+      return null;
+    } finally {
+      setLoadingState('services', false);
+    }
+  }, [getCachedServiceDetails, setLoadingState, cacheServiceDetails]);
+
+  const loadPackageDetails = useCallback(async (packageId: string): Promise<ServicePackage | null> => {
+    try {
+      // Check cache first
+      const cached = getCachedPackageDetails(packageId);
+      if (cached) {
+        console.log(`📋 Using cached package details for ${packageId}`);
+        return cached;
+      }
+
+      console.log(`🔄 Loading package details for ${packageId}`);
+      setLoadingState('packages', true);
+      
+      const pkg = await serviceCanisterService.getPackage(packageId);
+      
+      if (pkg) {
+        console.log(`✅ Package details loaded:`, pkg);
+        cachePackageDetails(packageId, pkg);
+        return pkg;
+      } else {
+        console.log(`⚠️ No package found for ${packageId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`❌ Error loading package details for ${packageId}:`, error);
+      return null;
+    } finally {
+      setLoadingState('packages', false);
+    }
+  }, [getCachedPackageDetails, setLoadingState, cachePackageDetails]);
+
   // Time calculation utilities
   const calculateTimeUntilService = useCallback((scheduledDate: string): string => {
     if (!scheduledDate) return 'Not scheduled';
@@ -313,13 +402,58 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
   }, []);
+  
+  // Location formatting utility
+  const formatLocationString = useCallback((location: any): string => {
+    if (!location) return 'No location provided';
+    
+    // Handle string locations
+    if (typeof location === 'string') return location;
+    
+    // Handle object locations with address fields
+    if (typeof location === 'object') {
+      const parts = [];
+      
+      if (location.address) parts.push(location.address);
+      else {
+        if (location.street) parts.push(location.street);
+        if (location.city) parts.push(location.city);
+        if (location.state) parts.push(location.state);
+        if (location.zipCode || location.postalCode) parts.push(location.zipCode || location.postalCode);
+        if (location.country) parts.push(location.country);
+      }
+      
+      if (parts.length > 0) return parts.join(', ');
+      
+      // If no standard address fields, try to JSON stringify but handle circular refs
+      try {
+        return JSON.stringify(location);
+      } catch {
+        return 'Complex location object';
+      }
+    }
+    
+    return 'Unknown location format';
+  }, []);
 
-  // Enhanced booking enrichment with client data
+  // Enhanced booking enrichment with client, service, and package data
   const enrichBookingWithClientData = useCallback(async (booking: Booking): Promise<ProviderEnhancedBooking> => {
     try {
-      console.log(`🔄 Enriching booking ${booking.id} with client data`);
+      console.log(`🔄 Enriching booking ${booking.id} with all data`, {
+        bookingId: booking.id,
+        clientId: booking.clientId.toString(),
+        serviceId: booking.serviceId,
+        servicePackageId: booking.servicePackageId, // Use servicePackageId instead of packageId
+        hasServicePackageId: !!booking.servicePackageId
+      });
       
-      const clientProfile = await loadClientProfile(booking.clientId.toString());
+      // Load all data in parallel - use servicePackageId
+      const [clientProfile, serviceDetails, packageDetails] = await Promise.all([
+        loadClientProfile(booking.clientId.toString()),
+        booking.serviceId ? loadServiceDetails(booking.serviceId) : Promise.resolve(null),
+        booking.servicePackageId ? loadPackageDetails(booking.servicePackageId) : Promise.resolve(null)
+      ]);
+      
       const formattedLocation = formatLocationString(booking.location);
       const timeUntilService = booking.scheduledDate ? calculateTimeUntilService(booking.scheduledDate) : undefined;
       
@@ -332,6 +466,7 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       
       const enhancedBooking: ProviderEnhancedBooking = {
         ...booking,
+        // Client data
         clientProfile: clientProfile || undefined,
         clientName: clientProfile?.name ||'Unknown Client',
         clientPhone: clientProfile?.phone || 'Unknown Phone Number',
@@ -339,11 +474,15 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         timeUntilService,
         isOverdue,
         
+        // Service and package data - using servicePackageId
+        serviceDetails: serviceDetails || undefined,
+        packageDetails: packageDetails || undefined,
+        packageName: packageDetails?.title,
+        description: packageDetails?.description ,
+        
         // Status flags
         isPending: booking.status === 'Requested',
-
-        // Removed is overdue
-        isUpcoming: booking.status === 'Accepted' ,
+        isUpcoming: booking.status === 'Accepted',
         isActive: booking.status === 'InProgress',
         isCompleted: booking.status === 'Completed',
         
@@ -358,22 +497,38 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         estimatedRevenue: booking.price,
         actualRevenue: booking.status === 'Completed' ? booking.price : 0,
         
-        isClientDataLoaded: true
+        // Data loading status
+        isClientDataLoaded: !!clientProfile,
+        isServiceDataLoaded: !!serviceDetails || !booking.serviceId,
+        isPackageDataLoaded: !!packageDetails || !booking.servicePackageId // Consider loaded if no servicePackageId
       };
 
-      console.log("This is the enhanced booking ", enhancedBooking);
-      
+      console.log(`✅ Booking enriched:`, {
+        bookingId: booking.id,
+        clientName: enhancedBooking.clientName,
+        packageName: enhancedBooking.packageName,
+        description: enhancedBooking.description,
+        hasClientProfile: !!clientProfile,
+        hasServiceDetails: !!serviceDetails,
+        hasPackageDetails: !!packageDetails,
+        servicePackageId: booking.servicePackageId, // Log servicePackageId instead of packageId
+        formattedLocation
+      });
       
       return enhancedBooking;
     } catch (error) {
       console.error(`❌ Error enriching booking ${booking.id}:`, error);
       
-      // Return booking with minimal enhancement
+      // Return booking with minimal enhancement but proper packageName handling
       return {
         ...booking,
         clientName:'Unknown Client',
         formattedLocation: formatLocationString(booking.location),
+        packageName: undefined,
+        description: undefined,
         isClientDataLoaded: false,
+        isServiceDataLoaded: false,
+        isPackageDataLoaded: false,
         isPending: booking.status === 'Requested',
         isUpcoming: booking.status === 'Accepted',
         isActive: booking.status === 'InProgress',
@@ -387,7 +542,53 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         actualRevenue: booking.status === 'Completed' ? booking.price : 0
       };
     }
-  }, [loadClientProfile, formatLocationString, calculateTimeUntilService]);
+  }, [loadClientProfile, formatLocationString, calculateTimeUntilService, loadServiceDetails, loadPackageDetails]);
+
+  // Enhanced helper functions for better package handling using servicePackageId
+  const getPackageDisplayName = useCallback((booking: ProviderEnhancedBooking): string => {
+    if (!booking.servicePackageId) {
+      return 'No Package Selected';
+    }
+    
+    if (booking.packageDetails?.title) {
+      return booking.packageDetails.title;
+    }
+    
+    if (booking.packageName) {
+      return booking.packageName;
+    }
+    
+    if (booking.isPackageDataLoaded === false) {
+      return 'Loading Package...';
+    }
+    
+    return `Package ID: ${booking.servicePackageId}`;
+  }, []);
+
+  const hasPackage = useCallback((booking: ProviderEnhancedBooking): boolean => {
+    return !!booking.servicePackageId;
+  }, []);
+
+  // Service helper functions
+  const getServiceDisplayName = useCallback((booking: ProviderEnhancedBooking): string => {
+    if (booking.serviceDetails?.title) {
+      return booking.serviceDetails.title;
+    }
+    
+    if (booking.serviceName) {
+      return booking.serviceName;
+    }
+    
+    if (booking.isServiceDataLoaded === false) {
+      return 'Loading Service...';
+    }
+    
+    return booking.serviceId ? `Service ID: ${booking.serviceId}` : 'Unknown Service';
+  }, []);
+
+  const hasServiceDetails = useCallback((booking: ProviderEnhancedBooking): boolean => {
+    return !!booking.serviceDetails || !!booking.serviceName;
+  }, []);
 
   // Load provider profile
   const loadProviderProfile = useCallback(async () => {
@@ -461,8 +662,10 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
   const refreshBookings = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Clear client cache to ensure fresh data
+      // Clear all caches to ensure fresh data
       setClientProfiles(new Map());
+      setServiceDetails(new Map());
+      setPackageDetails(new Map());
       await loadProviderBookings();
     } finally {
       setRefreshing(false);
@@ -963,17 +1166,20 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     }
   }, [providerBookings, calculateAnalytics, setLoadingState]);
 
-  // Return hook interface
+  // Return hook interface with enhanced data
   return {
     // Data states
     bookings: providerBookings,
     providerProfile,
     clientProfiles,
+    serviceDetails,
+    packageDetails,
     analytics,
     
     // Loading states
     loading,
     loadingClients,
+    loadingServices,
     loadingAnalytics,
     refreshing,
     
@@ -1069,6 +1275,12 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
     clearError,
     isOperationInProgress,
     retryOperation,
+    
+    // Enhanced helper functions
+    getPackageDisplayName,
+    hasPackage,
+    getServiceDisplayName,
+    hasServiceDetails,
   };
 };
 

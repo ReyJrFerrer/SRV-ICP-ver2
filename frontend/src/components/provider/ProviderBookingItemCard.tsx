@@ -37,10 +37,14 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     refreshBookings // Add this if it exists in your hook
   } = useProviderBookingManagement();
 
+
+  console.log("This is from the sp booking item card: ", booking);
+
   // Extract booking data with proper property names for ProviderEnhancedBooking
   const clientName = booking.clientName || 'Unknown Client';
   const clientContact = booking.clientPhone || booking.clientProfile?.phone || 'Contact not available';
-  const serviceTitle = booking.serviceName || 'Service'; // TODO: Add serviceTitle to the interface when service data is available
+  const serviceTitle = booking.serviceDetails?.description // TODO: Add serviceTitle to the interface when service data is available
+  const packageTitle =  booking.packageName; 
   const scheduledDate = booking.scheduledDate ? new Date(booking.scheduledDate) : null;
   const duration = booking.serviceDuration || 'N/A';
   const price = booking.price;
@@ -106,7 +110,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-base font-semibold text-blue-700 group-hover:text-blue-800 transition-colors pr-2 flex-grow break-words">
-            {serviceTitle}
+            {serviceTitle }
         </h3>
         <span 
           className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${getStatusColor(status)}`}
@@ -163,13 +167,13 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
           <div className="flex items-center">
             <CalendarIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             <span>Date: <span className="font-medium">
-              {booking.scheduledDate ? formatBookingDate(booking.scheduledDate) : booking.bookingDate}
+              { formatBookingDate(booking.requestedDate)}
             </span></span>
           </div>
           <div className="flex items-center">
             <ClockIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
             <span>Time: <span className="font-medium">
-              {booking.scheduledDate ? formatBookingTime(booking.scheduledDate) : booking.bookingTime}
+              {formatBookingTime(booking.requestedDate)}
             </span></span>
           </div>
           {duration !== 'N/A' && (
@@ -178,7 +182,19 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
               <span>Duration: <span className="font-medium">{duration}</span></span>
             </div>
           )}
-          {/* Note: booking.notes property doesn't exist in the interface - removed for now */}
+          <div className="flex items-center">
+            <ClockIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+            <span>Package: <span className="font-medium">
+              {booking.packageName}
+            </span></span>
+          </div>
+            <div className="flex items-center">
+            <ClockIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+            <span>Package Description <span className="font-medium">
+              {booking.packageDetails?.description}
+            </span></span>
+          </div>
+         
         </div>
       </div>
 

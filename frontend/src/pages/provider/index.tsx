@@ -1,149 +1,137 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth, useClient } from "@bundly/ares-react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { useAuth, useClient } from "@bundly/ares-react"; 
 import Head from 'next/head';
-import Link from 'next/link';
 import { Actor, HttpAgent } from '@dfinity/agent';
-import { idlFactory } from '../../declarations/auth/auth.did.js';
-import type { Profile } from '../../declarations/auth/auth.did.js';
-import { FingerPrintIcon, UserPlusIcon } from '@heroicons/react/24/solid';
+import { idlFactory as authIdlFactory } from 'frontend/src/declarations/auth/auth.did.js';
+import type { Profile as UserProfile } from 'frontend/src/declarations/auth/auth.did.js';
+import Hero from "@app/components/shared/Hero";
+import Features from "@app/components/shared/Features";
+import WhyChooseSRV from "@app/components/shared/WhyChooseSRV";
+import AboutUs from "@app/components/shared/AboutUs";
+import SDGSection from "@app/components/shared/SDGSection";
+import Footer from "@app/components/shared/Footer";
 
 type Result<T> = {
   ok?: T;
   err?: string;
 };
 
-export default function ProviderIndexPage() {
+export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
   const client = useClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); 
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [error, setError] = useState('');
-  const [statusMessage, setStatusMessage] = useState('Initializing...');
 
   useEffect(() => {
-    const checkProfile = async () => {
-      if (isAuthenticated && currentIdentity) {
-        setIsLoading(true);
-        setStatusMessage('Authenticated. Verifying your profile...');
-        setError('');
+    const checkProfileAndRedirect = async () => {
+     if (isAuthenticated && currentIdentity) {
+       setIsCheckingProfile(true);
+       setError('');
+       try {
+         const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+         const agent = new HttpAgent({ identity: currentIdentity, host });
+         if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
+         
+         const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
+         if (!authCanisterId) throw new Error('Auth canister ID not configured');
 
-        try {
-          const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
-          const agent = new HttpAgent({ identity: currentIdentity, host });
-          if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
+         const authActor = Actor.createActor(authIdlFactory, { agent, canisterId: authCanisterId });
+         const profileResult = await authActor.getMyProfile() as Result<UserProfile>;
 
-          const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-          if (!authCanisterId) throw new Error('Auth canister ID not configured');
+         if (profileResult.ok) {
+           if ('Client' in profileResult.ok.role) router.push('/client/home');
+           else if ('ServiceProvider' in profileResult.ok.role) router.push('/provider/home');
+           else router.push('/create-profile');
+         } else if (profileResult.err?.includes("Profile not found")) {
+           const intendedRole = sessionStorage.getItem('signupRole');
+           sessionStorage.removeItem('signupRole'); 
 
-          const authActor = Actor.createActor(idlFactory, { agent, canisterId: authCanisterId });
-          const profileResult = await authActor.getMyProfile() as Result<Profile>;
-
-          if ('ok' in profileResult && profileResult.ok) {
-            if ('ServiceProvider' in profileResult.ok.role) {
-              setStatusMessage('Profile found. Redirecting...');
-              router.push('/provider/home');
-            } else {
-              setError('Access denied. A Service Provider profile is required.');
-            }
-          } else if ('err' in profileResult && profileResult.err?.includes("Profile not found")) {
-            setStatusMessage('No profile found. Redirecting to sign up...');
-            router.push('/create-profile');
-          } else {
-            throw new Error(profileResult.err || 'Failed to retrieve profile.');
-          }
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'Failed to check profile.');
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-        setStatusMessage('Please log in or create an account to access the provider portal.');
-      }
-    };
-
-    checkProfile();
+           if (intendedRole === 'Client' || intendedRole === 'ServiceProvider') {
+             router.push(`/create-profile?role=${intendedRole}`);
+           } else {
+             // Fallback if no role was stored
+             router.push('/create-profile');
+           }
+         } else {
+           throw new Error(profileResult.err || 'Failed to retrieve profile.');
+         }
+       } catch (err) {
+         console.error('Profile check error:', err);
+         setError(err instanceof Error ? err.message : 'Error checking profile.');
+       } finally {
+         setIsCheckingProfile(false);
+       }
+     } else {
+       setIsCheckingProfile(false);
+     }
+   };
+   checkProfileAndRedirect();
   }, [isAuthenticated, currentIdentity, router]);
-
-  const handleAuthAction = async () => {
+  
+  const handleIILogin = async () => {
     try {
       setIsLoading(true);
       setError('');
-      setStatusMessage('Connecting to Internet Identity...');
       const provider = client.getProvider("internet-identity");
       if (!provider) throw new Error('Internet Identity provider not found');
       await provider.connect();
     } catch (err) {
-      console.error('Authentication error:', err);
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect to Internet Identity');
+    } finally {
       setIsLoading(false);
     }
   };
-
-  const renderStatus = () => {
-    if (error) {
-      return <p className="text-red-600 text-sm font-medium">{error}</p>;
-    }
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-600 mr-2"></div>
-          <span className="text-slate-600">{statusMessage}</span>
-        </div>
-      );
-    }
-    return <p className="text-slate-600">{statusMessage}</p>;
-  };
+  
+  if (isCheckingProfile && isAuthenticated) {
+     return (
+       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+         <p className="mt-4 text-lg text-gray-700">Checking your profile...</p>
+       </div>
+     );
+  }
 
   return (
     <>
       <Head>
-        <title>SRV Provider Portal</title>
-        <meta name="description" content="Access your provider portal or log in." />
+        <title>SRV - Your Service Hub</title>
+        <meta name="description" content="Find and book local services with ease on the Internet Computer." />
+        <link rel="icon" href="/logo.jpeg" /> 
       </Head>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-2xl p-8 text-center border-t-4 border-yellow-300">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">
-            Provider Portal
-          </h2>
-          
-          <div className="min-h-[4rem] flex items-center justify-center mb-6">
-            {renderStatus()}
-          </div>
-          
-          <div className="space-y-4">
-            <button
-              onClick={handleAuthAction}
-              disabled={isLoading}
-              className={`w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg 
-                          transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105
-                          ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-            >
-              {isLoading ? 'Processing...' : (
-                <>
-                  <FingerPrintIcon className="h-6 w-6 mr-2" />
-                  Login with Internet Identity
-                </>
-              )}
-            </button>
-            
-            <Link href="/create-profile" legacyBehavior>
-               <a
-                className={`w-full flex items-center justify-center bg-yellow-300 hover:bg-yellow-400 text-slate-800 font-bold py-3 px-6 rounded-lg 
-                            transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105`}
-              >
-                <UserPlusIcon className="h-6 w-6 mr-2" />
-                Create an Account
-              </a>
-            </Link>
-          </div>
-
-          <Link href="/" className="mt-6 block text-sm text-blue-500 hover:underline">
-            Back to Homepage
-          </Link>
-        </div>
-      </div>
+      
+      <main className="bg-gray-50">
+        <Hero onLoginClick={handleIILogin} isLoginLoading={isLoading} />
+        <Features />
+        <WhyChooseSRV />
+        <SDGSection />
+        <AboutUs />
+        
+        {(!isAuthenticated && error) && (
+          <section className="py-16 lg:py-24 bg-yellow-100">
+            <div className="container mx-auto px-6 text-center">
+              <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-6">
+                Login to Continue
+              </h2>
+              <div className="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg max-w-md mx-auto">
+                Error: {error}
+              </div>
+               <button
+                 onClick={handleIILogin}
+                 disabled={isLoading}
+                 className={`bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg
+                             ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+               >
+                 {isLoading ? 'Connecting...' : 'Retry Login'}
+               </button>
+            </div>
+          </section>
+        )}
+      </main>
+      <Footer/>
     </>
   );
 }

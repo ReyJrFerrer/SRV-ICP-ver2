@@ -1,8 +1,9 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth, useClient } from "@bundly/ares-react"; // Import useClient
+import { useAuth, useClient } from "@bundly/ares-react";
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import { UserIcon, WrenchScrewdriverIcon, UserPlusIcon, EnvelopeIcon, PhoneIcon, ExclamationTriangleIcon, FingerPrintIcon } from '@heroicons/react/24/outline';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from '../declarations/auth/auth.did.js';
@@ -11,7 +12,7 @@ import type { Profile, Result } from '../declarations/auth/auth.did.js';
 export default function CreateProfilePage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
-  const client = useClient(); // Initialize the bundly client
+  const client = useClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -23,27 +24,35 @@ export default function CreateProfilePage() {
   });
   const [reauthRequired, setReauthRequired] = useState(false);
 
-  
+  useEffect(() => {
+    // This effect now ONLY sets the role if it's passed in the URL.
+    // It no longer throws an error if the role is missing.
+    if (router.isReady) {
+      const { role } = router.query;
+      if (role === 'Client' || role === 'ServiceProvider') {
+        setSelectedRole(role);
+      }
+    }
+  }, [router.isReady, router.query]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
         if (!isAuthenticated) {
             console.warn("Not authenticated, redirecting to login...");
-            router.push('/client');
+            router.push('/'); // Go to main landing page to login
         } else {
             setReauthRequired(false);
-            setError(null);
         }
     }, 1500);
 
     return () => clearTimeout(timer);
   }, [isAuthenticated, router]);
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handler for our custom re-authentication button
   const handleReAuth = async () => {
     try {
       setIsLoading(true);
@@ -51,7 +60,6 @@ export default function CreateProfilePage() {
       const provider = client.getProvider("internet-identity");
       if (!provider) throw new Error('Internet Identity provider not found');
       await provider.connect();
-      // On success, clear the error and hide the re-auth prompt
       setReauthRequired(false);
       setError(null);
     } catch (err) {
@@ -63,30 +71,32 @@ export default function CreateProfilePage() {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setReauthRequired(false);
+    setError(null);
+    setSuccess(false);
 
     if (!selectedRole) {
-      setError('Please select a role.');
+      setError('Please select a role before submitting.');
       return;
     }
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
-        setError('All fields are required.'); return;
+        setError('All fields are required.');
+        return;
     }
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i;
     if (!emailRegex.test(formData.email.trim())) {
-      setError('Please enter a valid email address ending in .com.'); return;
+      setError('Please enter a valid email address ending in .com.');
+      return;
     }
     const phoneRegex = /^09\d{9}$/;
     if (!phoneRegex.test(formData.phone.trim())) {
-      setError('Please enter a valid 11-digit phone number starting with 09.'); return;
+      setError('Please enter a valid 11-digit phone number starting with 09.');
+      return;
     }
-
+    
     setIsLoading(true);
-    setSuccess(false);
 
     if (!isAuthenticated || !currentIdentity) {
-      setError('Authentication session not found.');
+      setError('Authentication session not found. Please log in again.');
       setReauthRequired(true);
       setIsLoading(false);
       return;
@@ -99,7 +109,7 @@ export default function CreateProfilePage() {
       if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
 
       const authCanisterId = process.env.NEXT_PUBLIC_AUTH_CANISTER_ID;
-      if (!authCanisterId) throw new Error('Auth canister ID not found');
+      if (!authCanisterId) throw new Error('Auth canister ID not configured');
 
       const authActor = Actor.createActor(idlFactory, { agent, canisterId: authCanisterId });
 
@@ -122,14 +132,16 @@ export default function CreateProfilePage() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       if (errorMessage.includes("Invalid delegation expiry")) {
-        setError("Your secure session has expired for security. Please re-authenticate to continue.");
+        setError("Your secure session has expired. Please re-authenticate.");
         setReauthRequired(true);
       } else {
         setError(errorMessage);
       }
       console.error('Profile creation error:', err);
     } finally {
-      setIsLoading(false);
+      if (!success) { // Only stop loading if it's not a success
+        setIsLoading(false);
+      }
     }
   };
 
@@ -189,6 +201,14 @@ export default function CreateProfilePage() {
                         <p className="text-sm text-red-700 text-left">{error}</p>
                       </div>
                     </div>
+                    {/* ADDED "Return to Home" BUTTON */}
+                    <div className="mt-4">
+                        <Link href="/" legacyBehavior>
+                            <a className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                                &larr; Return to Home Page
+                            </a>
+                        </Link>
+                    </div>
                   </div>
                 )}
                 
@@ -196,98 +216,70 @@ export default function CreateProfilePage() {
                   <div className="text-center space-y-4 pt-4">
                      <p className="text-slate-700 font-medium">Please re-authenticate to continue.</p>
                      <button
-                        type="button" // Important to prevent form submission
+                        type="button"
                         onClick={handleReAuth}
                         disabled={isLoading}
                         className={`w-full max-w-xs mx-auto mt-2 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg 
                                     transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105
                                     ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                       >
-                        {isLoading ? (
-                            <>
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                              <span>Connecting...</span>
-                            </>
-                        ) : (
-                            <>
-                              <FingerPrintIcon className="h-6 w-6 mr-2" />
-                              Login Again with Internet Identity
-                            </>
-                        )}
+                        {isLoading ? "Connecting..." : "Login Again with Internet Identity"}
                       </button>
                   </div>
                 ) : (
                   <>
-                    {/* Role Selection */}
-                    <div>
-                      <h3 className="text-lg font-medium text-slate-800 mb-3">First, choose your role:</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRole('Client')}
-                          className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedRole === 'Client' ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-blue-400'}`}
-                        >
-                          <UserIcon className={`h-8 w-8 mb-2 ${selectedRole === 'Client' ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <span className={`font-semibold ${selectedRole === 'Client' ? 'text-blue-700' : 'text-slate-700'}`}>Client</span>
-                          <span className="text-xs text-gray-500">I need services</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRole('ServiceProvider')}
-                          className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedRole === 'ServiceProvider' ? 'border-yellow-400 bg-yellow-50 shadow-md' : 'border-gray-200 hover:border-yellow-300'}`}
-                        >
-                          <WrenchScrewdriverIcon className={`h-8 w-8 mb-2 ${selectedRole === 'ServiceProvider' ? 'text-yellow-600' : 'text-gray-400'}`} />
-                          <span className={`font-semibold ${selectedRole === 'ServiceProvider' ? 'text-yellow-700' : 'text-slate-700'}`}>Service Provider</span>
-                          <span className="text-xs text-gray-500">I offer services</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Form Inputs */}
-                    {selectedRole && (
-                        <div className="space-y-4 border-t pt-6">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <UserIcon className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            </div>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            </div>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <PhoneIcon className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input type="tel" name="phone" placeholder="Phone Number (e.g., 0917...)" value={formData.phone} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            </div>
+                    {/* --- START: CONDITIONAL ROLE SELECTION --- */}
+                    {!router.query.role && !selectedRole ? (
+                      <div>
+                        <h3 className="text-lg font-medium text-slate-800 mb-3">First, choose your role:</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRole('Client')}
+                            className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 border-gray-200 hover:border-blue-400`}
+                          >
+                            <UserIcon className={`h-8 w-8 mb-2 text-gray-400`} />
+                            <span className={`font-semibold text-slate-700`}>Client</span>
+                            <span className="text-xs text-gray-500">I need services</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedRole('ServiceProvider')}
+                            className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 border-gray-200 hover:border-yellow-300`}
+                          >
+                            <WrenchScrewdriverIcon className={`h-8 w-8 mb-2 text-gray-400`} />
+                            <span className={`font-semibold text-slate-700`}>Service Provider</span>
+                            <span className="text-xs text-gray-500">I offer services</span>
+                          </button>
                         </div>
-                    )}
-                    
-                    {/* Submit Button */}
+                      </div>
+                    ) : null}
+                    {/* --- END: CONDITIONAL ROLE SELECTION --- */}
+
                     {selectedRole && (
+                      <>
+                        <div>
+                          <h3 className="text-lg font-medium text-slate-800 mb-3">You are signing up as a:</h3>
+                          <div className="flex items-center justify-center p-4 border-2 rounded-lg bg-gray-50 border-gray-300">
+                            {selectedRole === 'Client' && (<><UserIcon className="h-8 w-8 text-blue-600 mr-3" /><span className="font-semibold text-blue-700 text-xl">Client</span></>)}
+                            {selectedRole === 'ServiceProvider' && (<><WrenchScrewdriverIcon className="h-8 w-8 text-yellow-600 mr-3" /><span className="font-semibold text-yellow-700 text-xl">Service Provider</span></>)}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 border-t pt-6">
+                            <div className="relative"><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><UserIcon className="h-5 w-5 text-gray-400" /></div><input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                            <div className="relative"><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><EnvelopeIcon className="h-5 w-5 text-gray-400" /></div><input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                            <div className="relative"><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><PhoneIcon className="h-5 w-5 text-gray-400" /></div><input type="tel" name="phone" placeholder="Phone Number (e.g., 0917...)" value={formData.phone} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                        </div>
+                        
                         <button
                           type="submit"
                           disabled={isLoading}
-                          className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg 
-                                      transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105
-                                      disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100"
+                          className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
-                          {isLoading && !reauthRequired ? (
-                              <>
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                              <span>Creating Profile...</span>
-                              </>
-                          ) : (
-                              <>
-                              <UserPlusIcon className="h-6 w-6 mr-2" />
-                              Create Profile
-                              </>
-                          )}
+                          {isLoading ? "Creating Profile..." : "Create Profile"}
                         </button>
+                      </>
                     )}
                   </>
                 )}

@@ -43,9 +43,9 @@ const SDGSection: React.FC = () => {
   return (
     <section className="py-16 lg:py-24 bg-gray-50">
       <div className="container mx-auto px-6 text-center">
-        <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-4">
+       <h1 className="text-3xl lg:text-6xl font-bold text-slate-800 mb-4">
           Our Commitment to Sustainable Development
-        </h2>
+        </h1>
         <p className="text-gray-600 max-w-3xl mx-auto mb-12 lg:mb-16 text-lg">
           SRV is dedicated to making a positive impact by aligning our platform with key Sustainable Development Goals.
         </p>

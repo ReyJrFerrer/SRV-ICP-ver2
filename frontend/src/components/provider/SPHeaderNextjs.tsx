@@ -24,9 +24,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Use the logout method from the ares-react client
       await client.logout();
-      // Redirect to the home page after logout
       router.push('/'); 
     } catch (error) {
       console.error("Logout failed:", error);
@@ -47,71 +45,69 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
     );
   }
 
-  // Extract first name from the full name
   const displayName = provider.name.split(' ')[0] || 'Provider';
   const displayLocation = provider.location?.city || 'Location not set';
 
   return (
-    <header className={`provider-header bg-white p-4 ${className}`}>
+    <header className={`provider-header bg-white p-4 ${className} space-y-4`}>
+      {/* Top Row: Welcome Info & Actions */}
       <div className="flex justify-between items-center">
-        {/* Left side: Logo and Welcome Message */}
         <div className="flex items-center gap-4">
           <Image
             src="/logo.svg"
             alt="Logo"
             width={60}
             height={60}
-            className="rounded-full bg-white"
+            className="rounded-full bg-white flex-shrink-0"
             priority
           />
           <div className="welcome-section">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
               Welcome, {displayName}!
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600">
               {provider.isVerified ? '✓ Verified Provider' : 'Manage your services and bookings'}
             </p>
           </div>
         </div>
-        
-        {/* Right side: Location, Profile, Notifications */}
-        <div className="flex items-center space-x-4">
-          {/* Location Badge */}
-          <button className="location-badge flex items-center bg-yellow-200 px-4 py-2 rounded-full shadow-sm hover:bg-yellow-300 transition-colors">
-            <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
-              <MapPinIcon className="h-5 w-5 text-white" />
-            </span>
-            <span className="text-base font-medium truncate max-w-[150px] text-black">
-              {displayLocation}
-            </span>
-          </button>
 
-          {/* Notifications */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {notificationCount > 0 && (
-            <button className="relative p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
-              <BellIcon className="h-6 w-6 text-gray-700" />
+            <button className="relative p-2 sm:p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+              <BellIcon className="h-5 sm:h-6 w-5 sm:w-6 text-gray-700" />
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {notificationCount > 99 ? '99+' : notificationCount}
               </span>
             </button>
           )}
 
-          {/* Logout Button */}
           {isAuthenticated && (
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-3 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
+              className="p-2 sm:p-3 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
               title="Logout"
             >
               {isLoggingOut ? (
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <div className="animate-spin rounded-full h-6 sm:h-8 w-6 sm:h-8 border-b-2 border-gray-900"></div>
                 ) : (
-                  <ArrowRightOnRectangleIcon className="h-8 w-8" />
+                  <ArrowRightOnRectangleIcon className="h-6 sm:h-8 w-6 sm:h-8" />
               )}
             </button>
           )}
         </div>
+      </div>
+
+      {/* Bottom Row: Expanded Location Bar */}
+      <div>
+        <button className="location-badge w-full flex items-center justify-center bg-yellow-200 px-4 py-3 rounded-lg shadow-sm hover:bg-yellow-300 transition-colors">
+            <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-3">
+              <MapPinIcon className="h-5 w-5 text-white" />
+            </span>
+            <span className="text-base font-medium text-black">
+              Current Location: <span className="font-bold">{displayLocation}</span>
+            </span>
+        </button>
       </div>
     </header>
   );

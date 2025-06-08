@@ -4,8 +4,8 @@ import Image from 'next/image';
 const teamMembers = [
   { name: "Reynaldo Jr. Ferrer", title: "Lead Developer", imageUrl: "/images/team/member1.jpg" },
   { name: "Jan Dale Zarate", title: "Project Manager | Business Strategist", imageUrl: "/images/team/member2.jpg" },
-  { name: "Don Daryll Dela Concha", title: "UI/UX Designer", imageUrl: "/images/team/member3.jpg" },
-  { name: "Hyaeni Gayle Ferrer", title: "Frontend Developer", imageUrl: "/images/team/member4.jpg" },
+  { name: "Don Daryll Dela Concha", title: "Frontend Developer", imageUrl: "/images/team/member3.jpg" },
+  { name: "Hyaeni Gayle Ferrer", title: "UI/UX Designer", imageUrl: "/images/team/member4.jpg" },
   { name: "Princess Hannah Azradon", title: "Frontend Developer", imageUrl: "/images/team/member5.jpg" },
 ];
 

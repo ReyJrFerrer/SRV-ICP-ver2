@@ -130,10 +130,49 @@ export const resetAgent = () => {
 };
 
 /**
+ * Logout function that clears identity and resets agent state
+ * Returns the principal ID that was logged out (useful for disconnect operations)
+ */
+export const logout = (): string | null => {
+  let principalId = null;
+  
+  // Get the principal ID before clearing identity
+  if (currentIdentity && typeof currentIdentity.getPrincipal === 'function') {
+    try {
+      principalId = currentIdentity.getPrincipal().toString();
+      console.log('Logging out user with principal:', principalId);
+    } catch (error) {
+      console.warn('Could not get principal ID during logout:', error);
+    }
+  }
+  
+  // Clear the current identity
+  currentIdentity = null;
+  
+  // Reset agent and initialization state
+  resetAgent();
+  
+  console.log('User logged out successfully');
+  return principalId;
+};
+
+/**
+ * Clear all authentication state (for complete logout)
+ */
+export const clearAuthState = () => {
+  currentIdentity = null;
+  httpAgent = null;
+  identityInitialized = false;
+  console.log('All authentication state cleared');
+};
+
+/**
  * Check if user is currently authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return currentIdentity !== null && !currentIdentity.getPrincipal().isAnonymous();
+  return currentIdentity !== null && 
+         typeof currentIdentity.getPrincipal === 'function' &&
+         !currentIdentity.getPrincipal().isAnonymous();
 };
 
 /**

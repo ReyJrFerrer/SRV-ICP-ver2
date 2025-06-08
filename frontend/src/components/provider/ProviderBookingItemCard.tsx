@@ -129,7 +129,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     const success = await acceptBookingById(booking.id);
     if (success) {
       console.log(`✅ Booking ${booking.id} accepted successfully`);
-      await refreshBookings();
+      window.location.reload()
     } else {
       console.error(`❌ Failed to accept booking ${booking.id}`);
     }
@@ -143,7 +143,8 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
       const success = await declineBookingById(booking.id, 'Declined by provider');
       if (success) {
         console.log(`✅ Booking ${booking.id} declined successfully`);
-        await refreshBookings();
+        window.location.reload()
+        // await refreshBookings();
       } else {
         console.error(`❌ Failed to decline booking ${booking.id}`);
       }

@@ -28,7 +28,7 @@ const WhyChooseUsSection: React.FC = () => {
           <div className="container mx-auto px-6 relative z-10">
             <div className="flex justify-center mb-12">
                 <div className="bg-yellow-400 rounded-full py-3 px-8 shadow-lg">
-                    <h1 className="text-3xl lg:text-4xl font-bold text-slate-800">
+                    <h1 className="text-3xl lg:text-6xl font-bold text-slate-800">
                         Why Choose SRV?
                     </h1>
                 </div>

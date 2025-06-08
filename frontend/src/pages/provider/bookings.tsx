@@ -187,9 +187,9 @@ const ProviderBookingsPage: React.FC = () => {
           </nav>
         </div>
 
-        <main className="flex-grow overflow-y-auto p-3 sm:p-4 pb-20">
+        <main className="flex-grow overflow-y-auto pb-20">
           {currentBookings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="space-y-4 p-4">
               {currentBookings.map(booking => (
                 <div 
                   key={booking.id}
@@ -199,7 +199,7 @@ const ProviderBookingsPage: React.FC = () => {
                       router.push(`/provider/active-service/${booking.id}`);
                     }
                   }}
-                  className={activeTab === 'InProgress' ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}
+                  className={`w-full ${activeTab === 'InProgress' ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
                 >
                   <ProviderBookingItemCard 
                       booking={booking}

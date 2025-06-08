@@ -10,14 +10,6 @@
         "output": "frontend/src/declarations/auth"
       }
     },
-    "auth-test": {
-      "type": "motoko",
-      "main": "backend/function/auth-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/auth-test"
-      }
-    },
     "booking": {
       "type": "motoko",
       "main": "backend/function/booking.mo",
@@ -32,14 +24,6 @@
       "declarations": {
         "node_compatibility": true,
         "output": "frontend/src/declarations/reputation"
-      }
-    },
-    "reputation-test": {
-      "type": "motoko",
-      "main": "backend/function/reputation-test.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/reputation-test"
       }
     },
     "review": {

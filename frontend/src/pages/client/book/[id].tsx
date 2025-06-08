@@ -1,15 +1,21 @@
 import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { GetServerSideProps } from 'next';
 import ClientBookingPageComponent from '../../../components/client/ClientBookingPageComponent';
 
-interface BookingPageProps {
-  serviceSlug: string;
-}
-
-const BookingPage: React.FC<BookingPageProps> = ({ serviceSlug }) => {
+const BookingPage: React.FC = () => {
   const router = useRouter();
+  const { id } = router.query;
+  const serviceSlug = id as string;
+
+  // Show loading state while router is not ready
+  if (!router.isReady || !serviceSlug) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,22 +44,6 @@ const BookingPage: React.FC<BookingPageProps> = ({ serviceSlug }) => {
       </main>
     </div>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  const serviceSlug = params?.id as string;
-  
-  if (!serviceSlug) {
-    return {
-      notFound: true,
-    };
-  }
-
-  return {
-    props: {
-      serviceSlug,
-    },
-  };
 };
 
 export default BookingPage;

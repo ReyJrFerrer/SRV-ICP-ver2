@@ -146,7 +146,6 @@ export const useAllServicesWithProviders = (): UseServicesResult => {
         return transformToEnrichedService(service, providerProfile);
       });
 
-      console.log(enrichedServices)
       
       setServices(enrichedServices);
     } catch (err) {
@@ -281,8 +280,6 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
       const providerProfiles = await Promise.all(
         providerIds.map(async (providerId) => {
           try {
-            console.log("These are the provider id's")
-            console.log(providerId);
             return await authCanisterService.getProfile(providerId);
           } catch (err) {
             console.error(`Failed to fetch profile for provider ${providerId}`, err);
@@ -290,8 +287,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
           }
         })
       );
-      console.log("These are the provider profiles:")
-      console.log(providerProfiles); 
+     
       
       // Create a map for quick provider lookup
       const providerMap = providerIds.reduce((map, id, index) => {
@@ -305,7 +301,7 @@ export const useTopPickServices = (limit?: number): UseServicesResult => {
         return transformToEnrichedService(service, providerProfile);
       });
 
-      console.log(enrichedServices);
+
       
       setServices(enrichedServices);
     } catch (err) {
@@ -400,15 +396,15 @@ export const useCategories = (): {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching categories from service canister...');
+ 
       // Add a small delay to ensure agents are ready
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const canisterCategories = await serviceCanisterService.getAllCategories();
-      console.log('Fetched categories from canister:', canisterCategories);
+
       
       setCategories(canisterCategories || []);
-      console.log('Successfully loaded categories from service canister');
+    
     } catch (err) {
       console.error('Failed to load categories from service canister:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch categories'));

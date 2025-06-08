@@ -41,7 +41,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     refreshBookings
   } = useProviderBookingManagement();
 
-  console.log("This is from the sp booking item card: ", booking);
 
   // Debug validation
   if (!booking) {
@@ -128,7 +127,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     
     const success = await acceptBookingById(booking.id);
     if (success) {
-      console.log(`✅ Booking ${booking.id} accepted successfully`);
       window.location.reload()
     } else {
       console.error(`❌ Failed to accept booking ${booking.id}`);
@@ -142,7 +140,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     if (window.confirm('Are you sure you want to decline this booking?')) {
       const success = await declineBookingById(booking.id, 'Declined by provider');
       if (success) {
-        console.log(`✅ Booking ${booking.id} declined successfully`);
         window.location.reload()
         // await refreshBookings();
       } else {
@@ -169,7 +166,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     if (window.confirm('Mark this booking as completed?')) {
       const success = await completeBookingById(booking.id);
       if (success) {
-        console.log(`✅ Booking ${booking.id} marked as completed`);
         await refreshBookings();
       } else {
         console.error(`❌ Failed to complete booking ${booking.id}`);
@@ -183,7 +179,6 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     
     const success = await startBookingById(booking.id);
     if (success) {
-      console.log(`✅ Service started for booking ${booking.id}`);
       router.push(`/provider/active-service/${booking.id}`);
     } else {
       console.error(`❌ Failed to start service for booking ${booking.id}`);

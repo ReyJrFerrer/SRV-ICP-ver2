@@ -66,18 +66,13 @@ export const authCanisterService = {
       const actor = await getAuthActor();
       
       // Convert string to Principal
-      console.log('Converting userId to Principal:', userId);
       const userPrincipal = Principal.fromText(userId);
-      console.log('Principal created:', userPrincipal.toString());
       
       const result = await actor.getProfile(userPrincipal);
-      console.log('getProfile result:', result);
       
       if ('ok' in result) {
-        console.log('Profile found:', result.ok);
         return adaptBackendProfile(result.ok);
       } else {
-        console.log('Profile not found, error:', result.err);
         return null;
       }
     } catch (error) {

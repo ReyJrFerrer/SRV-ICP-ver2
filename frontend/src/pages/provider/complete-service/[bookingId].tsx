@@ -72,7 +72,6 @@ const CompleteServicePage: React.FC = () => {
     }
     
     setIsSubmitting(true);
-    console.log('Processing payment and completing service for booking:', bookingId);
     
     try {
       // Use the hook's complete function with the final price if different

@@ -75,7 +75,6 @@ const ActiveServicePage: React.FC = () => {
   const handleMarkCompleted = async () => {
     if (!booking) return;
     
-    console.log(`Redirecting to complete service page for booking: ${booking.id}`);
     
     // Just redirect to the complete service page without calling completeBookingById
     // The actual completion will be handled in the complete-service page

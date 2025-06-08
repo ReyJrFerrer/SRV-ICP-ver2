@@ -11,8 +11,7 @@ export const useLogout = () => {
   const logout = useCallback(async () => {
     try {
       setIsLoggingOut(true);
-      
-      console.log('Logging out user...');
+    
       
       // Clear local authentication state
       clearAuthState();
@@ -23,7 +22,6 @@ export const useLogout = () => {
         sessionStorage.clear();
       }
       
-      console.log('Logout completed successfully');
       
       // Force a hard redirect to clear any cached state
       window.location.href = '/';

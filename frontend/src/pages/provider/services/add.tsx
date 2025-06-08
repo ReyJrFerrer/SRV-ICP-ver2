@@ -518,7 +518,6 @@ const AddServicePage: React.FC = () => {
           
           // In a real implementation, you could also do reverse geocoding here
           // to populate the address fields automatically
-          console.log('Location detected:', { latitude, longitude });
         },
         (error) => {
           console.error('Geolocation error:', error);

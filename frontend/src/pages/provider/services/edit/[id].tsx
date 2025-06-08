@@ -211,7 +211,6 @@ const EditServicePage: React.FC = () => {
     if (id && typeof id === 'string') {
       // Only load if service ID changed or we haven't loaded successfully
       if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
-        console.log('Loading service for ID:', id);
         currentServiceId.current = id;
         hasLoadedSuccessfully.current = false;
         loadServiceDataRobust(id);
@@ -227,13 +226,11 @@ const EditServicePage: React.FC = () => {
   const loadServiceDataRobust = useCallback(async (serviceId: string): Promise<void> => {
     // Prevent concurrent loading
     if (isLoadingRef.current) {
-      console.log('Already loading, skipping...');
       return;
     }
 
     // Don't reload if we already have this service loaded successfully
     if (serviceToEdit && serviceToEdit.id === serviceId && hasLoadedSuccessfully.current) {
-      console.log('Service already loaded, skipping reload');
       return;
     }
 
@@ -253,7 +250,6 @@ const EditServicePage: React.FC = () => {
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`Loading service data (attempt ${attempt + 1}/${maxRetries + 1})`);
           
           // Add progressive delay for retries
           if (attempt > 0) {
@@ -268,7 +264,6 @@ const EditServicePage: React.FC = () => {
           const service = await getService(serviceId);
           
           if (service) {
-            console.log('Service loaded successfully:', service);
             
             // Only update state if component is still mounted
             if (mountedRef.current) {
@@ -280,9 +275,7 @@ const EditServicePage: React.FC = () => {
             let serviceAvailability: ProviderAvailability | null = null;
             
             try {
-              console.log('Loading packages for service:', serviceId);
               loadedPackages = await getServicePackages(serviceId);
-              console.log('Packages loaded:', loadedPackages);
               
               if (mountedRef.current) {
                 setPackages(loadedPackages);
@@ -296,9 +289,7 @@ const EditServicePage: React.FC = () => {
 
             // Load availability data
             try {
-              console.log('Loading availability for service:', serviceId);
               serviceAvailability = await getServiceAvailability(serviceId);
-              console.log('Availability loaded:', serviceAvailability);
             } catch (availabilityError) {
               console.error("Failed to load service availability:", availabilityError);
             }
@@ -459,7 +450,6 @@ const EditServicePage: React.FC = () => {
       try {
         const availabilityData = convertUIAvailabilityToBackend(formData);
         await updateAvailability(serviceToEdit.id, availabilityData);
-        console.log('Availability updated successfully');
       } catch (availabilityError) {
         console.error('Failed to update availability:', availabilityError);
         // Don't fail the entire operation, just log the error

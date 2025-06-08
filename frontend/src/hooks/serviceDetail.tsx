@@ -166,7 +166,6 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
     setError(null);
     
     try {
-      console.log('Fetching service with ID:', serviceId);
       
       // Fetch the service data
       const serviceData = await serviceCanisterService.getService(serviceId);
@@ -179,26 +178,22 @@ export const useServiceDetail = (serviceId: string): UseServiceDetailResult => {
         return;
       }
       
-      console.log('Fetched service from canister:', serviceData);
       
       // Fetch provider information
       try {
-        console.log('Fetching provider details...');
+ 
         const providerIdStr = principalToString(serviceData.providerId);
         const providerData = await authCanisterService.getProfile(providerIdStr);
         
         if (providerData) {
-          console.log('Fetched provider:', providerData);
           setProvider(providerData);
           
           // Format service with provider data
           const formattedService = formatServiceForDetailPage(serviceData, providerData);
-          console.log("Formatted Service in the service detail page:")
-          console.log(formattedService);
+
           setService(formattedService);
 
-          
-          console.log('Successfully loaded and formatted service for detail page');
+       
         } else {
           console.warn('Provider not found for service');
           setProvider(null);

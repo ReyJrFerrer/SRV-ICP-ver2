@@ -18,7 +18,6 @@ class ReputationCanisterService {
 
   private async initializeActor() {
     try {
-      console.log('🔧 Initializing reputation canister with ID:', REPUTATION_CANISTER_ID);
       
       if (!REPUTATION_CANISTER_ID) {
         throw new Error('Reputation canister ID is not configured');
@@ -31,7 +30,6 @@ class ReputationCanisterService {
         canisterId: REPUTATION_CANISTER_ID,
       }) as ReputationService;
       
-      console.log('✅ Reputation canister actor initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize reputation canister actor:', error);
     }
@@ -57,7 +55,6 @@ class ReputationCanisterService {
     serviceCanisterId: string
   ): Promise<void> {
     try {
-      console.log('🔧 Setting reputation canister references...');
       
       const actor = await this.getActor();
       
@@ -69,7 +66,6 @@ class ReputationCanisterService {
       );
 
       if ('ok' in result) {
-        console.log('✅ Reputation canister references set successfully:', result.ok);
       } else {
         console.error('❌ Failed to set reputation canister references:', result.err);
         throw new Error(`Failed to set canister references: ${result.err}`);

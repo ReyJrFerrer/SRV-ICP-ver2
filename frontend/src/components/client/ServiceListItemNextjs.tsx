@@ -59,7 +59,6 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           loading: false
         });
       } catch (error) {
-        console.error('Error loading service rating:', error);
         // Fallback to service rating data if available
         setServiceRating({
           average: service.rating?.average || 0,

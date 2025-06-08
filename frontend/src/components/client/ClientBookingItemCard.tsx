@@ -25,29 +25,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const [canUserReview, setCanUserReview] = useState<boolean | null>(null);
   const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
 
-  // Debug validation
-  if (!booking) {
-    console.error("CRITICAL: ClientBookingItemCard received an undefined 'booking' prop!");
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-lg" role="alert">
-        <strong className="font-bold">Error!</strong>
-        <span className="block sm:inline"> Booking data is missing for this card.</span>
-      </div>
-    );
-  }
-
-  if (!booking.id) {
-    console.error("CRITICAL: Booking object is missing 'id'. Booking data:", JSON.stringify(booking, null, 2));
-    return (
-      <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded-xl shadow-lg" role="alert">
-        <div className="flex items-center">
-          <ExclamationTriangleIcon className="h-5 w-5 mr-2"/>
-          <strong className="font-bold">Data Issue!</strong>
-        </div>
-        <span className="block sm:inline"> This booking card has incomplete data (missing ID).</span>
-      </div>
-    );
-  }
 
   // ✅ Check review status when booking is finished
   useEffect(() => {
@@ -74,15 +51,10 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         // Check if user can review this booking
         const canReview = await reviewCanisterService.canUserReviewBooking(booking.id, userProfile.id);
         setCanUserReview(canReview);
-        
-        console.log(`Review status for booking ${booking.id}:`, {
-          canReview,
-          userId: userProfile.id,
-          bookingStatus: booking.status
-        });
+      
         
       } catch (error) {
-        console.error('Error checking review status:', error);
+    
         // Default to allowing review if check fails (only for completed bookings)
         setCanUserReview(true);
       } finally {
@@ -97,7 +69,6 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
   const serviceTitle = booking.serviceName;
   const serviceImage = booking.providerProfile?.profilePicture?.imageUrl || "/images/Tutoring-MathTutor1.jpg";
   const providerName = booking.providerProfile?.name;
-  console.log("This is from the Client Booking Item Card", booking);
   
   const bookingLocation = booking.formattedLocation || 
     (typeof booking.location === 'string' ? booking.location : 'Location not specified');
@@ -155,11 +126,9 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
         } else if (onCancelBooking) {
           onCancelBooking(booking.id);
         } else {
-          console.warn(`No cancel handler provided for booking ID: ${booking.id}`);
           alert(`Mock: Request Cancel for Booking ID: ${booking.id} (Handler not passed)`);
         }
       } catch (error) {
-        console.error('Error cancelling booking:', error);
         alert('Failed to cancel booking. Please try again.');
       }
     }

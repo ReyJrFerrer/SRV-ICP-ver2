@@ -212,7 +212,6 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
 
   // Show error state (fallback to service data)
   if (reviewsError) {
-    console.warn('Error loading reviews, falling back to service data:', reviewsError);
     // Use original service data as fallback
     const fallbackRating = service?.rating || { average: 0, count: 0 };
     

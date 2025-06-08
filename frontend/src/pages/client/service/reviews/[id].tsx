@@ -50,8 +50,6 @@ const ServiceReviewsPage: React.FC = () => {
     refreshReviews
   } = useServiceReviews(serviceId as string);
 
-  console.log("These are the reviews: ", reviews)
-
   // Local state for filtering and sorting
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
   const [filterRating, setFilterRating] = useState<number | null>(null);

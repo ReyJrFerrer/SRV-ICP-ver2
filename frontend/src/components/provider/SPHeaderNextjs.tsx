@@ -55,15 +55,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
             className="rounded-full bg-white flex-shrink-0"
             priority
           />
-          <div className="welcome-section">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Welcome, {displayName}!
-            </h1>
-            <p className="text-gray-600">
-              {provider.isVerified ? '✓ Verified Provider' : 'Manage your services and bookings'}
-            </p>
-          </div>
-
+         
         </div>
       
 

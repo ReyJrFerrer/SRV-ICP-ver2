@@ -22,11 +22,6 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
     resetServiceActor();
     resetAuthActor(); // Add this line
     
-    if (isAuthenticated && currentIdentity) {
-      console.log('User authenticated, actors will be recreated with identity:', currentIdentity.getPrincipal().toString());
-    } else {
-      console.log('User not authenticated, actors will use anonymous identity');
-    }
   }, [isAuthenticated, currentIdentity]);
 
   return <>{children}</>;

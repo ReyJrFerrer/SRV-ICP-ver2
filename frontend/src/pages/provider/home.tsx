@@ -74,13 +74,9 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
   useEffect(() => {
     const loadProviderData = async () => {
       try {
-        console.log('Loading provider data - attempt:', initializationAttempts + 1);
-        console.log('Is authenticated:', isUserAuthenticated());
-        console.log('User profile exists:', !!userProfile);
 
         // Check authentication first
         if (!isUserAuthenticated()) {
-          console.log('User not authenticated, waiting...');
           
           // Retry authentication check up to 3 times with delays
           if (initializationAttempts < 3) {
@@ -89,7 +85,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
             }, 1000);
             return;
           } else {
-            console.log('Authentication failed after multiple attempts');
             setPageLoading(false);
             return;
           }
@@ -99,11 +94,10 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
         setInitializationAttempts(0);
 
         // Load provider stats
-        console.log('Loading provider stats...');
         const stats = await getProviderStats();
         setProviderStats(stats);
         
-        console.log('Provider data loaded successfully:', stats);
+
       } catch (error) {
         console.error('Error loading provider data:', error);
       } finally {
@@ -121,14 +115,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
     
     const pendingCount = pendingBookings.length;
     const upcomingCount = upcomingBookings.length;
-
-    console.log('Booking counts calculated:', {
-      pendingCount,
-      upcomingCount,
-      totalBookings: bookings.length,
-      pendingBookings: pendingBookings.map(b => ({ id: b.id, status: b.status })),
-      upcomingBookings: upcomingBookings.map(b => ({ id: b.id, status: b.status, scheduledDate: b.scheduledDate }))
-    });
 
     return { pendingCount, upcomingCount };
   }, [bookings, getPendingBookings, getUpcomingBookings]);

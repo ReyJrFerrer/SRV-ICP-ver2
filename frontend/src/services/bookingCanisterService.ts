@@ -297,7 +297,6 @@ export const bookingCanisterService = {
       // Get the agent to check the principal being used
       const agent = await getHttpAgent();
       const principal = await agent.getPrincipal();
-      console.log('Calling createBooking with requested time stamp:',requestedTimestamp);
       
       const result = await actor.createBooking(
         serviceId,
@@ -719,7 +718,6 @@ export const bookingCanisterService = {
       const actor = await getBookingActor();
       const dateTimestamp = BigInt(date.getTime() * 1000000);
 
-      console.log("This is the datetimestamp in the bookingCanisterService", dateTimestamp );
       
       const result = await actor.getServiceAvailableSlots(serviceId, dateTimestamp);
       
@@ -1013,7 +1011,6 @@ export const bookingCanisterService = {
 // Reset functions for authentication state changes
 export const resetBookingActor = () => {
   bookingActor = null;
-  console.log('Booking actor reset - will be recreated with new identity');
 };
 
 export const refreshBookingActor = async () => {

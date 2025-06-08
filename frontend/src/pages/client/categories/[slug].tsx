@@ -53,9 +53,7 @@ const CategoryPage: React.FC = () => {
 
     const loadCategory = async () => {
       try {
-        console.log('Fetching categories from service canister...');
         const canisterCategories = await serviceCanisterService.getAllCategories();
-        console.log('Fetched categories from canister:', canisterCategories);
         
         let foundCategory: CategoryState | null = null;
         

@@ -253,21 +253,17 @@ export const useReviewManagement = (
       // Check cache first
       const cached = getCachedProfile(userId);
       if (cached) {
-        console.log(`📋 Using cached profile for ${userId}`);
         return cached;
       }
 
-      console.log(`🔄 Loading profile for ${userId}`);
       setLoadingState('profiles', true);
       
       const profile = await authCanisterService.getProfile(userId);
       
       if (profile) {
-        console.log(`✅ Profile loaded:`, profile);
         cacheProfile(userId, profile);
         return profile;
       } else {
-        console.log(`⚠️ No profile found for user ${userId}`);
         return null;
       }
     } catch (error) {
@@ -325,7 +321,6 @@ export const useReviewManagement = (
   // Enhanced review enrichment with profile data
   const enrichReviewWithProfileData = useCallback(async (review: Review): Promise<EnhancedReview> => {
     try {
-      console.log(`🔄 Enriching review ${review.id} with profile data`);
       
       // Load client and provider profiles in parallel
       const [clientProfile, providerProfile] = await Promise.all([
@@ -353,13 +348,6 @@ export const useReviewManagement = (
         isProfileDataLoaded: true
       };
 
-      console.log(`✅ Review enriched:`, {
-        reviewId: review.id,
-        clientName: enhancedReview.clientName,
-        providerName: enhancedReview.providerName,
-        hasClientProfile: !!clientProfile,
-        hasProviderProfile: !!providerProfile
-      });
       
       return enhancedReview;
     } catch (error) {
@@ -385,7 +373,6 @@ export const useReviewManagement = (
       
       const profile = await authCanisterService.getMyProfile();
       setUserProfile(profile);
-      console.log('✅ User profile loaded:', profile);
     } catch (error) {
       handleReviewError(error, 'load user profile');
       handleAuthError();
@@ -409,18 +396,14 @@ export const useReviewManagement = (
       if (!currentUserId) {
         throw new Error('No authenticated user found');
       }
-
-      console.log('🔄 Loading reviews for user:', currentUserId);
       const rawReviews = await reviewCanisterService.getUserReviews(currentUserId);
-      
-      console.log(`📋 Loaded ${rawReviews.length} raw reviews`);
+
       
       // Enrich reviews with profile data in parallel
       const enrichedReviews = await Promise.all(
         rawReviews.map(review => enrichReviewWithProfileData(review))
       );
-      
-      console.log(`✅ Enriched ${enrichedReviews.length} reviews with profile data`);
+
       setReviews(enrichedReviews);
       
     } catch (error) {
@@ -473,7 +456,7 @@ export const useReviewManagement = (
       if (newReview) {
         const enrichedReview = await enrichReviewWithProfileData(newReview);
         setReviews(prev => [enrichedReview, ...prev]);
-        console.log(`✅ Review submitted successfully for booking ${bookingId}`);
+  
       }
       
       return newReview;
@@ -507,7 +490,6 @@ export const useReviewManagement = (
             review.id === reviewId ? enrichedReview : review
           )
         );
-        console.log(`✅ Review ${reviewId} updated successfully`);
       }
       
       return updatedReview;
@@ -535,8 +517,7 @@ export const useReviewManagement = (
             : review
         )
       );
-      
-      console.log(`✅ Review ${reviewId} deleted successfully`);
+
       return true;
     } catch (error) {
       handleReviewError(error, `delete review ${reviewId}`);

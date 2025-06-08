@@ -893,7 +893,7 @@ export const serviceCanisterService = {
 // Reset functions for authentication state changes
 export const resetServiceActor = () => {
   serviceActor = null;
-  console.log('Service actor reset - will be recreated with new identity');
+
 };
 
 export const refreshServiceActor = async () => {

@@ -72,7 +72,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
     setError(null);
     
     try {
-      console.log('Loading service data for:', serviceId);
       
       // Get service details
       const serviceData = await serviceCanisterService.getService(serviceId);
@@ -87,7 +86,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
       let providerData: FrontendProfile | null = null;
       try {
         providerData = await authCanisterService.getProfile(serviceData.providerId.toString());
-        console.log('Provider profile loaded:', providerData);
       } catch (providerError) {
         console.warn('Could not load provider profile:', providerError);
       }
@@ -100,12 +98,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
       const sameDayAvailable = await checkSameDayAvailability(serviceId);
       setIsSameDayAvailable(sameDayAvailable);
       
-      console.log('Service data loaded successfully:', {
-        service: serviceData.title,
-        provider: providerData?.name || 'Unknown',
-        packages: servicePackages?.length || 0,
-        sameDayAvailable
-      });
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load service data';
@@ -129,14 +121,12 @@ export const useBookRequest = (): UseBookRequestReturn => {
       
       // Check if service allows same-day booking
       if (!serviceData?.instantBookingEnabled) {
-        console.log('Same-day booking not enabled for service');
         return false;
       }
       
       // Check current time availability using booking canister
       const isAvailable = await bookingCanisterService.checkServiceAvailability(serviceId, now);
       
-      console.log('Same-day availability check:', { serviceId, isAvailable });
       return isAvailable || false;
       
     } catch (err) {
@@ -148,13 +138,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
   // Get available time slots for a specific date
   const getAvailableSlots = useCallback(async (serviceId: string, date: Date): Promise<AvailableSlot[]> => {
     try {
-      console.log('Fetching available slots for:', { serviceId, date: date.toISOString() });
       
       const slots = await bookingCanisterService.getServiceAvailableSlots(serviceId, date);
       const availableSlots = slots || [];
       
       setAvailableSlots(availableSlots);
-      console.log('Available slots fetched:', availableSlots.length);
       
       return availableSlots;
       
@@ -195,13 +183,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
       
       const isAvailable = await bookingCanisterService.checkServiceAvailability(serviceId, requestedDateTime);
       
-      console.log('Time slot availability check:', { 
-        serviceId, 
-        timeSlot, 
-        requestedDateTime: requestedDateTime.toISOString(), 
-        isAvailable 
-      });
-      
       return isAvailable || false;
       
     } catch (err) {
@@ -216,7 +197,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Creating booking request:', bookingData);
       
       // Validate booking data
       const validation = validateBookingRequest(bookingData);
@@ -231,13 +211,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
       let requestedDate: Date;
       if (bookingData.bookingType === 'sameday') {
         requestedDate = new Date();
-        console.log('📅 Same day booking - using current date:', requestedDate.toISOString());
       } else if (bookingData.scheduledDate && bookingData.scheduledTime) {
-        console.log('🕒 Processing scheduled time:', {
-          scheduledDate: bookingData.scheduledDate.toISOString(),
-          scheduledTime: bookingData.scheduledTime,
-          scheduledTimeType: typeof bookingData.scheduledTime
-        });
         
         // Parse the time string (format: "HH:MM-HH:MM" or "HH:MM")
         let startHour = 9; // default
@@ -263,7 +237,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
             }
           }
           
-          console.log('⏰ Parsed time components:', { startHour, startMinute });
           
         } catch (timeParseError) {
           console.error('❌ Error parsing time:', timeParseError);
@@ -273,7 +246,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
         requestedDate = new Date(bookingData.scheduledDate);
         requestedDate.setHours(startHour, startMinute, 0, 0);
         
-        console.log('📅 Scheduled booking date created:', requestedDate.toISOString());
         
       } else {
         throw new Error('Invalid booking data: missing date or time for scheduled booking');
@@ -289,13 +261,11 @@ export const useBookRequest = (): UseBookRequestReturn => {
         });
         throw new Error(`Invalid total price: ${bookingData.totalPrice}`);
       }
-      
-      console.log('💰 Total price validation passed:', totalPrice);
+
       
       // Get the first package ID (you might want to modify this based on your business logic)
       const firstPackageId = bookingData.packages.length > 0 ? bookingData.packages[0].id : undefined;
-      
-      console.log('📦 Using package ID:', firstPackageId);
+
       
       // Create booking through canister
       const booking = await bookingCanisterService.createBooking(
@@ -307,7 +277,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
         firstPackageId
       );
       
-      console.log('✅ Booking created successfully:', booking);
       return booking;
       
     } catch (err) {
@@ -357,8 +326,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
     if (!bookingData.location) {
       errors.push('Location is required');
     }
-    
-    console.log('Booking validation:', { isValid: errors.length === 0, errors });
+
     
     return {
       isValid: errors.length === 0,
@@ -375,8 +343,7 @@ export const useBookRequest = (): UseBookRequestReturn => {
       const pkg = allPackages.find(p => p.id === packageId);
       return sum + (pkg?.price || 0);
     }, 0);
-    
-    console.log('Total price calculated:', { selectedPackageIds, total });
+
     return total;
   }, []);
 
@@ -384,7 +351,6 @@ export const useBookRequest = (): UseBookRequestReturn => {
   const formatLocationForBooking = useCallback((location: any): Location => {
     if (typeof location === 'string') {
       // If location is a string (manual address or GPS), convert to Location object
-      console.log('Formatting string location:', location);
       return {
         latitude: 0, // Default values - you might want to geocode the address
         longitude: 0,
@@ -396,11 +362,9 @@ export const useBookRequest = (): UseBookRequestReturn => {
       };
     } else if (typeof location === 'object' && location !== null) {
       // If location is already a Location object
-      console.log('Using existing Location object:', location);
       return location as Location;
     } else {
       // Fallback
-      console.log('Using fallback location');
       return {
         latitude: 0,
         longitude: 0,

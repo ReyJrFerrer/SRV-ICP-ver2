@@ -41,12 +41,9 @@ const Header: React.FC<HeaderProps> = ({
 
       setProfileLoading(true);
       try {
-        console.log('Fetching profile for current user...');
         const userProfile = await authCanisterService.getMyProfile();
-        console.log('Fetched user profile:', userProfile);
         setProfile(userProfile);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
         setProfile(null);
       } finally {
         setProfileLoading(false);
@@ -84,80 +81,56 @@ const Header: React.FC<HeaderProps> = ({
   const isVerified = profile?.isVerified || false;
 
   return (
-    <header className={`bg-white rounded-lg shadow-sm p-4 space-y-4 ${className}`}>
-      {/* Top Row: Logo, Location, Profile & Notifications */}
+     <header className={`bg-white rounded-lg shadow-sm p-4 space-y-4 ${className}`}>
+      {/* Top Row: Logo + Home | Logout*/}
       <div className="flex justify-between items-center">
-          <Link href="/client/home" legacyBehavior>
-              <a aria-label="Home" className="flex items-center">
-                <div className="relative w-48 h-20">
-                <Image 
-                  src="/logo.svg"
-                  alt="SRV Logo"
-                  width={100}
-                  height={40}
-                  className="object-contain"
-                />
-                </div>
-            </a>
+        <Link href="/client/home" legacyBehavior>
+          <a aria-label="Home" className="flex items-center">
+            <Image 
+              src="/logo.svg"
+              alt="SRV Logo"
+              width={100}
+              height={40}
+              className="object-contain"
+            />
+          </a>
+        </Link>
+            {isAuthenticated && (
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                       className="p-3 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
+                    >
+                      {isLoggingOut ? (
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                        ) : (
+                          <ArrowRightOnRectangleIcon className="h-8 w-8" />
+                      )}
+                    </button>
+                  )}
+                
 
-          </Link>
+      </div>
 
-          {/* Logout Button */}
-          {isAuthenticated && (
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="p-2 w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50"
-              title="Logout"
-            >
-              {isLoggingOut ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-              ) : (
-                <ArrowRightOnRectangleIcon className="h-6 w-6" />
-              )}
-            </button>
-          )}
+      {/* Location Section */}
+      <div className="bg-yellow-200 p-4 rounded-lg">
+        <p className="text-sm font-medium text-gray-800">My Location</p>
+        <div className="flex items-center">
+          <MapPinIcon className="h-5 w-5 text-gray-700 mr-2" />
+          <span className="text-gray-800">
+            San Vicente, Baguio, Cordillera Administrative Region
+          </span>
         </div>
 
-
-
-          {/* Location Section */}
-          <div className="bg-yellow-200 p-4 rounded-lg">
-            <p className="text-sm font-medium text-gray-800">My Location</p>
-            <div className="flex items-center">
-              <MapPinIcon className="h-5 w-5 text-gray-700 mr-2" />
-              <span className="text-gray-800">
-                San Vicente, Baguio, Cordillera Administrative Region
-              </span>
-                {/* Search Bar */}
-            <div className="w-full">
-              <SearchBar 
-                placeholder="Search for services"
-                redirectToSearchResultsPage={true}
-                servicesList={services}
-              />
-            </div>
-            </div>
-
-          {/* Notifications */}
-          {isAuthenticated && notificationCount > 0 && (
-            <button 
-              onClick={handleNotificationClick}
-              className="relative p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-            >
-              <BellIcon className="h-5 w-5 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {notificationCount > 99 ? '99+' : notificationCount}
-              </span>
-            </button>
-          )}
+        {/* Search Bar with padding above */}
+        <div className="w-full mt-4">
+          <SearchBar 
+            placeholder="Search for service"
+            redirectToSearchResultsPage={true}
+            servicesList={services}
+          />
         </div>
-    
-
-      
-
-    
-
+      </div>
     </header>
   );
 };

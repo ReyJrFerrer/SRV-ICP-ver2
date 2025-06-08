@@ -40,10 +40,8 @@ const ProviderBookingDetailsPage: NextPage = () => {
         const foundBooking = bookings.find(booking => booking.id === id);
         
         if (foundBooking) {
-          console.log('✅ Found provider booking in hook data:', foundBooking);
           setSpecificBooking(foundBooking);
         } else {
-          console.log('❌ Provider booking not found in hook data, ID:', id);
           setLocalError('Booking not found');
         }
         

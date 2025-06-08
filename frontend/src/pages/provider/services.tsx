@@ -41,7 +41,6 @@ const MyServicesPage: React.FC = () => {
   useEffect(() => {
     const initializePage = async () => {
       if (!isUserAuthenticated()) {
-        console.log('User not authenticated');
         setPageLoading(false);
         return;
       }
@@ -86,14 +85,12 @@ const MyServicesPage: React.FC = () => {
 
   const handleToggleActive = async (serviceId: string, currentStatus: boolean) => {
     // TODO: Implement actual backend call
-    console.log(`Toggle service ${serviceId} from ${currentStatus} to ${!currentStatus}`);
     alert(`Service ${serviceId} status would be toggled. Backend integration needed.`);
   };
 
   const handleDeleteService = async (serviceId: string) => {
     if (window.confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
       // TODO: Implement actual backend call
-      console.log(`Delete service ${serviceId}`);
       alert(`Service ${serviceId} would be deleted. Backend integration needed.`);
     }
   };

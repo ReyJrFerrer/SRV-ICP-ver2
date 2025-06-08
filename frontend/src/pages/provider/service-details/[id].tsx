@@ -69,12 +69,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // Simply check if we have the getService function available
       // This is more reliable than checking loading states
-      if (typeof getService === 'function') {
-        console.log('Hook functions are ready');
-        return true;
-      }
-      
-      console.log(`Waiting for hook functions... (${attempt + 1}/${maxAttempts})`);
+
       setInitializationAttempts(attempt + 1);
       
       // Shorter wait time since we're just checking function availability
@@ -94,13 +89,11 @@ const ProviderServiceDetailPage: React.FC = () => {
   const loadServiceDataRobust = useCallback(async (serviceId: string): Promise<void> => {
     // Prevent concurrent loading
     if (isLoadingRef.current) {
-      console.log('Already loading, skipping...');
       return;
     }
 
     // Don't reload if we already have this service loaded successfully
     if (service && service.id === serviceId && hasLoadedSuccessfully.current) {
-      console.log('Service already loaded, skipping reload');
       return;
     }
 
@@ -112,7 +105,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     try {
       // Simplified approach - just wait a bit for the hook to be ready
       if (!getService) {
-        console.log('Waiting for hook to be ready...');
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
@@ -122,17 +114,13 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
 
       // Direct call without retries first, since backend is fast
-      console.log('Loading service data directly...');
       const serviceData = await getService(serviceId);
       
       if (serviceData) {
-        console.log('Service loaded successfully:', serviceData);
-        
-        // Fetch packages for this service
-        console.log('Loading packages for service:', serviceId);
+
         try {
           const servicePackages = await getServicePackages(serviceId);
-          console.log('Packages loaded:', servicePackages);
+        
           
           // Only update state if component is still mounted
           if (mountedRef.current) {
@@ -178,7 +166,6 @@ const ProviderServiceDetailPage: React.FC = () => {
     if (id && typeof id === 'string') {
       // Only load if service ID changed or we haven't loaded successfully
       if (currentServiceId.current !== id || !hasLoadedSuccessfully.current) {
-        console.log('Loading service for ID:', id);
         currentServiceId.current = id;
         hasLoadedSuccessfully.current = false;
         loadServiceDataRobust(id);

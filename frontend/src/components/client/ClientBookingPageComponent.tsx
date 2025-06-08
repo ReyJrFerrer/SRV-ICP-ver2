@@ -131,40 +131,19 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     }
   }, [isSameDayAvailable, bookingOption]);
 
-  // Debug: Log available slots changes
-  useEffect(() => {
-    console.log('🕒 Available slots updated:', {
-      count: hookAvailableSlots.length,
-      slots: hookAvailableSlots,
-      selectedDate: selectedDate?.toISOString()
-    });
-  }, [hookAvailableSlots, selectedDate]);
-
   // Load available slots when date is selected
   useEffect(() => {
     const loadSlots = async () => {
       if (hookService && selectedDate) {
-        console.log('🔍 Loading slots for service:', hookService.id, 'on date:', selectedDate);
-        console.log('📅 Selected date details:', {
-          date: selectedDate.toISOString(),
-          dayOfWeek: dayIndexToName(selectedDate.getDay())
-        });
         
         try {
-          console.log("These are the data for getting the available slots: ")
-          console.log(hookService.id);
-          console.log(selectedDate);
           const slots = await getAvailableSlots(hookService.id, selectedDate);
-          console.log('📋 Fetched available slots:', slots);
-          console.log('📊 Hook available slots after fetch:', hookAvailableSlots);
+          
         } catch (error) {
-          console.error('❌ Error loading slots:', error);
+      
         }
       } else {
-        console.log('⚠️ Cannot load slots - missing requirements:', {
-          hasService: !!hookService,
-          hasSelectedDate: !!selectedDate
-        });
+      
       }
     };
     loadSlots();
@@ -280,28 +259,17 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
     // Prepare booking data with debugging
     const selectedPackageIds = packages.filter(pkg => pkg.checked).map(pkg => pkg.id);
     
-    // Debug the time value specifically
-    console.log('🕒 Time debugging:', {
-      bookingOption,
-      selectedTime,
-      selectedTimeType: typeof selectedTime,
-      selectedTimeLength: selectedTime?.length,
-      selectedDate: selectedDate?.toISOString(),
-      timeSlotParsed: selectedTime ? parseTimeSlotString(selectedTime) : null
-    });
 
     let totalPrice = 0;
     try {
       totalPrice = calculateTotalPrice(selectedPackageIds, hookPackages);
-      console.log('💰 Calculated total price:', totalPrice);
       
       if (isNaN(totalPrice) || totalPrice < 0) {
-        console.error('❌ Invalid total price:', totalPrice);
+
         setFormError("Error calculating total price. Please try again.");
         return;
       }
     } catch (error) {
-      console.error('❌ Price calculation error:', error);
       setFormError("Error calculating total price. Please try again.");
       return;
     }
@@ -319,12 +287,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
       concerns: concerns.trim() || 'No specific concerns mentioned.',
     };
 
-    console.log('📋 Final Booking Data before submission:', {
-      ...bookingData,
-      scheduledDate: bookingData.scheduledDate?.toISOString(),
-      totalPrice: bookingData.totalPrice,
-      providerId: bookingData.providerId
-    });
+  
 
     try {
       const booking = await createBookingRequest(bookingData);
@@ -353,7 +316,6 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
           location: bookingData.location
         };
 
-        console.log("✅ Confirmation details prepared:", confirmationDetails);
         
         // Navigate to confirmation page with details
         router.push({
@@ -364,7 +326,7 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
         setFormError("Failed to create booking. Please try again.");
       }
     } catch (error) {
-      console.error('❌ Booking creation error:', error);
+
       setFormError("An error occurred while creating the booking. Please try again.");
     }
   };

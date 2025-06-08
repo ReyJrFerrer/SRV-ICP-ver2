@@ -823,7 +823,6 @@ export const reviewCanisterService = {
 // Reset functions for authentication state changes
 export const resetReviewActor = () => {
   reviewActor = null;
-  console.log('Review actor reset - will be recreated with new identity');
 };
 
 export const refreshReviewActor = async () => {

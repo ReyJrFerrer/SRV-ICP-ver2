@@ -300,7 +300,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const fetchProviderProfile = useCallback(async (providerId: string): Promise<FrontendProfile | null> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching provider profile');
+
       return null;
     }
 
@@ -465,7 +465,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getService = useCallback(async (serviceId: string): Promise<EnhancedService | null> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service');
+     
       return null;
     }
 
@@ -578,7 +578,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getServicePackages = useCallback(async (serviceId: string): Promise<ServicePackage[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service packages');
       return [];
     }
 
@@ -634,7 +633,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   ): Promise<AvailableSlot[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching available slots');
       return [];
     }
 
@@ -739,7 +737,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getServicesByCategory = useCallback(async (categoryId: string): Promise<EnhancedService[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching services by category');
       return [];
     }
 
@@ -763,7 +760,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   ): Promise<EnhancedService[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching services by location');
       return [];
     }
 
@@ -880,7 +876,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getCategories = useCallback(async (): Promise<ServiceCategory[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching categories');
       return [];
     }
 
@@ -903,7 +898,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getProviderServices = useCallback(async (providerId?: string): Promise<EnhancedService[]> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching provider services');
       return [];
     }
 
@@ -975,7 +969,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const getServiceAvailability = useCallback(async (serviceId: string): Promise<ProviderAvailability | null> => {
     // Wait for initialization before making canister calls
     if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service availability');
       return null;
     }
 

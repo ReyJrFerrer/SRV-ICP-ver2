@@ -297,21 +297,19 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Check cache first
       const cached = getCachedClientProfile(clientId);
       if (cached) {
-        console.log(`📋 Using cached client profile for ${clientId}`);
         return cached;
       }
 
-      console.log(`🔄 Loading client profile for ${clientId}`);
       setLoadingState('clients', true);
       
       const profile = await authCanisterService.getProfile(clientId);
       
       if (profile) {
-        console.log(`✅ Client profile loaded:`, profile);
+
         cacheClientProfile(clientId, profile);
         return profile;
       } else {
-        console.log(`⚠️ No profile found for client ${clientId}`);
+
         return null;
       }
     } catch (error) {
@@ -328,21 +326,17 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Check cache first
       const cached = getCachedServiceDetails(serviceId);
       if (cached) {
-        console.log(`📋 Using cached service details for ${serviceId}`);
         return cached;
       }
 
-      console.log(`🔄 Loading service details for ${serviceId}`);
       setLoadingState('services', true);
       
       const service = await serviceCanisterService.getService(serviceId);
       
       if (service) {
-        console.log(`✅ Service details loaded:`, service);
         cacheServiceDetails(serviceId, service);
         return service;
       } else {
-        console.log(`⚠️ No service found for ${serviceId}`);
         return null;
       }
     } catch (error) {
@@ -358,21 +352,18 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Check cache first
       const cached = getCachedPackageDetails(packageId);
       if (cached) {
-        console.log(`📋 Using cached package details for ${packageId}`);
         return cached;
       }
 
-      console.log(`🔄 Loading package details for ${packageId}`);
+
       setLoadingState('packages', true);
       
       const pkg = await serviceCanisterService.getPackage(packageId);
       
       if (pkg) {
-        console.log(`✅ Package details loaded:`, pkg);
         cachePackageDetails(packageId, pkg);
         return pkg;
       } else {
-        console.log(`⚠️ No package found for ${packageId}`);
         return null;
       }
     } catch (error) {
@@ -439,13 +430,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
   // Enhanced booking enrichment with client, service, and package data
   const enrichBookingWithClientData = useCallback(async (booking: Booking): Promise<ProviderEnhancedBooking> => {
     try {
-      console.log(`🔄 Enriching booking ${booking.id} with all data`, {
-        bookingId: booking.id,
-        clientId: booking.clientId.toString(),
-        serviceId: booking.serviceId,
-        servicePackageId: booking.servicePackageId, // Use servicePackageId instead of packageId
-        hasServicePackageId: !!booking.servicePackageId
-      });
       
       // Load all data in parallel - use servicePackageId
       const [clientProfile, serviceDetails, packageDetails] = await Promise.all([
@@ -460,8 +444,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       // Calculate booking properties
       const now = new Date();
       const scheduledDate = booking.scheduledDate ? new Date(booking.scheduledDate) : null;
-      console.log('scheduled date', scheduledDate)
-      console.log('now date', now)
       const isOverdue = scheduledDate ? scheduledDate < now && booking.status === 'Accepted' : false;
       
       const enhancedBooking: ProviderEnhancedBooking = {
@@ -503,17 +485,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         isPackageDataLoaded: !!packageDetails || !booking.servicePackageId // Consider loaded if no servicePackageId
       };
 
-      console.log(`✅ Booking enriched:`, {
-        bookingId: booking.id,
-        clientName: enhancedBooking.clientName,
-        packageName: enhancedBooking.packageName,
-        description: enhancedBooking.description,
-        hasClientProfile: !!clientProfile,
-        hasServiceDetails: !!serviceDetails,
-        hasPackageDetails: !!packageDetails,
-        servicePackageId: booking.servicePackageId, // Log servicePackageId instead of packageId
-        formattedLocation
-      });
       
       return enhancedBooking;
     } catch (error) {
@@ -599,7 +570,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
       const profile = await authCanisterService.getMyProfile();
       if (profile && profile.role === 'ServiceProvider') {
         setProviderProfile(profile);
-        console.log('✅ Provider profile loaded:', profile);
       } else {
         handleAuthError();
       }
@@ -627,20 +597,15 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
         throw new Error('No authenticated provider found');
       }
 
-      console.log('🔄 Loading bookings for provider:', currentProviderId);
       const providerPrincipal = Principal.fromText(currentProviderId);
       const rawBookings = await bookingCanisterService.getProviderBookings(providerPrincipal);
       
-      
-      console.log(`📋 Loaded ${rawBookings.length} raw provider bookings`);
-      console.log("Raw Bookings data format: ", rawBookings)
       
       // Enrich bookings with client data in parallel
       const enrichedBookings = await Promise.all(
         rawBookings.map(booking => enrichBookingWithClientData(booking))
       );
       
-      console.log(`✅ Enriched ${enrichedBookings.length} provider bookings with client data`);
       setProviderBookings(enrichedBookings);
       
     } catch (error) {
@@ -687,7 +652,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} accepted successfully`);
       }
     } catch (error) {
       handleBookingError(error, `accept booking ${bookingId}`);
@@ -711,7 +675,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} declined successfully`);
       }
     } catch (error) {
       handleBookingError(error, `decline booking ${bookingId}`);
@@ -735,7 +698,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} started successfully`);
       }
     } catch (error) {
       handleBookingError(error, `start booking ${bookingId}`);
@@ -759,7 +721,6 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} completed successfully`);
       }
     } catch (error) {
       handleBookingError(error, `complete booking ${bookingId}`);
@@ -783,7 +744,7 @@ export const useProviderBookingManagement = (): ProviderBookingManagementHook =>
             booking.id === bookingId ? enrichedBooking : booking
           )
         );
-        console.log(`✅ Booking ${bookingId} disputed successfully with reason: ${reason}`);
+
       }
     } catch (error) {
       handleBookingError(error, `dispute booking ${bookingId}`);

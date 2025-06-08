@@ -1,47 +1,43 @@
-
-
 ```bash
 
-#Steps to do to run the project with ICP
+# Install npm into the project
 - npm install
-- create env file in frontend 
+
+# create env file in frontend 
 cp frontend/.env-example frontend/.env
 
-- start ICP local 
+#start ICP local 
 dfx start --background --clean
 
-- Get your canister ids:
-# Create canisters
+# Create canisters to get the id's
 dfx canister create --all
 
-# Get backend canister id
-dfx canister id test
-
-# Get internet-identity canister id
-dfx canister id internet-identity
-```
-
-Replace values in the .env file:
-
-```bash
-# Replace port if needed
+# Stay as is
 NEXT_PUBLIC_IC_HOST_URL=http://localhost:4943
-# Replace YOUR_TEST_CANISTER_ID with your test canister id
-NEXT_PUBLIC_TEST_CANISTER_ID=YOUR_TEST_CANISTER_ID
+
+# Replace the necesseary canister ids
+NEXT_PUBLIC_AUTH_CANISTER_ID=YOUR_TEST_CANISTER_ID
+NEXT_PUBLIC_SERVICE_CANISTER_ID=ufxgi-4p777-77774-qaadq-cai
+NEXT_PUBLIC_BOOKING_CANISTER_ID=uzt4z-lp777-77774-qaabq-cai
+NEXT_PUBLIC_REVIEW_CANISTER_ID=ucwa4-rx777-77774-qaada-cai
+NEXT_PUBLIC_REPUTATION_CANISTER_ID= umunu-kh777-77774-qaaca-cai
+
 # Replace YOUR_INTERNET_IDENTITY_CANISTER_ID with your internet-identity canister id
 NEXT_PUBLIC_INTERNET_IDENTITY_URL=http://YOUR_INTERNET_IDENTITY_CANISTER_ID.localhost:4943
-```
 
-Generate did files:
+#deploy the canisters
+dfx deploy
 
-```bash
-dfx generate test
-```
+# generate the canisters
+dfx generate auth
+dfx generate service
+dfx generate booking
+dfx generate review
+dfx generate reputation
 
-Then, navitate to `frontend` folder:
+# Then, navigate to frontend folder:
+cd frontend
 
-`cd frontend`
+# Run the following script:
 
-Run the following script:
-
-`npm run dev`
+npm run dev

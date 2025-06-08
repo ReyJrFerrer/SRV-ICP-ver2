@@ -184,7 +184,6 @@ const EditServicePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [initializationAttempts, setInitializationAttempts] = useState(0);
 
   const [serviceImageFiles, setServiceImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -206,31 +205,6 @@ const EditServicePage: React.FC = () => {
       mountedRef.current = false;
     };
   }, []);
-
-  // Wait for hook initialization before attempting to load service
-  const waitForInitialization = useCallback(async (maxAttempts = 20): Promise<boolean> => {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // Check if hook is no longer loading and no errors
-      if (!hookLoading && !hookError) {
-        console.log('Hook initialized successfully');
-        return true;
-      }
-      
-      console.log(`Waiting for hook initialization... (${attempt + 1}/${maxAttempts})`);
-      setInitializationAttempts(attempt + 1);
-      
-      // Wait progressively longer each attempt
-      await new Promise(resolve => setTimeout(resolve, 250 + (attempt * 100)));
-      
-      // Check if component was unmounted
-      if (!mountedRef.current) {
-        return false;
-      }
-    }
-    
-    console.warn('Hook initialization timeout');
-    return false;
-  }, [hookLoading, hookError]);
 
   // Load service data when component mounts
   useEffect(() => {
@@ -266,16 +240,8 @@ const EditServicePage: React.FC = () => {
     isLoadingRef.current = true;
     setPageLoading(true);
     setError(null);
-    setInitializationAttempts(0);
 
     try {
-      // Wait for hook to initialize first
-      const initialized = await waitForInitialization();
-      
-      if (!initialized) {
-        throw new Error('Hook initialization failed');
-      }
-
       // Check if component was unmounted during initialization
       if (!mountedRef.current) {
         return;
@@ -412,7 +378,7 @@ const EditServicePage: React.FC = () => {
       }
       isLoadingRef.current = false;
     }
-  }, [serviceToEdit, waitForInitialization, getService, getServicePackages]);
+  }, [serviceToEdit, getService, getServicePackages, getServiceAvailability]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -585,17 +551,12 @@ const EditServicePage: React.FC = () => {
     setFormData(prev => ({ ...prev, perDayTimeSlots: perDaySlots }));
   };
 
-  // Show loading screen during initialization or data loading
-  if ((pageLoading || hookLoading || initializationAttempts > 0) && !serviceToEdit) {
+  // Show loading screen during data loading (simplified - no more "initializing system")
+  if ((pageLoading || hookLoading) && !serviceToEdit) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <p className="text-gray-700 mt-4">
-          {initializationAttempts > 0 
-            ? `Initializing system... (${initializationAttempts}/20)`
-            : 'Loading service details...'
-          }
-        </p>
+        <p className="text-gray-700 mt-4">Loading service details...</p>
         {retryCount > 0 && (
           <p className="text-sm text-gray-500 mt-2">Retry attempt: {retryCount}</p>
         )}
@@ -663,10 +624,6 @@ const EditServicePage: React.FC = () => {
       </div>
     );
   }
-
-  if (pageLoading) { /* ... page loading JSX ... */ return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div><p className="ml-3">Loading service details...</p></div>; }
-  if (error && !serviceToEdit) { /* ... error JSX ... */ return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Error: {error}</div>; }
-  if (!serviceToEdit) { /* ... service not found JSX ... */ return <div className="min-h-screen flex items-center justify-center"><p>Service not found or invalid slug.</p></div>; }
 
   return (
     <>
@@ -802,12 +759,6 @@ const EditServicePage: React.FC = () => {
                     </div>
                 )}
                  {serviceImageFiles.length === 0 && !formData.existingHeroImage && <p className="mt-1 text-xs text-red-500">At least one image (hero image) is required.</p>}
-            </div>
-
-            {/* Image Upload Section */}
-            <div>
-                <label htmlFor="serviceImages" className="block text-sm font-medium text-gray-700 mb-1">Service Images (New images will replace existing)</label>
-                 {/* ... image upload and preview content ... */}
             </div>
 
             <button type="submit" disabled={isLoading} className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">

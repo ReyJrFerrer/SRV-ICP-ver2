@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Principal } from '@dfinity/principal';
 import { useAuth } from '@bundly/ares-react';
 import { 
@@ -197,8 +197,17 @@ export const useServiceManagement = (): ServiceManagementHook => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Add initialization state tracking
+  // Add initialization and retry state tracking (like home.tsx and bookings.tsx)
   const [isInitialized, setIsInitialized] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [initializationAttempts, setInitializationAttempts] = useState(0);
+  
+  // Add refs to prevent concurrent operations
+  const isInitializingRef = useRef(false);
+  const mountedRef = useRef(true);
+  
+  const MAX_RETRY_ATTEMPTS = 3;
+  const RETRY_DELAY = 1000; // 1 second
 
   // Computed states
   const loading = useMemo(() => 
@@ -225,13 +234,22 @@ export const useServiceManagement = (): ServiceManagementHook => {
     );
   }, [services, currentIdentity]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Helper function to update loading state
   const setLoadingState = useCallback((key: keyof Omit<LoadingStates, 'operations'>, value: boolean) => {
+    if (!mountedRef.current) return;
     setLoadingStates(prev => ({ ...prev, [key]: value }));
   }, []);
 
   // Helper function to update operation loading state
   const setOperationLoading = useCallback((operation: string, value: boolean) => {
+    if (!mountedRef.current) return;
     setLoadingStates(prev => {
       const newOperations = new Map(prev.operations);
       if (value) {
@@ -243,46 +261,183 @@ export const useServiceManagement = (): ServiceManagementHook => {
     });
   }, []);
 
-  // Error handling
+  // Enhanced error handling with retry logic
   const handleError = useCallback((error: any, operation: string) => {
     console.error(`Error in ${operation}:`, error);
+    
+    // Check if it's a certificate error
     const errorMessage = error instanceof Error ? error.message : String(error);
-    setError(`${operation}: ${errorMessage}`);
+    const isCertificateError = errorMessage.includes('certificate') || errorMessage.includes('Invalid certificate');
+    
+    if (isCertificateError) {
+      console.log(`Certificate error detected in ${operation}, will retry automatically`);
+      
+      // Don't set the error state immediately for certificate errors
+      // Let the retry mechanism handle it
+      return;
+    }
+    
+    if (mountedRef.current) {
+      setError(`${operation}: ${errorMessage}`);
+    }
   }, []);
 
   const clearError = useCallback(() => {
-    setError(null);
+    if (mountedRef.current) {
+      setError(null);
+    }
   }, []);
 
-  // Fetch user profile
+  // Enhanced operation wrapper with retry logic (similar to home.tsx and bookings.tsx)
+  const executeWithRetry = useCallback(async <T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    maxRetries: number = MAX_RETRY_ATTEMPTS
+  ): Promise<T | null> => {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Add progressive delay for retries
+        if (attempt > 1) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+        }
+        
+        // Check if component was unmounted during delay
+        if (!mountedRef.current) {
+          return null;
+        }
+        
+        const result = await operation();
+        
+        // Reset retry count on success
+        if (attempt > 1) {
+          console.log(`${operationName} succeeded on attempt ${attempt}`);
+        }
+        
+        return result;
+      } catch (error) {
+        console.error(`${operationName} attempt ${attempt} failed:`, error);
+        lastError = error as Error;
+        
+        // Check if it's a certificate error
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isCertificateError = errorMessage.includes('certificate') || errorMessage.includes('Invalid certificate');
+        
+        if (isCertificateError) {
+          console.log(`Certificate error in ${operationName}, attempt ${attempt}/${maxRetries}`);
+          
+          // If this is the last attempt, we'll throw the error
+          if (attempt === maxRetries) {
+            break;
+          }
+          
+          // Continue to next attempt for certificate errors
+          continue;
+        } else {
+          // For non-certificate errors, fail immediately
+          break;
+        }
+      }
+    }
+    
+    // All retries failed
+    if (mountedRef.current) {
+      handleError(lastError, operationName);
+    }
+    throw lastError || new Error(`${operationName} failed after ${maxRetries} attempts`);
+  }, [handleError]);
+
+  // Enhanced fetch user profile with retry logic
   const fetchUserProfile = useCallback(async () => {
-    // Wait for authentication context to be properly initialized
-    if (!isAuthenticated || !currentIdentity || !isInitialized) return;
+    if (!isAuthenticated || !currentIdentity || !isInitialized || !mountedRef.current) return;
 
     try {
       setLoadingState('profile', true);
-      // Add a small delay to ensure HTTP agent is ready
-      await new Promise(resolve => setTimeout(resolve, 100));
       
-      const profileData = await authCanisterService.getProfile(currentIdentity.getPrincipal().toString());
-      setUserProfile(profileData);
+      await executeWithRetry(async () => {
+        const profileData = await authCanisterService.getProfile(currentIdentity.getPrincipal().toString());
+        if (mountedRef.current) {
+          setUserProfile(profileData);
+        }
+        return profileData;
+      }, 'fetch user profile');
+      
     } catch (error) {
-      handleError(error, 'fetch user profile');
+      // Error already handled by executeWithRetry
     } finally {
       setLoadingState('profile', false);
     }
-  }, [isAuthenticated, currentIdentity, isInitialized, setLoadingState, handleError]);
+  }, [isAuthenticated, currentIdentity, isInitialized, setLoadingState, executeWithRetry]);
 
-  // Add initialization effect (add this after your existing useEffects)
+  // Enhanced initialization (similar to home.tsx and bookings.tsx)
+  const initializeHook = useCallback(async () => {
+    if (isInitializingRef.current || !mountedRef.current) return;
+    
+    try {
+      console.log('Initializing service management hook - attempt:', initializationAttempts + 1);
+      isInitializingRef.current = true;
+      
+      // Check authentication first with retry logic
+      if (!isAuthenticated || !currentIdentity) {
+        console.log('User not authenticated, waiting...');
+        
+        if (initializationAttempts < MAX_RETRY_ATTEMPTS) {
+          setTimeout(() => {
+            if (mountedRef.current) {
+              setInitializationAttempts(prev => prev + 1);
+            }
+          }, RETRY_DELAY * (initializationAttempts + 1));
+          return;
+        } else {
+          console.log('Authentication failed after multiple attempts');
+          setIsInitialized(true); // Still mark as initialized to prevent infinite loops
+          return;
+        }
+      }
+
+      // Reset initialization attempts once authenticated
+      setInitializationAttempts(0);
+      setRetryCount(0);
+      setIsInitialized(true);
+      
+      console.log('Service management hook initialized successfully');
+      
+    } catch (error) {
+      console.error('Error initializing service management hook:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('certificate') || errorMessage.includes('Invalid certificate')) {
+        console.log('Certificate error detected during initialization, implementing retry logic...');
+        
+        if (retryCount < MAX_RETRY_ATTEMPTS) {
+          console.log(`Retrying initialization in ${RETRY_DELAY}ms... (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`);
+          setRetryCount(prev => prev + 1);
+          
+          setTimeout(() => {
+            if (mountedRef.current) {
+              initializeHook();
+            }
+          }, RETRY_DELAY * (retryCount + 1));
+          
+          return;
+        }
+      }
+      
+      setIsInitialized(true); // Mark as initialized even on error to prevent infinite loops
+    } finally {
+      isInitializingRef.current = false;
+    }
+  }, [isAuthenticated, currentIdentity, initializationAttempts, retryCount]);
+
+  // Initialize on mount and auth changes
   useEffect(() => {
-    // Immediate initialization since auth context should be ready by the time components mount
-    setIsInitialized(true);
-  }, []);
+    initializeHook();
+  }, [initializeHook]);
 
-  // Fetch provider profile
+  // Fetch provider profile with enhanced error handling
   const fetchProviderProfile = useCallback(async (providerId: string): Promise<FrontendProfile | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching provider profile');
       return null;
     }
@@ -292,38 +447,46 @@ export const useServiceManagement = (): ServiceManagementHook => {
         return providerProfiles.get(providerId)!;
       }
 
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const profile = await executeWithRetry(async () => {
+        return await authCanisterService.getProfile(providerId);
+      }, 'fetch provider profile');
 
-      const profile = await authCanisterService.getProfile(providerId);
-      if (profile) {
+      if (profile && mountedRef.current) {
         setProviderProfiles(prev => new Map(prev).set(providerId, profile));
         return profile;
       }
       return null;
     } catch (error) {
-      console.error('Error fetching provider profile:', error);
+      // Error already handled by executeWithRetry
       return null;
     }
-  }, [isInitialized, providerProfiles]);
+  }, [isInitialized, providerProfiles, executeWithRetry]);
 
-  // Fetch categories
+  // Enhanced fetch categories with retry logic
   const fetchCategories = useCallback(async () => {
-    if (!isInitialized) return;
+    if (!isInitialized || !mountedRef.current) return;
     
     try {
       setLoadingState('categories', true);
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
       
-      const categoriesData = await serviceCanisterService.getAllCategories();
-      setCategories(categoriesData);
+      await executeWithRetry(async () => {
+        const categoriesData = await serviceCanisterService.getAllCategories();
+        if (mountedRef.current) {
+          setCategories(categoriesData);
+        }
+        return categoriesData;
+      }, 'fetch categories');
+      
     } catch (error) {
-      handleError(error, 'fetch categories');
+      // Error already handled by executeWithRetry
+      console.log('Failed to fetch categories after retries, continuing with empty array');
+      if (mountedRef.current) {
+        setCategories([]); // Set empty array on failure
+      }
     } finally {
       setLoadingState('categories', false);
     }
-  }, [isInitialized, setLoadingState, handleError]);
+  }, [isInitialized, setLoadingState, executeWithRetry]);
 
   // Enrich service with provider data
   const enrichServiceWithProviderData = useCallback(async (service: Service): Promise<EnhancedService> => {
@@ -342,64 +505,77 @@ export const useServiceManagement = (): ServiceManagementHook => {
     return enrichedService;
   }, [fetchProviderProfile]);
 
-  // Fetch services
+  // Enhanced fetch services with retry logic
   const fetchServices = useCallback(async () => {
-    if (!isInitialized) return;
+    if (!isInitialized || !mountedRef.current) return;
     
     try {
       setLoadingState('services', true);
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
       
-      const servicesData = await serviceCanisterService.getAllServices();
+      await executeWithRetry(async () => {
+        const servicesData = await serviceCanisterService.getAllServices();
+        
+        // Enrich services with provider data
+        const enrichedServices = await Promise.all(
+          servicesData.map(service => enrichServiceWithProviderData(service))
+        );
+        
+        if (mountedRef.current) {
+          setServices(enrichedServices);
+        }
+        return enrichedServices;
+      }, 'fetch services');
       
-      // Enrich services with provider data
-      const enrichedServices = await Promise.all(
-        servicesData.map(service => enrichServiceWithProviderData(service))
-      );
-      
-      setServices(enrichedServices);
     } catch (error) {
-      handleError(error, 'fetch services');
+      // Error already handled by executeWithRetry
+      console.log('Failed to fetch services after retries, continuing with empty array');
+      if (mountedRef.current) {
+        setServices([]); // Set empty array on failure
+      }
     } finally {
       setLoadingState('services', false);
     }
-  }, [isInitialized, setLoadingState, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, setLoadingState, executeWithRetry, enrichServiceWithProviderData]);
 
-  // Service CRUD Operations
+  // Service CRUD Operations with enhanced error handling
 
-  // Fixed: createService now uses individual parameters instead of request object
   const createService = useCallback(async (request: ServiceCreateRequest): Promise<EnhancedService> => {
     try {
       setOperationLoading('createService', true);
-      const newService = await serviceCanisterService.createService(
-        request.title,
-        request.description,
-        request.categoryId,
-        request.price,
-        request.location,
-        request.weeklySchedule,
-        request.instantBookingEnabled,
-        request.bookingNoticeHours,
-        request.maxBookingsPerDay
-      );
+      
+      const result = await executeWithRetry(async () => {
+        const newService = await serviceCanisterService.createService(
+          request.title,
+          request.description,
+          request.categoryId,
+          request.price,
+          request.location,
+          request.weeklySchedule,
+          request.instantBookingEnabled,
+          request.bookingNoticeHours,
+          request.maxBookingsPerDay
+        );
 
-      if (!newService) {
-        throw new Error('Failed to create service');
-      }
+        if (!newService) {
+          throw new Error('Failed to create service');
+        }
 
-      const enrichedService = await enrichServiceWithProviderData(newService);
-      setServices(prev => [...prev, enrichedService]);
-      return enrichedService;
+        const enrichedService = await enrichServiceWithProviderData(newService);
+        if (mountedRef.current) {
+          setServices(prev => [...prev, enrichedService]);
+        }
+        return enrichedService;
+      }, 'create service');
+
+      return result!;
     } catch (error) {
       handleError(error, 'create service');
       throw error;
     } finally {
       setOperationLoading('createService', false);
     }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+  }, [setOperationLoading, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
-  // Fixed: updateService now uses only 4 parameters (serviceId, title, description, price)
   const updateService = useCallback(async (
     serviceId: string, 
     title: string, 
@@ -408,75 +584,98 @@ export const useServiceManagement = (): ServiceManagementHook => {
   ): Promise<EnhancedService> => {
     try {
       setOperationLoading('updateService', true);
-      const updatedService = await serviceCanisterService.updateService(
-        serviceId,
-        title,
-        description,
-        price
-      );
+      
+      const result = await executeWithRetry(async () => {
+        const updatedService = await serviceCanisterService.updateService(
+          serviceId,
+          title,
+          description,
+          price
+        );
 
-      if (!updatedService) {
-        throw new Error('Failed to update service');
-      }
+        if (!updatedService) {
+          throw new Error('Failed to update service');
+        }
 
-      const enrichedService = await enrichServiceWithProviderData(updatedService);
-      setServices(prev => prev.map(service => 
-        service.id === serviceId ? enrichedService : service
-      ));
-      return enrichedService;
+        const enrichedService = await enrichServiceWithProviderData(updatedService);
+        if (mountedRef.current) {
+          setServices(prev => prev.map(service => 
+            service.id === serviceId ? enrichedService : service
+          ));
+        }
+        return enrichedService;
+      }, 'update service');
+
+      return result!;
     } catch (error) {
       handleError(error, 'update service');
       throw error;
     } finally {
       setOperationLoading('updateService', false);
     }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+  }, [setOperationLoading, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   const deleteService = useCallback(async (serviceId: string): Promise<void> => {
     try {
       setOperationLoading('deleteService', true);
-      await serviceCanisterService.deleteService(serviceId);
-      setServices(prev => prev.filter(service => service.id !== serviceId));
+      
+      await executeWithRetry(async () => {
+        await serviceCanisterService.deleteService(serviceId);
+        if (mountedRef.current) {
+          setServices(prev => prev.filter(service => service.id !== serviceId));
+        }
+      }, 'delete service');
+      
     } catch (error) {
       handleError(error, 'delete service');
       throw error;
     } finally {
       setOperationLoading('deleteService', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
   const getService = useCallback(async (serviceId: string): Promise<EnhancedService | null> => {
     try {
-      const service = await serviceCanisterService.getService(serviceId);
-      if (!service) return null;
+      const result = await executeWithRetry(async () => {
+        const service = await serviceCanisterService.getService(serviceId);
+        if (!service) return null;
+        
+        return await enrichServiceWithProviderData(service);
+      }, 'get service');
       
-      return await enrichServiceWithProviderData(service);
+      return result;
     } catch (error) {
       handleError(error, 'get service');
       return null;
     }
-  }, [handleError, enrichServiceWithProviderData]);
+  }, [executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   // Service status management
   const updateServiceStatus = useCallback(async (serviceId: string, status: ServiceStatus): Promise<void> => {
     try {
       setOperationLoading('updateServiceStatus', true);
-      const updatedService = await serviceCanisterService.updateServiceStatus(serviceId, status);
-      if (!updatedService) {
-        throw new Error('Failed to update service status');
-      }
+      
+      await executeWithRetry(async () => {
+        const updatedService = await serviceCanisterService.updateServiceStatus(serviceId, status);
+        if (!updatedService) {
+          throw new Error('Failed to update service status');
+        }
 
-      const enrichedService = await enrichServiceWithProviderData(updatedService);
-      setServices(prev => prev.map(service => 
-        service.id === serviceId ? enrichedService : service
-      ));
+        const enrichedService = await enrichServiceWithProviderData(updatedService);
+        if (mountedRef.current) {
+          setServices(prev => prev.map(service => 
+            service.id === serviceId ? enrichedService : service
+          ));
+        }
+      }, 'update service status');
+      
     } catch (error) {
       handleError(error, 'update service status');
       throw error;
     } finally {
       setOperationLoading('updateServiceStatus', false);
     }
-  }, [setOperationLoading, handleError, enrichServiceWithProviderData]);
+  }, [setOperationLoading, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   const activateService = useCallback(async (serviceId: string): Promise<void> => {
     await updateServiceStatus(serviceId, 'Available');
@@ -490,129 +689,151 @@ export const useServiceManagement = (): ServiceManagementHook => {
     await updateServiceStatus(serviceId, 'Unavailable');
   }, [updateServiceStatus]);
 
-  // Package management
+  // Package management with enhanced error handling
   const createPackage = useCallback(async (request: PackageCreateRequest): Promise<ServicePackage> => {
     try {
       setOperationLoading('createPackage', true);
-      const newPackage = await serviceCanisterService.createServicePackage(
-        request.serviceId,
-        request.title,
-        request.description,
-        request.price
-      );
+      
+      const result = await executeWithRetry(async () => {
+        const newPackage = await serviceCanisterService.createServicePackage(
+          request.serviceId,
+          request.title,
+          request.description,
+          request.price
+        );
 
-      if (!newPackage) {
-        throw new Error('Failed to create package');
-      }
+        if (!newPackage) {
+          throw new Error('Failed to create package');
+        }
 
-      return newPackage;
+        return newPackage;
+      }, 'create package');
+
+      return result!;
     } catch (error) {
       handleError(error, 'create package');
       throw error;
     } finally {
       setOperationLoading('createPackage', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
   const updatePackage = useCallback(async (request: PackageUpdateRequest): Promise<ServicePackage> => {
     try {
       setOperationLoading('updatePackage', true);
-      const updatedPackage = await serviceCanisterService.updateServicePackage(
-        request.id,
-        request.title!,
-        request.description!,
-        request.price!
-      );
+      
+      const result = await executeWithRetry(async () => {
+        const updatedPackage = await serviceCanisterService.updateServicePackage(
+          request.id,
+          request.title!,
+          request.description!,
+          request.price!
+        );
 
-      if (!updatedPackage) {
-        throw new Error('Failed to update package');
-      }
+        if (!updatedPackage) {
+          throw new Error('Failed to update package');
+        }
 
-      return updatedPackage;
+        return updatedPackage;
+      }, 'update package');
+
+      return result!;
     } catch (error) {
       handleError(error, 'update package');
       throw error;
     } finally {
       setOperationLoading('updatePackage', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
   const deletePackage = useCallback(async (packageId: string): Promise<void> => {
     try {
       setOperationLoading('deletePackage', true);
-      await serviceCanisterService.deleteServicePackage(packageId);
+      
+      await executeWithRetry(async () => {
+        await serviceCanisterService.deleteServicePackage(packageId);
+      }, 'delete package');
+      
     } catch (error) {
       handleError(error, 'delete package');
       throw error;
     } finally {
       setOperationLoading('deletePackage', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
   const getServicePackages = useCallback(async (serviceId: string): Promise<ServicePackage[]> => {
     try {
-      return await serviceCanisterService.getServicePackages(serviceId);
+      const result = await executeWithRetry(async () => {
+        return await serviceCanisterService.getServicePackages(serviceId);
+      }, 'get service packages');
+      
+      return result || [];
     } catch (error) {
       handleError(error, 'get service packages');
       return [];
     }
-  }, [handleError]);
+  }, [executeWithRetry, handleError]);
 
-  // Availability management
+  // Availability management with enhanced error handling
   const updateAvailability = useCallback(async (
     serviceId: string, 
     availability: ProviderAvailability
   ): Promise<void> => {
     try {
       setOperationLoading('updateAvailability', true);
-      // Fixed: using setServiceAvailability instead of updateProviderAvailability
-      const updatedAvailability = await serviceCanisterService.setServiceAvailability(
-        serviceId,
-        availability.weeklySchedule,
-        availability.instantBookingEnabled,
-        availability.bookingNoticeHours,
-        availability.maxBookingsPerDay
-      );
+      
+      await executeWithRetry(async () => {
+        const updatedAvailability = await serviceCanisterService.setServiceAvailability(
+          serviceId,
+          availability.weeklySchedule,
+          availability.instantBookingEnabled,
+          availability.bookingNoticeHours,
+          availability.maxBookingsPerDay
+        );
 
-      if (!updatedAvailability) {
-        throw new Error('Failed to update availability');
-      }
+        if (!updatedAvailability) {
+          throw new Error('Failed to update availability');
+        }
 
-      // Update the service in local state
-      setServices(prev => prev.map(service => 
-        service.id === serviceId 
-          ? { ...service, availability: updatedAvailability }
-          : service
-      ));
+        // Update the service in local state
+        if (mountedRef.current) {
+          setServices(prev => prev.map(service => 
+            service.id === serviceId 
+              ? { ...service, availability: updatedAvailability }
+              : service
+          ));
+        }
+      }, 'update availability');
+      
     } catch (error) {
       handleError(error, 'update availability');
       throw error;
     } finally {
       setOperationLoading('updateAvailability', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
-  // Fixed: getAvailableSlots now uses Date parameter and correct method name
   const getAvailableSlots = useCallback(async (
     serviceId: string, 
     date: Date
   ): Promise<AvailableSlot[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching available slots');
       return [];
     }
 
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const result = await executeWithRetry(async () => {
+        return await serviceCanisterService.getAvailableTimeSlots(serviceId, date);
+      }, 'get available slots');
       
-      return await serviceCanisterService.getAvailableTimeSlots(serviceId, date);
+      return result || [];
     } catch (error) {
       handleError(error, 'get available slots');
       return [];
     }
-  }, [isInitialized, handleError]);
+  }, [isInitialized, executeWithRetry, handleError]);
 
   const toggleInstantBooking = useCallback(async (
     serviceId: string, 
@@ -621,41 +842,46 @@ export const useServiceManagement = (): ServiceManagementHook => {
     try {
       setOperationLoading('toggleInstantBooking', true);
       
-      // Get current availability
-      const currentAvailability = await serviceCanisterService.getServiceAvailability(serviceId);
-      if (!currentAvailability) {
-        throw new Error('Service availability not found');
-      }
+      await executeWithRetry(async () => {
+        // Get current availability
+        const currentAvailability = await serviceCanisterService.getServiceAvailability(serviceId);
+        if (!currentAvailability) {
+          throw new Error('Service availability not found');
+        }
 
-      // Update with new instant booking setting
-      await serviceCanisterService.setServiceAvailability(
-        serviceId,
-        currentAvailability.weeklySchedule,
-        enabled,
-        currentAvailability.bookingNoticeHours,
-        currentAvailability.maxBookingsPerDay
-      );
+        // Update with new instant booking setting
+        await serviceCanisterService.setServiceAvailability(
+          serviceId,
+          currentAvailability.weeklySchedule,
+          enabled,
+          currentAvailability.bookingNoticeHours,
+          currentAvailability.maxBookingsPerDay
+        );
 
-      // Update local state
-      setServices(prev => prev.map(service => 
-        service.id === serviceId 
-          ? { 
-              ...service, 
-              availability: service.availability ? 
-                { ...service.availability, instantBookingEnabled: enabled } 
-                : undefined 
-            }
-          : service
-      ));
+        // Update local state
+        if (mountedRef.current) {
+          setServices(prev => prev.map(service => 
+            service.id === serviceId 
+              ? { 
+                  ...service, 
+                  availability: service.availability ? 
+                    { ...service.availability, instantBookingEnabled: enabled } 
+                    : undefined 
+                }
+              : service
+          ));
+        }
+      }, 'toggle instant booking');
+      
     } catch (error) {
       handleError(error, 'toggle instant booking');
       throw error;
     } finally {
       setOperationLoading('toggleInstantBooking', false);
     }
-  }, [setOperationLoading, handleError]);
+  }, [setOperationLoading, executeWithRetry, handleError]);
 
-  // Search and filtering
+  // Search and filtering with enhanced error handling
   const searchServices = useCallback(async (request: ServiceSearchRequest): Promise<EnhancedService[]> => {
     try {
       // For now, implement basic filtering on loaded services
@@ -702,52 +928,52 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [services, handleError]);
 
   const getServicesByCategory = useCallback(async (categoryId: string): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching services by category');
       return [];
     }
 
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const result = await executeWithRetry(async () => {
+        const categoryServices = await serviceCanisterService.getServicesByCategory(categoryId);
+        return await Promise.all(
+          categoryServices.map(service => enrichServiceWithProviderData(service))
+        );
+      }, 'get services by category');
       
-      const categoryServices = await serviceCanisterService.getServicesByCategory(categoryId);
-      return await Promise.all(
-        categoryServices.map(service => enrichServiceWithProviderData(service))
-      );
+      return result || [];
     } catch (error) {
       handleError(error, 'get services by category');
       return [];
     }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   const getServicesByLocation = useCallback(async (
     location: Location, 
     radius: number
   ): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching services by location');
       return [];
     }
 
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const result = await executeWithRetry(async () => {
+        const locationServices = await serviceCanisterService.searchServicesByLocation(
+          location, 
+          radius
+        );
+        return await Promise.all(
+          locationServices.map(service => enrichServiceWithProviderData(service))
+        );
+      }, 'get services by location');
       
-      const locationServices = await serviceCanisterService.searchServicesByLocation(
-        location, 
-        radius
-      );
-      return await Promise.all(
-        locationServices.map(service => enrichServiceWithProviderData(service))
-      );
+      return result || [];
     } catch (error) {
       handleError(error, 'get services by location');
       return [];
     }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   const getNearbyServices = useCallback(async (userLocation?: Location): Promise<EnhancedService[]> => {
     if (!userLocation) return services;
@@ -841,33 +1067,32 @@ export const useServiceManagement = (): ServiceManagementHook => {
     return loadingStates.operations.has(operation);
   }, [loadingStates.operations]);
 
-  // Category management
+  // Enhanced category management
   const getCategories = useCallback(async (): Promise<ServiceCategory[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching categories');
       return [];
     }
 
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const result = await executeWithRetry(async () => {
+        return await serviceCanisterService.getAllCategories();
+      }, 'get categories');
       
-      return await serviceCanisterService.getAllCategories();
+      return result || [];
     } catch (error) {
       handleError(error, 'get categories');
       return [];
     }
-  }, [isInitialized, handleError]);
+  }, [isInitialized, executeWithRetry, handleError]);
 
   const refreshCategories = useCallback(async (): Promise<void> => {
     await fetchCategories();
   }, [fetchCategories]);
 
-  // Provider functions
+  // Provider functions with enhanced error handling
   const getProviderServices = useCallback(async (providerId?: string): Promise<EnhancedService[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
+    if (!isInitialized || !mountedRef.current) {
       console.log('Waiting for initialization before fetching provider services');
       return [];
     }
@@ -876,18 +1101,19 @@ export const useServiceManagement = (): ServiceManagementHook => {
       const targetProviderId = providerId || getCurrentUserId();
       if (!targetProviderId) return [];
 
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const providerServices = await serviceCanisterService.getServicesByProvider(targetProviderId);
-      return await Promise.all(
-        providerServices.map(service => enrichServiceWithProviderData(service))
-      );
+      const result = await executeWithRetry(async () => {
+        const providerServices = await serviceCanisterService.getServicesByProvider(targetProviderId);
+        return await Promise.all(
+          providerServices.map(service => enrichServiceWithProviderData(service))
+        );
+      }, 'get provider services');
+      
+      return result || [];
     } catch (error) {
       handleError(error, 'get provider services');
       return [];
     }
-  }, [isInitialized, getCurrentUserId, handleError, enrichServiceWithProviderData]);
+  }, [isInitialized, getCurrentUserId, executeWithRetry, handleError, enrichServiceWithProviderData]);
 
   const getProviderStats = useCallback(async (providerId?: string): Promise<{
     totalServices: number;
@@ -922,12 +1148,31 @@ export const useServiceManagement = (): ServiceManagementHook => {
     }
   }, [getProviderServices, handleError]);
 
-  // Effects
+  // Enhanced service availability function
+  const getServiceAvailability = useCallback(async (serviceId: string): Promise<ProviderAvailability | null> => {
+    if (!isInitialized || !mountedRef.current) {
+      console.log('Waiting for initialization before fetching service availability');
+      return null;
+    }
+
+    try {
+      const result = await executeWithRetry(async () => {
+        return await serviceCanisterService.getServiceAvailability(serviceId);
+      }, 'get service availability');
+      
+      return result;
+    } catch (error) {
+      handleError(error, 'get service availability');
+      return null;
+    }
+  }, [isInitialized, executeWithRetry, handleError]);
+
+  // Effects with enhanced initialization
   useEffect(() => {
-    if (isAuthenticated && currentIdentity) {
+    if (isAuthenticated && currentIdentity && isInitialized) {
       fetchUserProfile();
     }
-  }, [isAuthenticated, currentIdentity, fetchUserProfile]);
+  }, [isAuthenticated, currentIdentity, isInitialized, fetchUserProfile]);
 
   useEffect(() => {
     if (isInitialized) {
@@ -935,25 +1180,6 @@ export const useServiceManagement = (): ServiceManagementHook => {
       fetchCategories();
     }
   }, [isInitialized, fetchServices, fetchCategories]);
-
-  // Availability management functions
-  const getServiceAvailability = useCallback(async (serviceId: string): Promise<ProviderAvailability | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service availability');
-      return null;
-    }
-
-    try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      return await serviceCanisterService.getServiceAvailability(serviceId);
-    } catch (error) {
-      handleError(error, 'get service availability');
-      return null;
-    }
-  }, [isInitialized, handleError]);
 
   // Return the hook interface
   return {

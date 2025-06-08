@@ -7,7 +7,7 @@ import {
     MapPinIcon, CalendarIcon, ClockIcon, UserIcon, 
     CurrencyDollarIcon, PhoneIcon, InformationCircleIcon,
     CalendarDaysIcon, CheckCircleIcon, XCircleIcon, 
-    ExclamationTriangleIcon, ArrowPathIcon
+    ExclamationTriangleIcon, ArrowPathIcon, StarIcon
 } from '@heroicons/react/24/outline';
 
 const calculateDuration = (start: string | Date, end: string | Date): string => {
@@ -382,6 +382,28 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
                     <CheckCircleIcon className="h-4 w-4 mr-1.5" />
                     {isBookingActionInProgress(booking.id, 'complete') ? 'Completing...' : 'Mark Completed'}
                   </button>
+                </>
+              )}
+
+              {/* Show contact and view reviews buttons for completed bookings */}
+              {isCompleted && (
+                <>
+                  <button 
+                    onClick={handleContactClient} 
+                    className="flex items-center justify-center text-xs w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-medium py-2 px-3 rounded-md transition-colors"
+                  >
+                    <PhoneIcon className="h-4 w-4 mr-1.5" />
+                    Contact Client
+                  </button>
+                  <Link href= {`/provider/review/${booking?.id}`}legacyBehavior>
+                    <a 
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center justify-center text-xs w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-3 rounded-md transition-colors text-center"
+                    >
+                      <StarIcon className="h-4 w-4 mr-1.5" />
+                      View My Reviews
+                    </a>
+                  </Link>
                 </>
               )}
             </div>

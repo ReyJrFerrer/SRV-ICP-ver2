@@ -6,7 +6,7 @@ import ProviderBookingItemCard from '@app/components/provider/ProviderBookingIte
 import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../hooks/useProviderBookingManagement';
 
 type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled' | 'InProgress';
-const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming','InProgress', 'Completed', 'Cancelled', ];
+const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'InProgress', 'Completed', 'Cancelled'];
 
 const ProviderBookingsPage: React.FC = () => {
   const router = useRouter();
@@ -39,12 +39,17 @@ const ProviderBookingsPage: React.FC = () => {
 
   // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {
+    // Combine cancelled and declined bookings in the cancelled tab
+    const cancelledBookings = getBookingsByStatus('Cancelled');
+    const declinedBookings = getBookingsByStatus('Declined');
+    const combinedCancelledBookings = [...cancelledBookings, ...declinedBookings];
+
     return {
       Pending: getPendingBookings(),
       Upcoming: getUpcomingBookings(),
       Completed: getCompletedBookings(),
-      Cancelled: getBookingsByStatus('Cancelled'),
-      InProgress: bookings.filter(booking => booking.status === 'InProgress'), // ADD InProgress
+      Cancelled: combinedCancelledBookings, // Include both cancelled and declined
+      InProgress: bookings.filter(booking => booking.status === 'InProgress'),
     };
   }, [getPendingBookings, getUpcomingBookings, getCompletedBookings, getBookingsByStatus, bookings]);
 
@@ -233,12 +238,17 @@ const ProviderBookingsPage: React.FC = () => {
                 {activeTab === 'Pending' && "You don't have any pending booking requests."}
                 {activeTab === 'Upcoming' && "You don't have any upcoming confirmed bookings."}
                 {activeTab === 'Completed' && "You haven't completed any bookings yet."}
-                {activeTab === 'Cancelled' && "You don't have any cancelled bookings."}
+                {activeTab === 'Cancelled' && "You don't have any cancelled or declined bookings."}
                 {activeTab === 'InProgress' && "You don't have any bookings in progress."}
               </p>
               {activeTab === 'Pending' && (
                 <p className="text-sm text-gray-400">
                   New booking requests will appear here when clients book your services.
+                </p>
+              )}
+              {activeTab === 'Cancelled' && (
+                <p className="text-sm text-gray-400">
+                  Bookings cancelled by clients or declined by you will appear here for reference.
                 </p>
               )}
             </div>

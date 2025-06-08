@@ -110,7 +110,7 @@ export default function BookingRating() {
 
       if (result) {
         // Success - navigate back to bookings
-        router.push('/client/bookings?tab=completed');
+        router.push('/client/booking');
       }
     } catch (error) {
       console.error('Error submitting review:', error);

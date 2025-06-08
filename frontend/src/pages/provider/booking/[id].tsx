@@ -395,9 +395,9 @@ const ProviderBookingDetailsPage: NextPage = () => {
 
             {/* View Reviews for completed bookings */}
             {isCompleted && (
-              <Link href={`/provider/reviews`} legacyBehavior>
+              <Link href={`/provider/review/${specificBooking?.id}`} legacyBehavior>
                 <a className="w-full sm:flex-1 flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm text-center">
-                  <StarIcon className="h-5 w-5 mr-2" /> View My Reviews
+                  <StarIcon className="h-5 w-5 mr-2" /> View Review
                 </a>
               </Link>
             )}

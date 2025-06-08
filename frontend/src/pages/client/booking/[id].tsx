@@ -8,6 +8,7 @@ import { EnhancedBooking, useBookingManagement } from '../../../hooks/bookingMan
 import { reviewCanisterService } from '../../../services/reviewCanisterService'; // ✅ Add this import
 import { authCanisterService } from '../../../services/authCanisterService'; // ✅ Add this import
 import BottomNavigationNextjs from '../../../components/client/BottomNavigationNextjs';
+import { booking } from '@app/declarations/booking';
 
 // Import BookingStatus from the hook's types if it's exported, or define it locally
 type BookingStatus = 'Requested' | 'Accepted' | 'Completed' | 'Cancelled' | 'InProgress' | 'Declined' | 'Disputed';
@@ -364,11 +365,12 @@ const BookingDetailsPage: NextPage = () => {
                 {specificBooking?.status?.replace('_', ' ') || 'Unknown'}
               </span>
             </div>
+              <h3 className="text-2xl font-bold text-slate-800">{specificBooking?.packageName}</h3>
             <p className="text-sm text-gray-500 mb-1 flex items-center">
               <UserCircleIcon className="h-4 w-4 mr-1.5 text-gray-400"/>
               Provider: <span className="font-medium text-gray-700 ml-1">{providerName}</span>
             </p>
-            <p className="text-sm text-gray-500 mb-4">Booking ID: {specificBooking?.id?.toUpperCase().slice(-8) || 'N/A'}</p>
+            <p className="text-sm text-gray-500 mb-4">Contact: {specificBooking?.providerProfile?.phone}</p>
 
             <div className="border-t border-gray-200 pt-4 space-y-3 text-sm">
               <div className="flex items-start">

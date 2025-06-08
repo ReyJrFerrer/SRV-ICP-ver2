@@ -296,7 +296,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
             <div>
               <div className="flex justify-between items-start">
                 <p className="text-xs text-indigo-500 uppercase tracking-wider font-semibold">
-                  {'Service'}
+                  {serviceTitle}
                 </p>
                 <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
                   {booking.status.replace('_', ' ')}
@@ -304,12 +304,18 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
               </div>
               
               <h3 className="mt-1 text-lg md:text-xl font-bold text-slate-800 truncate" title={serviceTitle}>
-                {serviceTitle}
+                {booking.packageName}
               </h3>
               
               <p className="mt-1 text-xs text-gray-500">
                 Provided by: {providerName}
+           
               </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Contact: {booking.providerProfile?.phone}
+           
+              </p>
+             
               
               <div className="mt-3 space-y-1.5 text-xs text-gray-600">
                 <p className="flex items-center">

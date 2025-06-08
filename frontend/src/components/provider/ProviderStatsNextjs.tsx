@@ -63,42 +63,42 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
         value: '₱0.00',
         icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+        bgColor: 'bg-yellow-400'
       },
       {
         title: 'Pending Payout',
         value: '₱0.00',
         icon: <ClockIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+         bgColor: 'bg-yellow-400'
       },
       {
         title: 'Completed Jobs',
         value: '0',
         icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
        borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+         bgColor: 'bg-yellow-400'
       },
       {
         title: 'Customer Rating',
         value: '0 (0)',
         icon: <StarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+         bgColor: 'bg-yellow-400'
       },
       {
         title: 'Completion Rate',
         value: '0%',
         icon: <ChartBarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+         bgColor: 'bg-yellow-400'
       },
       {
         title: 'Total Earnings',
         value: '₱0.00',
         icon: <BanknotesIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
-        bgColor: 'bg-blue-600'
+       bgColor: 'bg-yellow-400'
       }
     ];
 

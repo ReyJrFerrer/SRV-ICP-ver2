@@ -275,12 +275,8 @@ export const useServiceManagement = (): ServiceManagementHook => {
 
   // Add initialization effect (add this after your existing useEffects)
   useEffect(() => {
-    // Wait for auth context to be ready before initializing
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 500); // Give auth context time to initialize
-    
-    return () => clearTimeout(timer);
+    // Immediate initialization since auth context should be ready by the time components mount
+    setIsInitialized(true);
   }, []);
 
   // Fetch provider profile
@@ -450,16 +446,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [setOperationLoading, handleError]);
 
   const getService = useCallback(async (serviceId: string): Promise<EnhancedService | null> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service');
-      return null;
-    }
-
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       const service = await serviceCanisterService.getService(serviceId);
       if (!service) return null;
       
@@ -468,7 +455,7 @@ export const useServiceManagement = (): ServiceManagementHook => {
       handleError(error, 'get service');
       return null;
     }
-  }, [isInitialized, handleError, enrichServiceWithProviderData]);
+  }, [handleError, enrichServiceWithProviderData]);
 
   // Service status management
   const updateServiceStatus = useCallback(async (serviceId: string, status: ServiceStatus): Promise<void> => {
@@ -563,22 +550,13 @@ export const useServiceManagement = (): ServiceManagementHook => {
   }, [setOperationLoading, handleError]);
 
   const getServicePackages = useCallback(async (serviceId: string): Promise<ServicePackage[]> => {
-    // Wait for initialization before making canister calls
-    if (!isInitialized) {
-      console.log('Waiting for initialization before fetching service packages');
-      return [];
-    }
-
     try {
-      // Add delay to ensure agents are ready
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       return await serviceCanisterService.getServicePackages(serviceId);
     } catch (error) {
       handleError(error, 'get service packages');
       return [];
     }
-  }, [isInitialized, handleError]);
+  }, [handleError]);
 
   // Availability management
   const updateAvailability = useCallback(async (

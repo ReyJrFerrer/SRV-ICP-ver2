@@ -65,19 +65,20 @@ const ProviderServiceDetailPage: React.FC = () => {
   }, []);
 
   // Wait for hook initialization before attempting to load service
-  const waitForInitialization = useCallback(async (maxAttempts = 20): Promise<boolean> => {
+  const waitForInitialization = useCallback(async (maxAttempts = 10): Promise<boolean> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      // Check if hook is no longer loading and no errors
-      if (!hookLoading && !hookError) {
-        console.log('Hook initialized successfully');
+      // Simply check if we have the getService function available
+      // This is more reliable than checking loading states
+      if (typeof getService === 'function') {
+        console.log('Hook functions are ready');
         return true;
       }
       
-      console.log(`Waiting for hook initialization... (${attempt + 1}/${maxAttempts})`);
+      console.log(`Waiting for hook functions... (${attempt + 1}/${maxAttempts})`);
       setInitializationAttempts(attempt + 1);
       
-      // Wait progressively longer each attempt
-      await new Promise(resolve => setTimeout(resolve, 250 + (attempt * 100)));
+      // Shorter wait time since we're just checking function availability
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Check if component was unmounted
       if (!mountedRef.current) {
@@ -87,7 +88,7 @@ const ProviderServiceDetailPage: React.FC = () => {
     
     console.warn('Hook initialization timeout');
     return false;
-  }, [hookLoading, hookError]);
+  }, [getService]);
 
   // Robust service loading with initialization check
   const loadServiceDataRobust = useCallback(async (serviceId: string): Promise<void> => {
@@ -109,88 +110,57 @@ const ProviderServiceDetailPage: React.FC = () => {
     setInitializationAttempts(0);
 
     try {
-      // Wait for hook to initialize first
-      const initialized = await waitForInitialization();
-      
-      if (!initialized) {
-        throw new Error('Hook initialization failed');
+      // Simplified approach - just wait a bit for the hook to be ready
+      if (!getService) {
+        console.log('Waiting for hook to be ready...');
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Check if component was unmounted during initialization
+      // Check if component was unmounted during wait
       if (!mountedRef.current) {
         return;
       }
 
-      // Attempt to get service with retries
-      const maxRetries = 3;
-      let lastError: any = null;
-
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      // Direct call without retries first, since backend is fast
+      console.log('Loading service data directly...');
+      const serviceData = await getService(serviceId);
+      
+      if (serviceData) {
+        console.log('Service loaded successfully:', serviceData);
+        
+        // Fetch packages for this service
+        console.log('Loading packages for service:', serviceId);
         try {
-          console.log(`Loading service data (attempt ${attempt + 1}/${maxRetries + 1})`);
+          const servicePackages = await getServicePackages(serviceId);
+          console.log('Packages loaded:', servicePackages);
           
-          // Add progressive delay for retries
-          if (attempt > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          // Only update state if component is still mounted
+          if (mountedRef.current) {
+            setService(serviceData);
+            setPackages(servicePackages || []);
+            setRetryCount(0);
+            hasLoadedSuccessfully.current = true;
+            currentServiceId.current = serviceId;
+            setError(null);
           }
-
-          // Check if component was unmounted during delay
-          if (!mountedRef.current) {
-            return;
+        } catch (packageError) {
+          console.warn('Failed to load packages:', packageError);
+          // Continue with service loading even if packages fail
+          if (mountedRef.current) {
+            setService(serviceData);
+            setPackages([]);
+            setRetryCount(0);
+            hasLoadedSuccessfully.current = true;
+            currentServiceId.current = serviceId;
+            setError(null);
           }
-          
-          const serviceData = await getService(serviceId);
-          
-          if (serviceData) {
-            console.log('Service loaded successfully:', serviceData);
-            
-            // Fetch packages for this service
-            console.log('Loading packages for service:', serviceId);
-            try {
-              const servicePackages = await getServicePackages(serviceId);
-              console.log('Packages loaded:', servicePackages);
-              
-              // Only update state if component is still mounted
-              if (mountedRef.current) {
-                setService(serviceData);
-                setPackages(servicePackages || []);
-                setRetryCount(0);
-                hasLoadedSuccessfully.current = true;
-                currentServiceId.current = serviceId;
-                setError(null);
-              }
-            } catch (packageError) {
-              console.warn('Failed to load packages:', packageError);
-              // Continue with service loading even if packages fail
-              if (mountedRef.current) {
-                setService(serviceData);
-                setPackages([]);
-                setRetryCount(0);
-                hasLoadedSuccessfully.current = true;
-                currentServiceId.current = serviceId;
-                setError(null);
-              }
-            }
-            return; // Success
-          } else {
-            lastError = new Error('Service not found');
-          }
-          
-        } catch (err) {
-          console.error(`Failed to load service (attempt ${attempt + 1}):`, err);
-          lastError = err;
         }
-      }
-
-      // All retries failed
-      if (mountedRef.current) {
-        const errorMessage = lastError?.message || 'Failed to load service data';
-        setError(errorMessage);
-        hasLoadedSuccessfully.current = false;
+      } else {
+        throw new Error('Service not found');
       }
 
     } catch (err) {
-      console.error('Error in loadServiceDataRobust:', err);
+      console.error('Error loading service:', err);
       if (mountedRef.current) {
         setError(err instanceof Error ? err.message : 'Failed to load service');
         hasLoadedSuccessfully.current = false;
@@ -201,7 +171,7 @@ const ProviderServiceDetailPage: React.FC = () => {
       }
       isLoadingRef.current = false;
     }
-  }, [service, waitForInitialization, getService]);
+  }, [service, getService, getServicePackages]);
 
   // Main effect to load service when ID changes
   useEffect(() => {

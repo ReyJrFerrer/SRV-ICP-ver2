@@ -75,7 +75,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
   // Define layout classes based on props
   const itemWidthClass = isGridItem 
     ? 'w-full' // Full width for grid items
-    : (inCategories ? 'w-full' : 'w-80 md:w-96'); // Default width for list items
+    : 'w-full' // Default width for list items
 
   // Determine availability status (simplified since we may not have full availability data)
   const isAvailable = service.availability?.isAvailable ?? false;
@@ -160,7 +160,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
         <div className="service-content p-3 flex flex-col flex-grow">
           <div className="flex-grow"> {/* This div helps push price/location to bottom */}
             <div className={nameRatingContainerClass}>
-              <h3 className={`text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors ${nameMarginClass}`}>
+              <h3 className={`text-md font-bold text-blue-800 leading-tight group-hover:text-green-600 transition-colors ${nameMarginClass} truncate`}>
                 {service.providerName}
               </h3>
               

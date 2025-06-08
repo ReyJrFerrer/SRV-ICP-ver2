@@ -1,5 +1,5 @@
 // Version: 1.0.0
-type BookingStatus__709601298 =
+type BookingStatus__197313648 =
   {
     #Accepted;
     #Cancelled;
@@ -9,36 +9,36 @@ type BookingStatus__709601298 =
     #InProgress;
     #Requested
   };
-type Booking__35474032 =
+type Booking__666254305 =
   {
     clientId : Principal;
-    completedDate : ?Time__593356169;
-    createdAt : Time__593356169;
-    evidence : ?Evidence__885036349;
+    completedDate : ?Time__71309738;
+    createdAt : Time__71309738;
+    evidence : ?Evidence__303052768;
     id : Text;
-    location : Location__978735841;
+    location : Location__869948613;
     price : Nat;
     providerId : Principal;
-    requestedDate : Time__593356169;
-    scheduledDate : ?Time__593356169;
+    requestedDate : Time__71309738;
+    scheduledDate : ?Time__71309738;
     serviceId : Text;
     servicePackageId : ?Text;
-    status : BookingStatus__709601298;
-    updatedAt : Time__593356169
+    status : BookingStatus__197313648;
+    updatedAt : Time__71309738
   };
-type Booking__899850488 = Booking__35474032;
-type Evidence__122640906 = Evidence__885036349;
-type Evidence__885036349 =
+type Booking__896417828 = Booking__666254305;
+type Evidence__303052768 =
   {
     bookingId : Text;
-    createdAt : Time__593356169;
+    createdAt : Time__71309738;
     description : Text;
     fileUrls : [Text];
     id : Text;
     qualityScore : ?Float;
     submitterId : Principal
   };
-type Location__978735841 =
+type Evidence__685782184 = Evidence__303052768;
+type Location__869948613 =
   {
     address : Text;
     city : Text;
@@ -48,8 +48,8 @@ type Location__978735841 =
     postalCode : Text;
     state : Text
   };
-type Time__593356169 = Int;
+type Time__71309738 = Int;
 actor {
-  stable var bookingEntries : [(Text, Booking__899850488)];
-  stable var evidenceEntries : [(Text, Evidence__122640906)]
+  stable var bookingEntries : [(Text, Booking__896417828)];
+  stable var evidenceEntries : [(Text, Evidence__685782184)]
 };

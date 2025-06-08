@@ -1,5 +1,5 @@
 // Version: 1.0.0
-type DetectionFlag__184714163 =
+type DetectionFlag__731303017 =
   {
     #CompetitiveManipulation;
     #FakeEvidence;
@@ -7,21 +7,21 @@ type DetectionFlag__184714163 =
     #Other;
     #ReviewBomb
   };
-type ReputationScore__885305789 = ReputationScore__895766;
-type ReputationScore__895766 =
+type ReputationScore__138121375 =
   {
     averageRating : ?Float;
     completedBookings : Nat;
-    detectionFlags : [DetectionFlag__184714163];
-    lastUpdated : Time__593356169;
-    trustLevel : TrustLevel__920487450;
+    detectionFlags : [DetectionFlag__731303017];
+    lastUpdated : Time__71309738;
+    trustLevel : TrustLevel__848785197;
     trustScore : Float;
     userId : Principal
   };
-type Time__593356169 = Int;
-type TrustLevel__920487450 = {#High; #Low; #Medium; #New; #VeryHigh};
+type ReputationScore__699639555 = ReputationScore__138121375;
+type Time__71309738 = Int;
+type TrustLevel__848785197 = {#High; #Low; #Medium; #New; #VeryHigh};
 actor {
-  stable var reputationEntries : [(Principal, ReputationScore__885305789)];
+  stable var reputationEntries : [(Principal, ReputationScore__699639555)];
   stable var reputationHistoryEntries :
-    [(Principal, [(Time__593356169, Float)])]
+    [(Principal, [(Time__71309738, Float)])]
 };

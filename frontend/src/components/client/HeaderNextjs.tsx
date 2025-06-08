@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MapPinIcon, CheckCircleIcon, BellIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect } from 'react';
+import { MapPinIcon, CheckCircleIcon, BellIcon } from '@heroicons/react/24/solid';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,7 +7,6 @@ import { useAuth } from "@bundly/ares-react";
 import SearchBar from './SearchBarNextjs';
 import BottomSheet from './BottomSheetNextjs';
 import ServiceLocationMap from './ServiceLocationMapNextjs';
-// Import the hook and service
 import { useAllServicesWithProviders } from '../../hooks/serviceInformation';
 import authCanisterService, { FrontendProfile } from '../../services/authCanisterService';
 
@@ -26,10 +25,8 @@ const Header: React.FC<HeaderProps> = ({
   const [profileLoading, setProfileLoading] = useState<boolean>(false);
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   
-  // Use the hook to fetch all services
-  const { services, loading, error } = useAllServicesWithProviders();
+  const { services } = useAllServicesWithProviders();
 
-  // Fetch user profile when authenticated
   useEffect(() => {
     const fetchProfile = async () => {
       if (!isAuthenticated || !currentIdentity) {
@@ -39,9 +36,7 @@ const Header: React.FC<HeaderProps> = ({
 
       setProfileLoading(true);
       try {
-        console.log('Fetching profile for current user...');
         const userProfile = await authCanisterService.getMyProfile();
-        console.log('Fetched user profile:', userProfile);
         setProfile(userProfile);
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -54,91 +49,75 @@ const Header: React.FC<HeaderProps> = ({
     fetchProfile();
   }, [isAuthenticated, currentIdentity]);
 
-  const handleLocationClick = () => {
-    // setLocationSheetOpen(true);
-  };
+  const handleLocationClick = () => {};
+  const handleAddressMapClick = () => {};
+  const handleNotificationClick = () => router.push('/client/notifications');
 
-  const handleAddressMapClick = () => {
-    // setLocationSheetOpen(false);
-    // router.push('/client/service-maps');
-  };
-
-  const handleProfileClick = () => {
-    // if (isAuthenticated) {
-    //   router.push('/client/profile');
-    // } else {
-    //   router.push('/auth/login');
-    // }
-  };
-
-  const handleNotificationClick = () => {
-    router.push('/client/notifications');
-  };
-
-  // Extract first name from profile
   const displayName = profile?.name ? profile.name.split(' ')[0] : 'Guest';
   const isVerified = profile?.isVerified || false;
 
   return (
     <header className={`bg-white rounded-lg shadow-sm p-4 space-y-4 ${className}`}>
-      {/* Top Row: Logo, Location, Profile & Notifications */}
-      <div className="flex justify-between items-center">
-        {/* Logo on the left */}
-        <div className="flex-shrink-0">
+      {/* Top Row: Logo + Welcome | Location + Notifications */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        {/* Left: Logo + Welcome Message */}
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <Link href="/client/home" legacyBehavior>
-            <a aria-label="Home">
-              <Image 
-                src="/logo.svg"
-                alt="SRV Logo"
-                width={40}
-                height={40}
-                className="rounded-full bg-white"
-                priority
-              />
+            <a aria-label="Home" className="flex-shrink-0">
+              <div className="relative w-48 h-20">
+                <Image 
+                  src="/logo.svg"
+                  alt="SRV Logo"
+                  fill
+                  className="object-contain rounded-full bg-white"
+                  priority
+                />
+              </div>
             </a>
           </Link>
+
+          {/* Welcome Message */}
+          {!profileLoading && (
+            <div className="truncate">
+              {isAuthenticated && profile ? (
+                <>
+                  <h1 className="font-nordique text-base sm:text-xl font-bold text-gray-800 truncate">
+                    Hello, {displayName}!
+                  </h1>
+                  <p className="font-nordique text-gray-600 text-sm truncate">
+                    {isVerified ? '✓ Verified Client' : 'Find the perfect service for you'}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-nordique text-base sm:text-xl font-bold text-gray-800 truncate">
+                    Welcome to SRV!
+                  </h1>
+                  <p className="font-nordique text-gray-600 text-sm truncate">
+                    Discover amazing local services
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </div>
-        
-        {/* Right side: Location, Profile, Notifications */}
+
+        {/* Right: Location + Notifications */}
         <div className="flex items-center space-x-3">
-          {/* Location Badge */}
           <button 
             onClick={handleLocationClick}
-            className="location-badge flex items-center bg-yellow-200 px-3 py-1 rounded-full shadow-sm hover:bg-yellow-300 transition-colors"
+            className="location-badge flex items-center bg-yellow-200 px-3 py-1 rounded-full shadow-sm hover:bg-yellow-300 transition-colors max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg"
           >
-            <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
+            <span className="flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
               <MapPinIcon className="h-4 w-4 text-white" />
             </span>
             <div className="flex items-center overflow-hidden">
-              <span className="text-sm font-medium truncate max-w-[120px] text-black">
+              <span className="text-sm font-medium text-black truncate whitespace-nowrap max-w-[120px] sm:max-w-[180px] md:max-w-[240px]">
                 San Vicente, Baguio
               </span>
               <CheckCircleIcon className="h-3 w-3 text-green-500 ml-1 flex-shrink-0" />
             </div>
           </button>
-
-          {/* Profile Button */}
-          <button 
-            onClick={handleProfileClick}
-            className="flex items-center space-x-2 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-            disabled={profileLoading}
-          >
-            {profileLoading ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-400"></div>
-            ) : profile?.profilePicture ? (
-              <Image
-                src={profile.profilePicture.imageUrl}
-                alt="Profile"
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-            ) : (
-              <UserCircleIcon className="h-6 w-6 text-gray-600" />
-            )}
-          </button>
-
-          {/* Notifications */}
           {isAuthenticated && notificationCount > 0 && (
             <button 
               onClick={handleNotificationClick}
@@ -153,31 +132,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Welcome Message */}
-      {isAuthenticated && profile && !profileLoading && (
-        <div className="welcome-section">
-          <h1 className="font-nordique text-xl sm:text-2xl font-bold text-gray-800">
-            Hello, {displayName}!
-          </h1>
-          <p className="font-nordique text-gray-600 text-sm">
-            {isVerified ? '✓ Verified Client' : 'Find the perfect service for you'}
-          </p>
-        </div>
-      )}
-
-      {/* Guest Welcome Message */}
-      {!isAuthenticated && (
-        <div className="welcome-section">
-          <h1 className="font-nordique text-xl sm:text-2xl font-bold text-gray-800">
-            Welcome to SRV!
-          </h1>
-          <p className="font-nordique text-gray-600 text-sm">
-            Discover amazing local services
-          </p>
-        </div>
-      )}
-
-      {/* Loading state for profile */}
+      {/* Loading State */}
       {isAuthenticated && profileLoading && (
         <div className="welcome-section">
           <div className="animate-pulse">
@@ -196,7 +151,7 @@ const Header: React.FC<HeaderProps> = ({
         />
       </div>
 
-      {/* Location Bottom Sheet */}
+      {/* Bottom Sheet for Location Selection */}
       <BottomSheet 
         isOpen={locationSheetOpen}
         onClose={() => setLocationSheetOpen(false)}

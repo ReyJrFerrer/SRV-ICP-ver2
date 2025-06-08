@@ -92,8 +92,8 @@ const Categories: React.FC<CategoriesProps> = ({
   // Define responsive classes
   const itemBaseClass = "flex flex-col items-center text-center p-1 sm:p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500";
   const iconContainerBaseClass = "mb-1 sm:mb-2 p-2 rounded-full inline-flex justify-center items-center group-hover:bg-blue-200 transition-colors";
-  const iconSizeClass = "h-5 w-5 sm:h-6 sm:h-6 md:h-7 md:h-7";
-  const iconContainerSizeClass = "w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16"; // Mobile: 40px, sm: 48px, md: 64px
+  const iconSizeClass = "h-6 w-6 sm:h-8 sm:h-8 md:h-10 md:h-10";
+  const iconContainerSizeClass = "w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16"; // Mobile: 40px, sm: 48px, md: 64px
   const textClass = "text-xs sm:text-sm font-medium text-gray-700";
 
   return (

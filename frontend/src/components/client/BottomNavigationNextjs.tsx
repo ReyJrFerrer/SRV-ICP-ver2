@@ -16,7 +16,7 @@ const BottomNavigation: React.FC = () => {
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-40">
       <div className="flex justify-around items-center h-16">
         <Link href="/client/home" className="flex flex-col items-center justify-center w-full h-full">
-          <div className={`flex flex-col items-center ${isActive('/client/home') ? 'text-green-600' : 'text-gray-500'}`}>
+          <div className={`flex flex-col items-center ${isActive('/client/home') ? 'text-blue-600' : 'text-gray-500'}`}>
             {isActive('/client/home') ? (
               <HomeIconSolid className="h-6 w-6" />
             ) : (
@@ -27,7 +27,7 @@ const BottomNavigation: React.FC = () => {
         </Link>
 
         <Link href="/client/booking" className="flex flex-col items-center justify-center w-full h-full">
-          <div className={`flex flex-col items-center ${isActive('/client/booking') ? 'text-green-600' : 'text-gray-500'}`}>
+          <div className={`flex flex-col items-center ${isActive('/client/booking') ? 'text-blue-600' : 'text-gray-500'}`}>
             {isActive('/client/booking') ? (
               <BookingIconSolid className="h-6 w-6" />
             ) : (

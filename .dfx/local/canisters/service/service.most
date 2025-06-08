@@ -1,9 +1,9 @@
 // Version: 1.0.0
-type DayAvailability__882333125 =
-  {isAvailable : Bool; slots : [TimeSlot__1023712752]};
-type DayOfWeek__614152707 =
+type DayAvailability__419835659 =
+  {isAvailable : Bool; slots : [TimeSlot__546214916]};
+type DayOfWeek__562063820 =
   {#Friday; #Monday; #Saturday; #Sunday; #Thursday; #Tuesday; #Wednesday};
-type Location__978735841 =
+type Location__21895582 =
   {
     address : Text;
     city : Text;
@@ -13,20 +13,19 @@ type Location__978735841 =
     postalCode : Text;
     state : Text
   };
-type ProviderAvailability__199315516 = ProviderAvailability__7514810;
-type ProviderAvailability__7514810 =
+type ProviderAvailability__121787180 =
   {
     bookingNoticeHours : Nat;
-    createdAt : Time__593356169;
+    createdAt : Time__753646268;
     instantBookingEnabled : Bool;
     isActive : Bool;
     maxBookingsPerDay : Nat;
     providerId : Principal;
-    updatedAt : Time__593356169;
-    weeklySchedule : [(DayOfWeek__614152707, DayAvailability__882333125)]
+    updatedAt : Time__753646268;
+    weeklySchedule : [(DayOfWeek__562063820, DayAvailability__419835659)]
   };
-type ServiceCategory__733176 = ServiceCategory__803536771;
-type ServiceCategory__803536771 =
+type ProviderAvailability__475137467 = ProviderAvailability__121787180;
+type ServiceCategory__233584593 =
   {
     description : Text;
     id : Text;
@@ -35,43 +34,44 @@ type ServiceCategory__803536771 =
     parentId : ?Text;
     slug : Text
   };
-type ServicePackage__105949866 = ServicePackage__145258604;
-type ServicePackage__145258604 =
+type ServiceCategory__565480687 = ServiceCategory__233584593;
+type ServicePackage__367252686 = ServicePackage__783488351;
+type ServicePackage__783488351 =
   {
-    createdAt : Time__593356169;
+    createdAt : Time__753646268;
     description : Text;
     id : Text;
     price : Nat;
     serviceId : Text;
     title : Text;
-    updatedAt : Time__593356169
+    updatedAt : Time__753646268
   };
-type ServiceStatus__671671704 = {#Available; #Suspended; #Unavailable};
-type Service__213494878 = Service__874230076;
-type Service__874230076 =
+type ServiceStatus__518318742 = {#Available; #Suspended; #Unavailable};
+type Service__1057778907 =
   {
     bookingNoticeHours : ?Nat;
-    category : ServiceCategory__803536771;
-    createdAt : Time__593356169;
+    category : ServiceCategory__233584593;
+    createdAt : Time__753646268;
     description : Text;
     id : Text;
     instantBookingEnabled : ?Bool;
-    location : Location__978735841;
+    location : Location__21895582;
     maxBookingsPerDay : ?Nat;
     price : Nat;
     providerId : Principal;
     rating : ?Float;
     reviewCount : Nat;
-    status : ServiceStatus__671671704;
+    status : ServiceStatus__518318742;
     title : Text;
-    updatedAt : Time__593356169;
-    weeklySchedule : ?[(DayOfWeek__614152707, DayAvailability__882333125)]
+    updatedAt : Time__753646268;
+    weeklySchedule : ?[(DayOfWeek__562063820, DayAvailability__419835659)]
   };
-type TimeSlot__1023712752 = {endTime : Text; startTime : Text};
-type Time__593356169 = Int;
+type Service__336914994 = Service__1057778907;
+type TimeSlot__546214916 = {endTime : Text; startTime : Text};
+type Time__753646268 = Int;
 actor {
-  stable var availabilityEntries : [(Text, ProviderAvailability__199315516)];
-  stable var categoryEntries : [(Text, ServiceCategory__733176)];
-  stable var packageEntries : [(Text, ServicePackage__105949866)];
-  stable var serviceEntries : [(Text, Service__213494878)]
+  stable var availabilityEntries : [(Text, ProviderAvailability__475137467)];
+  stable var categoryEntries : [(Text, ServiceCategory__565480687)];
+  stable var packageEntries : [(Text, ServicePackage__367252686)];
+  stable var serviceEntries : [(Text, Service__336914994)]
 };

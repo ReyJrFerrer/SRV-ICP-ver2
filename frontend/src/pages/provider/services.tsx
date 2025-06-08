@@ -168,21 +168,21 @@ const MyServicesPage: React.FC = () => {
             </div>
           )}
 
-          {!loading && !error && userServices.length === 0 && (
-            <div className="text-center py-16 bg-white rounded-xl shadow-md mt-6">
-              <WrenchScrewdriverIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-lg text-gray-600 mb-2">No services found</p>
-              <p className="text-sm text-gray-500 mb-6">
-                Get started by adding your first service offering.
-              </p>
-              <Link href="/provider/services/add" legacyBehavior>
-                <a className="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
-                  <PlusIcon className="h-5 w-5 mr-2" />
-                  Add Your First Service
-                </a>
-              </Link>
-            </div>
-          )}
+            {!loading && !error && userServices.length === 0 && (
+              <div className="text-center py-16 bg-yellow-100 rounded-xl shadow-md mt-6">
+                <WrenchScrewdriverIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-lg text-gray-700 mb-2">No services found</p>
+                <p className="text-sm text-gray-600 mb-6">
+                  Get started by adding your first service offering.
+                </p>
+                <Link href="/provider/services/add" legacyBehavior>
+                  <a className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-colors">
+                    <PlusIcon className="h-5 w-5 mr-2" />
+                    Add Your First Service
+                  </a>
+                </Link>
+              </div>
+            )}
 
           {!loading && !error && userServices.length > 0 && (
             <div className="space-y-6">

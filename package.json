@@ -25,6 +25,7 @@
     "turbo": "^1.13.4"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0"
+    "@heroicons/react": "^2.2.0",
+    "sh": "^0.0.3"
   }
 }

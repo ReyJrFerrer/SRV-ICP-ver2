@@ -16,10 +16,10 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
 }) => {
   if (!provider) {
     return (
-      <header className={`provider-header bg-white ${className}`}>
+      <header className={`provider-header bg-yellow-280 ${className}`}>
         <div className="flex justify-center items-center py-4">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-48"></div>
+            <div className="h-8 bg-yellow-200 rounded w-48"></div>
           </div>
         </div>
       </header>
@@ -31,7 +31,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
   // const displayLocation = provider.address || 'Location not set';
 
   return (
-    <header className={`provider-header bg-white p-4 ${className}`}>
+    <header className={`provider-header bg-yellow-300 text-gray-900 p-4 ${className}`}>
       {/* Top Row: Logo, Location, Notifications */}
       <div className="flex justify-between items-center mb-2">
         {/* Logo */}
@@ -49,7 +49,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
         {/* Location Badge and Notifications */}
         <div className="flex items-center space-x-3">
           {/* Location Badge */}
-          <button className="location-badge flex items-center bg-yellow-200 px-3 py-1 rounded-full shadow-sm">
+          <button className="location-badge flex items-center bg-yellow-100 px-3 py-1 rounded-full shadow-sm">
             <span className="inline-flex items-center justify-center bg-blue-600 rounded-full p-1 mr-2">
               <MapPinIcon className="h-4 w-4 text-white" />
             </span>
@@ -75,7 +75,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
         <h1 className="text-2xl font-bold text-gray-800">
           Welcome, {displayName}!
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-700">
           {provider.isVerified ? '✓ Verified Provider' : 'Manage your services and bookings'}
         </p>
       </div>

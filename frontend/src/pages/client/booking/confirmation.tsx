@@ -51,10 +51,10 @@ const BookingConfirmationPage: React.FC = () => {
             
             {/* Success Message */}
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Your request has been sent to {bookingDetails.providerName}!
+              Ang request mo ay naibigay na kay {bookingDetails.providerName}!
             </h2>
             <p className="text-gray-600 mb-6">
-              Please wait for a notification regarding the status of your booking.
+              Hintayin na ang notipikasyon mula sa katayuan ng iyong booking.
             </p>
 
             {/* Booking Summary */}

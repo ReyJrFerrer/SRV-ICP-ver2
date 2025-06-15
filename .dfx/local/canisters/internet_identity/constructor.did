@@ -115,6 +115,7 @@ type CreateAccountError = variant {
   AccountLimitReached;
   InternalCanisterError : text;
   Unauthorized : principal;
+  NameTooLong;
 };
 type CredentialId = blob;
 type Delegation = record {
@@ -368,6 +369,7 @@ type UpdateAccountError = variant {
   AccountLimitReached;
   InternalCanisterError : text;
   Unauthorized : principal;
+  NameTooLong;
 };
 type UserKey = PublicKey;
 type UserNumber = nat64;

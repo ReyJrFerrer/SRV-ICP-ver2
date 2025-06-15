@@ -70,15 +70,15 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hala!</h1>
           <p className="text-gray-600 mb-4">
-            You need to be logged in as a service provider to access this page.
+            Kailangan mong nakalogin bilang isang tagapagbigay serbisyo upang magpatuloy
           </p>
           <button
             onClick={() => router.push('/provider/login')}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            Go to Login
+            Balik sa Login
           </button>
         </div>
       </div>
@@ -91,7 +91,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your bookings...</p>
+          <p className="text-gray-600">Niloload ang iyong mga bookings...</p>
         </div>
       </div>
     );
@@ -102,20 +102,20 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Bookings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hindi maload ang mga bookings</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <div className="space-x-3">
             <button
               onClick={() => router.push('/provider/dashboard')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             >
-              Back to Dashboard
+              Balik sa Dashboard
             </button>
             <button
               onClick={handleRetry}
               className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg transition-colors"
             >
-              Retry
+              Ulitin
             </button>
           </div>
         </div>
@@ -141,7 +141,7 @@ const ProviderBookingsPage: React.FC = () => {
                 onClick={clearError}
                 className="text-red-600 hover:text-red-800 text-sm font-medium"
               >
-                Dismiss
+                Isara
               </button>
             </div>
           </div>
@@ -152,14 +152,14 @@ const ProviderBookingsPage: React.FC = () => {
           <div className="mx-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
-              <span className="text-blue-600 text-sm">Refreshing bookings...</span>
+              <span className="text-blue-600 text-sm">Nirerefresh ang mga bookings...</span>
             </div>
           </div>
         )}
 
         <header className="bg-white shadow-sm sticky top-0 z-20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-800">My Bookings</h1>
+            <h1 className="text-xl font-semibold text-gray-800">Aking Bookings</h1>
             <button
               onClick={refreshBookings}
               disabled={refreshing}
@@ -232,23 +232,23 @@ const ProviderBookingsPage: React.FC = () => {
                 )}
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No {activeTab.toLowerCase()} bookings
+                Walang {activeTab.toLowerCase()} bookings
               </h3>
               <p className="text-gray-500 mb-6">
-                {activeTab === 'Pending' && "You don't have any pending booking requests."}
-                {activeTab === 'Upcoming' && "You don't have any upcoming confirmed bookings."}
-                {activeTab === 'Completed' && "You haven't completed any bookings yet."}
-                {activeTab === 'Cancelled' && "You don't have any cancelled or declined bookings."}
-                {activeTab === 'InProgress' && "You don't have any bookings in progress."}
+                {activeTab === 'Pending' && "Wala kang naghihintay na booking request."}
+                {activeTab === 'Upcoming' && "Wala kang mga nalalapit na kumpirmadong booking."}
+                {activeTab === 'Completed' && "Wala ka pang natapos na booking."}
+                {activeTab === 'Cancelled' && "Wala kang mga nakanselang o tinanggihang booking."}
+                {activeTab === 'InProgress' && "Wala kang mga booking na kasalukuyang isinasagawa."}
               </p>
               {activeTab === 'Pending' && (
                 <p className="text-sm text-gray-400">
-                  New booking requests will appear here when clients book your services.
+                  Ang mga bagong booking requests ay magpapakita dito kapag nagbook na sila.
                 </p>
               )}
               {activeTab === 'Cancelled' && (
                 <p className="text-sm text-gray-400">
-                  Bookings cancelled by clients or declined by you will appear here for reference.
+                  Ang booking na ito ay kinansela ng kliyente o tinanggihan mo ay magpapakita dito.
                 </p>
               )}
             </div>

@@ -61,7 +61,7 @@ const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | 
       <div className="flex items-start">
         <span className="text-xl mr-3 mt-0.5">💰</span>
         <div>
-          <span className="font-medium text-gray-800 block">Price</span>
+          <span className="font-medium text-gray-800 block">Presyo</span>
           <span className="text-lg font-semibold text-green-600">
             {service.price.currency === 'PHP' ? '₱' : service.price.currency}
             {service.price.amount.toFixed(2)} {service.price.unit}
@@ -75,12 +75,12 @@ const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | 
       <div className="flex items-start">
         <span className="text-xl mr-3 mt-0.5">📍</span>
         <div>
-          <span className="font-medium text-gray-800 block">Location</span>
+          <span className="font-medium text-gray-800 block">Lokasyon</span>
           <span className="text-sm text-gray-600 block">
             {service.location.address}
           </span>
           <span className="text-xs text-gray-500 block mt-1">
-            Service Radius: {service.location.serviceRadius}{service.location.serviceRadiusUnit}
+            Saklaw ng serbisyo: {service.location.serviceRadius}{service.location.serviceRadiusUnit}
           </span>
         </div>
       </div>
@@ -93,12 +93,12 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => 
   <div className="card mb-6">
     <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
       <span className="text-xl mr-2">📅</span>
-      Availability
+      Availabilidad
     </h3>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <span className="font-medium text-gray-800 block mb-2">Schedule</span>
+        <span className="font-medium text-gray-800 block mb-2">Iskedyul</span>
         <div className="flex flex-wrap gap-1">
           {service.availability.schedule.map((day: string, index: number) => (
             <span key={index} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
@@ -109,7 +109,7 @@ const ServiceAvailabilitySection: React.FC<{ service: any }> = ({ service }) => 
       </div>
       
       <div>
-        <span className="font-medium text-gray-800 block mb-2">Hours</span>
+        <span className="font-medium text-gray-800 block mb-2">Mga Oras</span>
         <div className="flex flex-wrap gap-1">
           {service.availability.timeSlots.map((slot: string, index: number) => (
             <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
@@ -235,7 +235,7 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
                 ))}
               </div>
               <p className="text-sm text-gray-600">{fallbackRating.count} reviews</p>
-              <p className="text-xs text-red-500">Unable to load latest reviews</p>
+              <p className="text-xs text-red-500">Hindi ma-load ang pinakabagong mga review</p>
             </div>
           </div>
           <button 
@@ -253,7 +253,7 @@ const ServiceRatingSection: React.FC<{ service: any }> = ({ service }) => {
     <div className="card mb-6">
       <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center">
         <span className="text-xl mr-2">⭐</span>
-        Rating & Reviews
+        Rating & Mga Review
       </h3>
       <div className="flex items-center justify-between">
         <div className="flex items-center">
@@ -380,10 +380,10 @@ const ServiceVerificationSection: React.FC<{ isVerified: boolean }> = ({ isVerif
         </span>
         <div>
           <span className={`font-medium ${isVerified ? 'text-green-700' : 'text-yellow-700'}`}>
-            {isVerified ? 'Verified Provider' : 'Verification Pending'}
+            {isVerified ? 'Veripikado' : 'Hinihintay ang verepikasyon'}
           </span>
           <span className="block text-xs text-gray-500 mt-0.5">
-            {isVerified ? 'All requirements verified' : 'Background check in progress'}
+            {isVerified ? 'Verified lahat ng dokumento ' : 'Isinasagawa pa ang pagsusuri ng dokumento'}
           </span>
         </div>
       </div>
@@ -519,9 +519,9 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
           <div className="hidden lg:block">
             <div className="sticky top-24">
               <div className="card mb-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Book This Service</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Ibook itong Serbisyo</h3>
                 <div className="mb-4">
-                  <p className="text-gray-600 text-sm mb-2">Provider</p>
+                  <p className="text-gray-600 text-sm mb-2">Tagapagbigay</p>
                   <div className="flex items-center">
                     {provider?.profilePicture?.imageUrl || displayService.providerAvatar ? (
                       <Image
@@ -540,14 +540,14 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                       <span className="font-medium text-gray-800 block">
                         {provider?.name || displayService.providerName || 'Service Provider'}
                       </span>
-                      <span className="text-xs text-gray-500">Member since {new Date(displayService.createdAt).getFullYear()}</span>
+                      <span className="text-xs text-gray-500">Miyembro simula pa noong {new Date(displayService.createdAt).getFullYear()}</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="border-t border-gray-100 pt-4 mb-4">
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Price:</span>
+                    <span className="text-gray-600">Presyo:</span>
                     <span className="font-semibold text-gray-800">
                       {displayService.price.currency === 'PHP' ? '₱' : displayService.price.currency}
                       {displayService.price.amount.toFixed(2)} {displayService.price.unit}
@@ -557,10 +557,10 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                     onClick={handleBookingRequest}
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                   >
-                    Book Now
+                    Ibook na
                   </button>
                   <p className="text-xs text-center text-gray-500 mt-2">
-                    You won't be charged yet
+                    "Hindi ka pa sisingilin."
                   </p>
                 </div>
                 
@@ -584,7 +584,7 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
           onClick={handleBookingRequest}
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
         >
-          Book Now
+          Ibook Na
         </button>
       </div>
     </div>

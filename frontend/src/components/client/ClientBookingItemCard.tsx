@@ -312,7 +312,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   onClick={handleCancelClick}
                   className="flex items-center justify-center text-xs w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-3 rounded-md transition-colors"
                 >
-                  <XCircleIcon className="h-4 w-4 mr-1.5" /> Cancel Booking
+                  <XCircleIcon className="h-4 w-4 mr-1.5" /> Ikansela ang booking
                 </button>
               )}
               
@@ -322,7 +322,7 @@ const ClientBookingItemCard: React.FC<ClientBookingItemCardProps> = ({
                   onClick={handleBookAgainClick}
                   className="flex items-center justify-center text-xs w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-md transition-colors"
                 >
-                  <ArrowPathIcon className="h-4 w-4 mr-1.5" /> Book Again
+                  <ArrowPathIcon className="h-4 w-4 mr-1.5" /> Magbook ulit
                 </button>
               )}
               

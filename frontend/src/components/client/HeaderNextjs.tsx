@@ -114,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({
 
       {/* Location Section */}
       <div className="bg-yellow-200 p-4 rounded-lg">
-        <p className="text-sm font-medium text-gray-800">My Location</p>
+        <p className="text-sm font-medium text-gray-800">Aking Lokasyon</p>
         <div className="flex items-center">
           <MapPinIcon className="h-5 w-5 text-gray-700 mr-2" />
           <span className="text-gray-800">
@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Search Bar with padding above */}
         <div className="w-full mt-4">
           <SearchBar 
-            placeholder="Search for service"
+            placeholder="Maghanap ng Serbisyo"
             redirectToSearchResultsPage={true}
             servicesList={services}
           />

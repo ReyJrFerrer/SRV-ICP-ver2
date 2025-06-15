@@ -16,8 +16,8 @@ const BottomNavigationNextjs: React.FC<BottomNavigationProps> = ({ className = '
   
    const navItems = [
     { label: 'Dashboard', icon: <HomeIcon />, href: '/provider/home' },
-    { label: 'My Bookings', icon: <CalendarDaysIcon />, href: '/provider/bookings' },
-    { label: 'Services', icon: <WrenchScrewdriverIcon />, href: '/provider/services' } // THIS IS THE LINK
+    { label: 'Aking Bookings', icon: <CalendarDaysIcon />, href: '/provider/bookings' },
+    { label: 'Mga Serbisyo', icon: <WrenchScrewdriverIcon />, href: '/provider/services' } // THIS IS THE LINK
   ];
   
   return (

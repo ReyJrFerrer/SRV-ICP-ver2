@@ -6,32 +6,81 @@
   - Environments: .env
 
    Creating an optimized production build ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
  ✓ Compiled successfully
    Linting and checking validity of types ...
  ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
    Collecting page data ...
-Error: Principal "rbp2o-jaaaa-aaaah-qcaiq-cai" does not have a valid checksum (original value "rdmx6-jaaaa-aaaah-qcaiq-cai" may not be a valid Principal ID).
-    at Principal.fromText (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/node_modules/@dfinity/principal/lib/cjs/index.js:63:19)
-    at 606 (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:12918)
-    at t (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/webpack-runtime.js:1:127)
-    at 3970 (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:534)
-    at t (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/webpack-runtime.js:1:127)
-    at r (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:20512)
-    at /Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:20547
-    at t.X (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/webpack-runtime.js:1:759)
-    at /Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:20525
-    at Object.<anonymous> (/Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend/build/server/pages/client/booking/[id].js:1:20574)
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+   Generating static pages (0/31) ...
+   Generating static pages (7/31) 
+   Generating static pages (15/31) 
+   Generating static pages (23/31) 
+ ✓ Generating static pages (31/31)
+   Finalizing page optimization ...
+   Collecting build traces ...
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
+Creating HTTP agent with anonymous identity
 
-> Build error occurred
-Error: Failed to collect page data for /client/booking/[id]
-    at /Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/node_modules/next/dist/build/utils.js:1269:15
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  type: 'Error'
-}
-npm error Lifecycle script `build` failed with error:
-npm error code 1
-npm error path /Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend
-npm error workspace frontend
-npm error location /Users/HUAWEI/Coding Stuff/main-SRV/SRV-ICP-ver2/frontend
-npm error command failed
-npm error command sh -c next build
+
+Route (pages)                                        Size     First Load JS
+┌ ○ / (492 ms)                                       6.45 kB         203 kB
+├   /_app                                            0 B             190 kB
+├ ○ /404                                             181 B           190 kB
+├ ○ /client                                          2.44 kB         195 kB
+├ ○ /client/book/[id] (986 ms)                       50.5 kB         241 kB
+├ ○ /client/booking                                  9.33 kB         208 kB
+├ ○ /client/booking/[id]                             6.4 kB          202 kB
+├ ○ /client/booking/confirmation                     1.22 kB         194 kB
+├ ○ /client/categories/[slug]                        3.68 kB         208 kB
+├ ○ /client/chat                                     2.25 kB         195 kB
+├ ○ /client/home                                     7.53 kB         211 kB
+├ ○ /client/review/[id] (415 ms)                     2.87 kB         199 kB
+├ ○ /client/search-results                           3.23 kB         207 kB
+├ ○ /client/service/[id] (455 ms)                    6.62 kB         206 kB
+├ ○ /client/service/reviews/[id] (425 ms)            4.8 kB          202 kB
+├ ○ /client/service/view-all (436 ms)                2.54 kB         206 kB
+├ ○ /create-profile (431 ms)                         4.24 kB         198 kB
+├ ○ /provider (486 ms)                               2.47 kB         195 kB
+├ ○ /provider/active-service/[bookingId] (483 ms)    4.92 kB         202 kB
+├ ○ /provider/booking/[id] (464 ms)                  6.06 kB         203 kB
+├ ○ /provider/bookings (481 ms)                      7.13 kB         208 kB
+├ ○ /provider/complete-service/[bookingId] (475 ms)  2.9 kB          197 kB
+├ ○ /provider/home                                   11.3 kB         218 kB
+├ ○ /provider/receipt/[bookingId]                    2.91 kB         197 kB
+├ ○ /provider/review/[id]                            5.01 kB         205 kB
+├ ○ /provider/service-details/[id]                   8.29 kB         204 kB
+├ ○ /provider/service-details/reviews/[id]           5.38 kB         207 kB
+├ ○ /provider/services                               6.03 kB         202 kB
+├ ○ /provider/services/add                           6.17 kB         202 kB
+└ ○ /provider/services/edit/[id]                     5.9 kB          202 kB
++ First Load JS shared by all                        203 kB
+  ├ chunks/framework-5592e5a4c1067601.js             44.8 kB
+  ├ chunks/main-f77067207b4384e2.js                  34 kB
+  ├ chunks/pages/_app-36f13f824692dffe.js            110 kB
+  ├ css/0d0890af7c166c4b.css                         12.9 kB
+  └ other shared chunks (total)                      1.72 kB
+
+○  (Static)  prerendered as static content
+

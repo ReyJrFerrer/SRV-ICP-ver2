@@ -49,18 +49,18 @@ interface CategoriesProps {
 const getCategoryDisplayName = (name: string): string => {
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes('home') || lowerName.includes('house')) return 'Home';
-  if (lowerName.includes('clean')) return 'Cleaning';
-  if (lowerName.includes('auto') || lowerName.includes('car')) return 'Automobile';
-  if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) return 'Gadget';
+  if (lowerName.includes('home') || lowerName.includes('house')) return 'Gawaing Bahay';
+  if (lowerName.includes('clean')) return 'Paglilinis';
+  if (lowerName.includes('auto') || lowerName.includes('car')) return 'Para sa Sasakyan';
+  if (lowerName.includes('gadget') || lowerName.includes('tech') || lowerName.includes('computer')) return 'Gadyet';
   if (lowerName.includes('beauty') && lowerName.includes('wellness')) return 'Spa';
-  if (lowerName.includes('beauty') && lowerName.includes('services')) return 'Beauty';
-  if (lowerName.includes('delivery')) return 'Delivery';
-  if (lowerName.includes('electric')) return 'Electrical';
-  if (lowerName.includes('repair') || lowerName.includes('maintenance')) return 'Repair';
-  if (lowerName.includes('photographer')) return 'Photography';
-  if (lowerName.includes('tutoring')) return 'Tutoring';
-  
+  if (lowerName.includes('beauty') && lowerName.includes('services')) return 'Pagpapaganda';
+  if (lowerName.includes('delivery')) return 'Paghahatid';
+  if (lowerName.includes('electric')) return 'Elektrikal';
+  if (lowerName.includes('repair') || lowerName.includes('maintenance')) return 'Pag-aayos';
+  if (lowerName.includes('photographer')) return 'Potograpiya';
+  if (lowerName.includes('tutoring')) return 'Pagtuturo';
+
   return name; // Return original if no match
 };
 
@@ -99,7 +99,7 @@ const Categories: React.FC<CategoriesProps> = ({
   return (
     <div className={`${className}`}>
       <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <h2 className="text-lg sm:text-xl font-bold">Categories</h2>
+        <h2 className="text-lg sm:text-xl font-bold">Mga Kategorya</h2>
       </div>
       
       {/* Grid with responsive gaps */}
@@ -131,7 +131,7 @@ const Categories: React.FC<CategoriesProps> = ({
                 : <ChevronDownIcon className="h-5 w-5 sm:h-6 sm:w-6" />
               }
             </div>
-            <span className={textClass}>{showAll ? "Show Less" : "View More"}</span>
+            <span className={textClass}>{showAll ? "Bawasan" : "Iba pa"}</span>
           </button>
         )}
       </div>

@@ -53,7 +53,7 @@ const ReceiptPage: React.FC = () => {
 
   // Check authentication
   if (!isProviderAuthenticated()) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Please log in as a service provider to access this page.</div>;
+    return <div className="min-h-screen flex items-center justify-center text-red-500 p-4 text-center">Maglogin bilang service provider upang makita ang page na ito.</div>;
   }
 
 

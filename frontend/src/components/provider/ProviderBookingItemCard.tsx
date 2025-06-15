@@ -48,7 +48,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     return (
       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-lg" role="alert">
         <strong className="font-bold">Error!</strong>
-        <span className="block sm:inline"> Booking data is missing for this card.</span>
+        <span className="block sm:inline"> Nawawala ang impormasyon sa booking na ito.</span>
       </div>
     );
   }
@@ -61,7 +61,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
           <ExclamationTriangleIcon className="h-5 w-5 mr-2"/>
           <strong className="font-bold">Data Issue!</strong>
         </div>
-        <span className="block sm:inline"> This booking card has incomplete data (missing ID).</span>
+        <span className="block sm:inline"> Kulang kulang ang impormasyon ng booking na ito.                      (missing ID).</span>
       </div>
     );
   }
@@ -137,7 +137,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     e.preventDefault();
     e.stopPropagation();
     
-    if (window.confirm('Are you sure you want to decline this booking?')) {
+    if (window.confirm('Sigurado ka bang gusto mong idecline?')) {
       const success = await declineBookingById(booking.id, 'Declined by provider');
       if (success) {
         window.location.reload()

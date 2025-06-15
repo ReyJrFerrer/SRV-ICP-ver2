@@ -147,7 +147,7 @@ const MyBookingsPage: NextPage = () => {
             >
               <ArrowLeftIcon className="h-5 w-5 text-gray-700" />
             </button>
-            <h1 className="text-xl font-semibold text-slate-800 text-center flex-grow md:text-left">My Bookings</h1>
+            <h1 className="text-xl font-semibold text-slate-800 text-center flex-grow md:text-left">Aking Bookings</h1>
           </div>
         </header>
 
@@ -176,7 +176,7 @@ const MyBookingsPage: NextPage = () => {
           {bookingManagement.loading ? (
             <div className="text-center py-16">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-500">Loading your bookings...</p>
+              <p className="mt-4 text-gray-500">Niloload ang iyong mga bookings...</p>
             </div>
           ) : bookingManagement.error ? (
             <div className="text-center py-16 bg-white rounded-lg shadow mt-4">
@@ -186,7 +186,7 @@ const MyBookingsPage: NextPage = () => {
                 onClick={() => bookingManagement.retryOperation('loadBookings')}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                Retry
+                Ulitin
               </button>
             </div>
           ) : filteredBookings.length > 0 ? (
@@ -204,7 +204,7 @@ const MyBookingsPage: NextPage = () => {
           ) : (
             <div className="text-center py-16 bg-white rounded-lg shadow mt-4">
               <ClipboardDocumentListIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No bookings found in the "{activeTab.replace('_', ' ')}" category.</p>
+              <p className="text-gray-500 text-lg">Walang booking na nahanap sa kategoryang: "{activeTab.replace('_', ' ')}" .</p>
             </div>
           )}
         </main>

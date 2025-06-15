@@ -78,7 +78,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     return (
       <div className={`services-section bg-white p-6 rounded-xl shadow-lg ${className}`}>
         <div className="section-header flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">My Services</h2>
+          <h2 className="text-xl font-bold text-gray-800">Aking mga Serbiso</h2>
         </div>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -93,7 +93,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
     return (
       <div className={`services-section bg-white p-6 rounded-xl shadow-lg ${className}`}>
         <div className="section-header flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">My Services</h2>
+          <h2 className="text-xl font-bold text-gray-800">Aking mga Serbiso</h2>
         </div>
         <div className="text-center py-8">
           <p className="text-red-500 mb-4">{error}</p>
@@ -113,7 +113,7 @@ const ServiceManagementNextjs: React.FC<ServiceManagementProps> = ({
   return (
     <div className={`services-section bg-white p-6 rounded-xl shadow-lg ${className}`}>
       <div className="section-header flex flex-wrap justify-between items-center mb-4 gap-2">
-        <h2 className="text-xl font-bold text-gray-800">My Services</h2>
+        <h2 className="text-xl font-bold text-gray-800">Aking mga Serbiso</h2>
         {services.length > maxItemsToShow && (
           <Link href="/provider/services" legacyBehavior>
             <a className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center transition-colors">

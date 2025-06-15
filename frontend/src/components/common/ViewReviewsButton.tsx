@@ -38,7 +38,7 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
               </span>
               <span className="text-gray-600">({totalReviews} reviews)</span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">View all ratings and reviews</p>
+            <p className="text-sm text-gray-500 mt-1">Tignan lahat ng ratings and reviews</p>
           </div>
           <EyeIcon className="h-5 w-5 text-gray-400" />
         </div>
@@ -53,7 +53,7 @@ const ViewReviewsButton: React.FC<ViewReviewsButtonProps> = ({
     >
       <EyeIcon className="h-4 w-4 text-gray-600" />
       <span className="text-sm font-medium text-gray-700">
-        View Reviews ({totalReviews})
+        Tignan ang mga Reviews ({totalReviews})
       </span>
     </button>
   );

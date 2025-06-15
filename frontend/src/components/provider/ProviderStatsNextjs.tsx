@@ -58,42 +58,42 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
     // Default stats for when there's no data or loading
     const defaultStats = [
       {
-        title: 'Earnings This Month',
+        title: 'Kita Ngayong Buwan',
         value: '₱0.00',
         icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
       {
-        title: 'Pending Payout',
+        title: 'Hinihintay na payout',
         value: '₱0.00',
         icon: <ClockIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
       {
-        title: 'Completed Jobs',
+        title: 'Mga Natapos na Trabaho',
         value: '0',
         icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
       {
-        title: 'Customer Rating',
+        title: 'Rating ng Kustomer',
         value: '0 (0)',
         icon: <StarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
       {
-        title: 'Completion Rate',
+        title: 'Persyento ng mga Natapos na Trabaho',
         value: '0%',
         icon: <ChartBarIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
         bgColor: 'bg-yellow-400'
       },
       {
-        title: 'Total Earnings',
+        title: 'Kabuuang Kita',
         value: '₱0.00',
         icon: <BanknotesIcon className="h-6 w-6 text-white" />,
         borderColor: 'border-yellow-400',
@@ -120,42 +120,42 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
       
       return [
         {
-          title: 'Earnings This Month',
+          title: 'Kita Ngayong Buwan',
           value: `₱${monthlyRevenue.toFixed(2)}`,
           icon: <CurrencyDollarIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
         {
-          title: 'Pending Payout',
+          title: 'Hinihintay na payout',
           value: `₱${pendingPayout.toFixed(2)}`,
            icon: <ClockIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
         {
-          title: 'Completed Jobs',
+          title: 'Mga Natapos na Trabaho',
           value: (analytics.completedBookings || 0).toString(),
           icon: <CheckCircleIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
         {
-          title: 'Customer Rating',
+          title: 'Rating ng Kustomer',
           value: `${ratingData.averageRating.toFixed(1)} (${ratingData.totalReviews})`,
           icon: <StarIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
         {
-          title: 'Completion Rate',
+          title: 'Persyento ng mga Natapos na Trabaho',
           value: `${(analytics.completionRate || 0).toFixed(0)}%`,
           icon: <ChartBarIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
           bgColor: 'bg-yellow-400'
         },
         {
-          title: 'Total Earnings',
+          title: 'Kabuuang Kita',
           value: `₱${(analytics.totalRevenue || 0).toFixed(2)}`,
           icon: <BanknotesIcon className="h-6 w-6 text-white" />,
           borderColor: 'border-yellow-400',
@@ -174,7 +174,7 @@ const ProviderStatsNextjs: React.FC<ProviderStatsProps> = ({
       <div className={`${className} p-4`}>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600 text-sm">
-            Error loading stats: {error || reviewsError}
+            Error sa paglo-load ng mga stats {error || reviewsError}
           </p>
         </div>
       </div>

@@ -1,14 +1,14 @@
 {
   "__Candid_UI": {
-    "local": "vpyes-67777-77774-qaaeq-cai"
+    "local": "ufxgi-4p777-77774-qaadq-cai"
   },
   "auth": {
     "local": "uxrrr-q7777-77774-qaaaq-cai"
   },
-  "auth-test": {
+  "booking": {
     "local": "u6s2n-gx777-77774-qaaba-cai"
   },
-  "booking": {
+  "frontend": {
     "local": "uzt4z-lp777-77774-qaabq-cai"
   },
   "internet_identity": {
@@ -17,16 +17,10 @@
   "reputation": {
     "local": "umunu-kh777-77774-qaaca-cai"
   },
-  "reputation-test": {
+  "review": {
     "local": "ulvla-h7777-77774-qaacq-cai"
   },
-  "review": {
-    "local": "ucwa4-rx777-77774-qaada-cai"
-  },
-  "review-test": {
-    "local": "ufxgi-4p777-77774-qaadq-cai"
-  },
   "service": {
-    "local": "vizcg-th777-77774-qaaea-cai"
+    "local": "ucwa4-rx777-77774-qaada-cai"
   }
 }

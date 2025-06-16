@@ -3,25 +3,24 @@ import Image from "next/image";
 import { ShieldCheckIcon, UserGroupIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
 
 
-const WhyChooseUsSection: React.FC = () => {
+  const WhyChooseUsSection: React.FC = () => {
     const reasons = [
       {
         icon: <ShieldCheckIcon className="h-10 w-10 text-blue-600 mb-4" />,
-        title: "Verified and Reliable",
-        description: "Connect with freelance providers, SRV helps you trust their credibility and competence, moving away from informal channels."
+        title: "Beripikado at Maaasahan",
+        description: "Kumonekta sa mga freelance provider; tinutulungan ka ng SRV na pagkatiwalaan ang kanilang kredibilidad at kakayahan, na lumalayo sa impormal na mga paraan."
       },
       {
         icon: <UserGroupIcon className="h-10 w-10 text-blue-600 mb-4" />,
-        title: "Client-Focused Platform",
-        description: "Easily discover, compare, and look providers based on your specific needs, location, and authentic user ratings."
+        title: "Platform na Nakatuon sa Kliyente",
+        description: "Madaling tumuklas, maghambing, at humanap ng mga provider batay sa iyong partikular na pangangailangan, lokasyon, at tunay na rating ng user."
       },
       {
         icon: <RocketLaunchIcon className="h-10 w-10 text-blue-600 mb-4" />,
-        title: "Empowering Providers",
-        description: "Service providers can showcase skills, manage availability and build a verifiable reputation through genuine client feedbacks."
+        title: "Nagpapalakas sa mga Provider",
+        description: "Maaaring ipakita ng mga service provider ang kanilang mga kasanayan, pamahalaan ang availability, at bumuo ng mapapatunayang reputasyon sa pamamagitan ng tunay na feedback mula sa kliyente."
       }
     ];
-
 
     return (
         <section className="relative bg-blue-500 py-20 lg:py-28 overflow-hidden">
@@ -29,7 +28,7 @@ const WhyChooseUsSection: React.FC = () => {
             <div className="flex justify-center mb-12">
                 <div className="bg-yellow-400 rounded-full py-3 px-8 shadow-lg">
                     <h1 className="text-3xl lg:text-6xl font-bold text-slate-800">
-                        Why Choose SRV?
+                        Bakit SRV ang piliin mo?
                     </h1>
                 </div>
             </div>

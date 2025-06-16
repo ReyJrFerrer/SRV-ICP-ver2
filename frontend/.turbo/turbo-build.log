@@ -45,34 +45,34 @@ Creating HTTP agent with anonymous identity
 
 
 Route (pages)                                        Size     First Load JS
-┌ ○ / (492 ms)                                       6.45 kB         203 kB
+┌ ○ / (441 ms)                                       6.58 kB         203 kB
 ├   /_app                                            0 B             190 kB
 ├ ○ /404                                             181 B           190 kB
 ├ ○ /client                                          2.44 kB         195 kB
-├ ○ /client/book/[id] (986 ms)                       50.5 kB         241 kB
-├ ○ /client/booking                                  9.33 kB         208 kB
-├ ○ /client/booking/[id]                             6.4 kB          202 kB
-├ ○ /client/booking/confirmation                     1.22 kB         194 kB
-├ ○ /client/categories/[slug]                        3.68 kB         208 kB
+├ ○ /client/book/[id] (1009 ms)                      50.5 kB         241 kB
+├ ○ /client/booking                                  9.35 kB         209 kB
+├ ○ /client/booking/[id] (413 ms)                    6.4 kB          202 kB
+├ ○ /client/booking/confirmation                     1.23 kB         194 kB
+├ ○ /client/categories/[slug] (448 ms)               3.68 kB         208 kB
 ├ ○ /client/chat                                     2.25 kB         195 kB
-├ ○ /client/home                                     7.53 kB         211 kB
-├ ○ /client/review/[id] (415 ms)                     2.87 kB         199 kB
+├ ○ /client/home                                     7.58 kB         212 kB
+├ ○ /client/review/[id] (485 ms)                     2.87 kB         199 kB
 ├ ○ /client/search-results                           3.23 kB         207 kB
-├ ○ /client/service/[id] (455 ms)                    6.62 kB         206 kB
-├ ○ /client/service/reviews/[id] (425 ms)            4.8 kB          202 kB
-├ ○ /client/service/view-all (436 ms)                2.54 kB         206 kB
-├ ○ /create-profile (431 ms)                         4.24 kB         198 kB
-├ ○ /provider (486 ms)                               2.47 kB         195 kB
-├ ○ /provider/active-service/[bookingId] (483 ms)    4.92 kB         202 kB
-├ ○ /provider/booking/[id] (464 ms)                  6.06 kB         203 kB
-├ ○ /provider/bookings (481 ms)                      7.13 kB         208 kB
-├ ○ /provider/complete-service/[bookingId] (475 ms)  2.9 kB          197 kB
-├ ○ /provider/home                                   11.3 kB         218 kB
-├ ○ /provider/receipt/[bookingId]                    2.91 kB         197 kB
-├ ○ /provider/review/[id]                            5.01 kB         205 kB
-├ ○ /provider/service-details/[id]                   8.29 kB         204 kB
+├ ○ /client/service/[id] (486 ms)                    6.67 kB         206 kB
+├ ○ /client/service/reviews/[id] (448 ms)            4.8 kB          202 kB
+├ ○ /client/service/view-all                         2.54 kB         206 kB
+├ ○ /create-profile (409 ms)                         4.24 kB         198 kB
+├ ○ /provider                                        2.47 kB         195 kB
+├ ○ /provider/active-service/[bookingId] (474 ms)    4.93 kB         202 kB
+├ ○ /provider/booking/[id] (462 ms)                  6.08 kB         203 kB
+├ ○ /provider/bookings (485 ms)                      7.22 kB         208 kB
+├ ○ /provider/complete-service/[bookingId] (471 ms)  2.9 kB          197 kB
+├ ○ /provider/home                                   11.4 kB         218 kB
+├ ○ /provider/receipt/[bookingId]                    2.92 kB         197 kB
+├ ○ /provider/review/[id]                            5.02 kB         205 kB
+├ ○ /provider/service-details/[id]                   8.3 kB          204 kB
 ├ ○ /provider/service-details/reviews/[id]           5.38 kB         207 kB
-├ ○ /provider/services                               6.03 kB         202 kB
+├ ○ /provider/services                               6.04 kB         202 kB
 ├ ○ /provider/services/add                           6.17 kB         202 kB
 └ ○ /provider/services/edit/[id]                     5.9 kB          202 kB
 + First Load JS shared by all                        203 kB

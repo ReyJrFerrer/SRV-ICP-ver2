@@ -426,11 +426,13 @@ const ClientBookingPageComponent: React.FC<ClientBookingPageComponentProps> = ({
               
               {hookService.weeklySchedule && hookService.weeklySchedule.length > 0 && (
                 <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700 text-center">
+                  <strong>
                   Available: {hookService.weeklySchedule
                     .filter(s => s.availability.isAvailable)
                     .map(s => s.day)
                     .join(', ')} | 
                   {hookService.weeklySchedule[0]?.availability?.slots?.map(slot => `${slot.startTime}-${slot.endTime}`).join(', ') || 'No time slots available'}
+                  </strong>
                 </div>
               )}
 

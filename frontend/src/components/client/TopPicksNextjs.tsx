@@ -23,7 +23,7 @@ const TopPicks: React.FC<TopPicksProps> = ({ className = '', limit = 4 }) => {
   return (
     <div className={`${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg sm:text-xl font-bold">Top Picks!</h2>
+        <h2 className="text-lg sm:text-xl font-bold">Magbook Na!</h2>
         <Link 
           href="/client/service/view-all"
           className="text-blue-600 flex items-center hover:text-amber-700 transition-colors"

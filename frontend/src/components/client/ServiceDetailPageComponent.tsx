@@ -59,20 +59,6 @@ const ServiceInfoSection: React.FC<{ service: any, provider?: FrontendProfile | 
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="flex items-start">
-        <span className="text-xl mr-3 mt-0.5">💰</span>
-        <div>
-          <span className="font-medium text-gray-800 block">Presyo</span>
-          <span className="text-lg font-semibold text-green-600">
-            {service.price.currency === 'PHP' ? '₱' : service.price.currency}
-            {service.price.amount.toFixed(2)} {service.price.unit}
-          </span>
-          {service.price.isNegotiable && (
-            <span className="block text-xs text-gray-500 mt-1">(Negotiable)</span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-start">
         <span className="text-xl mr-3 mt-0.5">📍</span>
         <div>
           <span className="font-medium text-gray-800 block">Lokasyon</span>
@@ -546,13 +532,6 @@ const ServiceDetailPageComponent: React.FC<ServiceDetailPageComponentProps> = ({
                 </div>
                 
                 <div className="border-t border-gray-100 pt-4 mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Presyo:</span>
-                    <span className="font-semibold text-gray-800">
-                      {displayService.price.currency === 'PHP' ? '₱' : displayService.price.currency}
-                      {displayService.price.amount.toFixed(2)} {displayService.price.unit}
-                    </span>
-                  </div>
                   <button
                     onClick={handleBookingRequest}
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"

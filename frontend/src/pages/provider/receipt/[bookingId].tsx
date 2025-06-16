@@ -88,7 +88,7 @@ const ReceiptPage: React.FC = () => {
           <div className="text-center mb-8">
             <CheckBadgeIcon className="h-16 w-16 text-green-500 mx-auto mb-3" />
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Service Completed!</h1>
-            <p className="text-sm text-gray-500">Thank you for using SRV Platform.</p>
+            <p className="text-sm text-gray-500">Salamat sa paggamit ng SRV Platform.</p>
           </div>
 
           <div className="space-y-3 text-sm mb-8">

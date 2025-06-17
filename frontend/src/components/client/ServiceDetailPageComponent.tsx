@@ -16,7 +16,7 @@ interface ServiceDetailPageComponentProps {
 const ServiceHeroImage: React.FC<{ service: any, provider?: FrontendProfile | null }> = ({ service, provider }) => (
   <div className="w-full h-48 md:h-64 lg:h-96 overflow-hidden relative">
     <Image 
-      src={service.heroImage || '/images/default-service.png'} 
+      src={'/images/Technician1.jpg'} 
       alt={service.title || service.name} 
       width={1200} 
       height={400} 

@@ -123,7 +123,7 @@ const ServiceReviewsPage: React.FC = () => {
   }
 
   const providerName =  service.providerName || 'Service Provider';
-  const providerAvatar = '/images/Tutoring-MathTutor1.jpg';
+  const providerAvatar = '/images/rey.png';
 
   return (
     <>

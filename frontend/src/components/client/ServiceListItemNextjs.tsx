@@ -131,7 +131,7 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
         <div className="relative"> {/* Image container */}
           <div className="aspect-video w-full">
             <Image 
-              src={service.providerAvatar || "/images/Tutoring-MathTutor1.jpg"}
+              src={service.providerAvatar || "/images/rey.png"}
               alt={service.title}
               className="service-image group-hover:scale-105 transition-transform duration-300"
               style={{ objectFit: 'cover' }}
@@ -210,8 +210,8 @@ const ServiceListItem: React.FC<ServiceListItemProps> = ({
           
           <div className={priceLocationContainerClass}>
             <p className={`text-lg font-bold text-blue-800 ${priceMarginClass}`}>
-              {service.price.display || `₱${service.price.amount.toFixed(2)}`}
-              <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span>
+              { `₱${service.price.amount.toFixed(2)}`}
+              {/* <span className="text-xs font-normal">{!service.price.display ? `/${service.price.unit}` : ''}</span> */}
             </p>
             <div className={`flex items-center text-blue-800 text-xs ${locationMarginClass}`}>
               <MapPinIcon className="h-3 w-3 mr-0.5" />

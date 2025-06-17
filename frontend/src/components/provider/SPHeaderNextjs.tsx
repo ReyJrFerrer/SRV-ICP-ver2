@@ -65,7 +65,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
                 <MapPinIcon className="h-5 w-5 text-white" />
               </span>
               <span className="text-base font-medium text-black">
-                Current Location: <span className="font-bold">Olangapo City</span>
+                Current Location: <span className="font-bold">Olongapo City</span>
               </span>
 
             </button>

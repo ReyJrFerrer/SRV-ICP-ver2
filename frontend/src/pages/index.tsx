@@ -17,6 +17,24 @@ type Result<T> = {
   err?: string;
 };
 
+// Dynamic environment configuration function
+const getDynamicHost = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // If accessing via localhost, use localhost for IC host
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:4943';
+    } else {
+      // If accessing via IP address, use the same IP for IC host
+      return `http://${hostname.split(':')[0]}:4943`;
+    }
+  }
+  
+  // Fallback for server-side rendering
+  return process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+};
+
 export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, currentIdentity } = useAuth();
@@ -31,7 +49,10 @@ export default function HomePage() {
        setIsCheckingProfile(true);
        setError('');
        try {
-         const host = process.env.NEXT_PUBLIC_IC_HOST_URL || 'http://localhost:4943';
+         // Use dynamic host configuration
+         const host = getDynamicHost();
+         console.log('Using host:', host); // For debugging
+         
          const agent = new HttpAgent({ identity: currentIdentity, host });
          if (process.env.NODE_ENV === 'development') await agent.fetchRootKey();
          

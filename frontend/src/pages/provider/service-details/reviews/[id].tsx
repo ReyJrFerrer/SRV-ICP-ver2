@@ -350,7 +350,7 @@ const ServiceReviewsPage: React.FC = () => {
                     <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0 border border-gray-100 bg-gray-200 flex items-center justify-center">
                       {review.clientProfile?.profilePicture?.imageUrl ? (
                         <Image
-                          src={"./images/Tutoring-MathTutor1.jpg"} 
+                          src={"./images/rey.png"} 
                           alt={review.clientName || 'Client'}
                           fill
                           className="object-cover"

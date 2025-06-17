@@ -118,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center">
           <MapPinIcon className="h-5 w-5 text-gray-700 mr-2" />
           <span className="text-gray-800">
-            San Vicente, Baguio, Cordillera Administrative Region
+           Olongapo City
           </span>
         </div>
 

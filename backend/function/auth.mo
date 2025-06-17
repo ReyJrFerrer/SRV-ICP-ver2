@@ -10,6 +10,10 @@ import Option "mo:base/Option";
 import Types "../types/shared";
 import StaticData "../utils/staticData";
 
+/**
+    Jun 17, 2025: 
+    Removed email from auth
+*/
 actor AuthCanister {
     // Type definitions
     type Profile = Types.Profile;
@@ -20,7 +24,7 @@ actor AuthCanister {
     private stable var profileEntries : [(Principal, Profile)] = [];
     private var profiles = HashMap.HashMap<Principal, Profile>(10, Principal.equal, Principal.hash);
     private var verifiedUsers = HashMap.HashMap<Principal, Bool>(10, Principal.equal, Principal.hash);
-    private var emailToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
+    // private var emailToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
     private var phoneToPrincipal = HashMap.HashMap<Text, Principal>(10, Text.equal, Text.hash);
 
     // Canister references
@@ -33,35 +37,35 @@ actor AuthCanister {
     private let MIN_NAME_LENGTH : Nat = 2;
     private let MAX_NAME_LENGTH : Nat = 50;
     private let MIN_EMAIL_LENGTH : Nat = 5;
-    private let MAX_EMAIL_LENGTH : Nat = 100;
+    // private let MAX_EMAIL_LENGTH : Nat = 100;
     private let MIN_PHONE_LENGTH : Nat = 10;
     private let MAX_PHONE_LENGTH : Nat = 15;
 
     // Helper functions
-    private func validateEmail(email : Text) : Bool {
-        if (email.size() < MIN_EMAIL_LENGTH or email.size() > MAX_EMAIL_LENGTH) {
-            return false;
-        };
+    // private func validateEmail(email : Text) : Bool {
+    //     if (email.size() < MIN_EMAIL_LENGTH or email.size() > MAX_EMAIL_LENGTH) {
+    //         return false;
+    //     };
         
-        let chars = Text.toIter(email);
-        var hasAt = false;
-        var hasDot = false;
-        var hasContentAfterDot = false;
+    //     let chars = Text.toIter(email);
+    //     var hasAt = false;
+    //     var hasDot = false;
+    //     var hasContentAfterDot = false;
         
-        for (c in chars) {
-            if (c == '@') {
-                if (hasAt) return false;
-                hasAt := true;
-            } else if (c == '.') {
-                if (not hasAt) return false;
-                hasDot := true;
-            } else if (hasDot) {
-                hasContentAfterDot := true;
-            };
-        };
+    //     for (c in chars) {
+    //         if (c == '@') {
+    //             if (hasAt) return false;
+    //             hasAt := true;
+    //         } else if (c == '.') {
+    //             if (not hasAt) return false;
+    //             hasDot := true;
+    //         } else if (hasDot) {
+    //             hasContentAfterDot := true;
+    //         };
+    //     };
         
-        hasAt and hasDot and hasContentAfterDot
-    };
+    //     hasAt and hasDot and hasContentAfterDot
+    // };
 
     private func validatePhone(phone : Text) : Bool {
         if (phone.size() < MIN_PHONE_LENGTH or phone.size() > MAX_PHONE_LENGTH) {
@@ -87,23 +91,23 @@ actor AuthCanister {
     };
 
     // Helper functions for duplicate checking
-    private func isEmailTaken(email : Text, excludePrincipal : ?Principal) : Bool {
-        switch (emailToPrincipal.get(email)) {
-            case (?principal) {
-                switch (excludePrincipal) {
-                    case (?exclude) {
-                        return Principal.notEqual(principal, exclude);
-                    };
-                    case (null) {
-                        return true;
-                    };
-                };
-            };
-            case (null) {
-                return false;
-            };
-        };
-    };
+    // private func isEmailTaken(email : Text, excludePrincipal : ?Principal) : Bool {
+    //     switch (emailToPrincipal.get(email)) {
+    //         case (?principal) {
+    //             switch (excludePrincipal) {
+    //                 case (?exclude) {
+    //                     return Principal.notEqual(principal, exclude);
+    //                 };
+    //                 case (null) {
+    //                     return true;
+    //                 };
+    //             };
+    //         };
+    //         case (null) {
+    //             return false;
+    //         };
+    //     };
+    // };
 
     private func isPhoneTaken(phone : Text, excludePrincipal : ?Principal) : Bool {
         switch (phoneToPrincipal.get(phone)) {
@@ -129,7 +133,6 @@ actor AuthCanister {
         for ((principal, profile) in StaticData.getSTATIC_PROFILES().vals()) {
             profiles.put(principal, profile);
             verifiedUsers.put(principal, true);
-            emailToPrincipal.put(profile.email, principal);
             phoneToPrincipal.put(profile.phone, principal);
         };
     };
@@ -149,7 +152,7 @@ actor AuthCanister {
         
         // Rebuild email and phone mappings
         for ((principal, profile) in profiles.entries()) {
-            emailToPrincipal.put(profile.email, principal);
+            // emailToPrincipal.put(profile.email, principal);
             phoneToPrincipal.put(profile.phone, principal);
         };
         
@@ -173,7 +176,6 @@ actor AuthCanister {
     // Create a new user profile
     public shared(msg) func createProfile(
         name : Text,
-        email : Text,
         phone : Text,
         role : UserRole
     ) : async Result<Profile> {
@@ -188,18 +190,18 @@ actor AuthCanister {
             return #err("Invalid name length. Must be between " # Nat.toText(MIN_NAME_LENGTH) # " and " # Nat.toText(MAX_NAME_LENGTH) # " characters");
         };
         
-        if (not validateEmail(email)) {
-            return #err("Invalid email format");
-        };
+        // if (not validateEmail(email)) {
+        //     return #err("Invalid email format");
+        // };
         
         if (not validatePhone(phone)) {
             return #err("Invalid phone format");
         };
 
         // Check for duplicate email and phone
-        if (isEmailTaken(email, null)) {
-            return #err("Email is already registered");
-        };
+        // if (isEmailTaken(email, null)) {
+        //     return #err("Email is already registered");
+        // };
 
         if (isPhoneTaken(phone, null)) {
             return #err("Phone number is already registered");
@@ -213,7 +215,6 @@ actor AuthCanister {
                 let newProfile : Profile = {
                     id = caller;
                     name = name;
-                    email = email;
                     phone = phone;
                     role = role;
                     createdAt = Time.now();
@@ -225,7 +226,7 @@ actor AuthCanister {
                 
                 profiles.put(caller, newProfile);
                 verifiedUsers.put(caller, false);
-                emailToPrincipal.put(email, caller);
+                // emailToPrincipal.put(email, caller);
                 phoneToPrincipal.put(phone, caller);
                 
                 // Initialize reputation for new user
@@ -300,17 +301,17 @@ actor AuthCanister {
                     case(null) {};
                 };
                 
-                switch(email) {
-                    case(?e) {
-                        if (not validateEmail(e)) {
-                            return #err("Invalid email format");
-                        };
-                        if (isEmailTaken(e, ?caller)) {
-                            return #err("Email is already registered");
-                        };
-                    };
-                    case(null) {};
-                };
+                // switch(email) {
+                //     case(?e) {
+                //         if (not validateEmail(e)) {
+                //             return #err("Invalid email format");
+                //         };
+                //         if (isEmailTaken(e, ?caller)) {
+                //             return #err("Email is already registered");
+                //         };
+                //     };
+                //     case(null) {};
+                // };
                 
                 switch(phone) {
                     case(?p) {
@@ -327,7 +328,7 @@ actor AuthCanister {
                 let updatedProfile : Profile = {
                     id = existingProfile.id;
                     name = Option.get(name, existingProfile.name);
-                    email = Option.get(email, existingProfile.email);
+                    // email = Option.get(email, existingProfile.email);
                     phone = Option.get(phone, existingProfile.phone);
                     role = existingProfile.role;
                     createdAt = existingProfile.createdAt;
@@ -336,15 +337,15 @@ actor AuthCanister {
                     profilePicture = existingProfile.profilePicture;
                     biography = existingProfile.biography;
                 };
-
+                // removed email
                 // Update email and phone mappings if changed
-                switch(email) {
-                    case(?e) {
-                        emailToPrincipal.delete(existingProfile.email);
-                        emailToPrincipal.put(e, caller);
-                    };
-                    case(null) {};
-                };
+                // switch(email) {
+                //     case(?e) {
+                //         emailToPrincipal.delete(existingProfile.email);
+                //         emailToPrincipal.put(e, caller);
+                //     };
+                //     case(null) {};
+                // };
 
                 switch(phone) {
                     case(?p) {
@@ -387,7 +388,7 @@ actor AuthCanister {
                 let updatedProfile : Profile = {
                     id = profile.id;
                     name = profile.name;
-                    email = profile.email;
+                    // email = profile.email;
                     phone = profile.phone;
                     role = profile.role;
                     createdAt = profile.createdAt;

@@ -27,7 +27,7 @@ const getAuthActor = async (): Promise<AuthService> => {
 export interface FrontendProfile {
   id: string;
   name: string;
-  email: string;
+  // email: string;
   phone: string;
   role: 'Client' | 'ServiceProvider';
   isVerified: boolean;
@@ -107,14 +107,14 @@ export const authCanisterService = {
    */
   async createProfile(
     name: string,
-    email: string,
+    // email: string,
     phone: string,
     role: 'Client' | 'ServiceProvider'
   ): Promise<FrontendProfile | null> {
     try {
       const actor = await getAuthActor();
       const userRole: UserRole = { [role]: null } as UserRole;
-      const result = await actor.createProfile(name, email, phone, userRole);
+      const result = await actor.createProfile(name, phone, userRole);
       
       if ('ok' in result) {
         return adaptBackendProfile(result.ok);
@@ -133,14 +133,14 @@ export const authCanisterService = {
    */
   async updateProfile(
     name?: string,
-    email?: string,
+    // email?: string,
     phone?: string
   ): Promise<FrontendProfile | null> {
     try {
       const actor = await getAuthActor();
       const result = await actor.updateProfile(
         name ? [name] : [],
-        email ? [email] : [],
+        // email ? [email] : [],
         phone ? [phone] : []
       );
       

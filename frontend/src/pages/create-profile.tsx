@@ -18,7 +18,7 @@ export default function CreateProfilePage() {
   const [selectedRole, setSelectedRole] = useState<'Client' | 'ServiceProvider' | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    // email: '',
     phone: '',
   });
   const [reauthRequired, setReauthRequired] = useState(false);
@@ -70,13 +70,14 @@ export default function CreateProfilePage() {
       setError('Please select a role.');
       return;
     }
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+    // Removed email from all fields are required - rey
+    if (!formData.name.trim()|| !formData.phone.trim()) {
         setError('All fields are required.'); return;
     }
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i;
-    if (!emailRegex.test(formData.email.trim())) {
-      setError('Please enter a valid email address ending in .com.'); return;
-    }
+    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i;
+    // if (!emailRegex.test(formData.email.trim())) {
+    //   setError('Please enter a valid email address ending in .com.'); return;
+    // }
     const phoneRegex = /^09\d{9}$/;
     if (!phoneRegex.test(formData.phone.trim())) {
       setError('Please enter a valid 11-digit phone number starting with 09.'); return;
@@ -105,7 +106,7 @@ export default function CreateProfilePage() {
 
       const result = await authActor.createProfile(
         formData.name.trim(),
-        formData.email.trim(),
+        // formData.email.trim(),
         formData.phone.trim(),
         selectedRole === 'Client' ? { Client: null } : { ServiceProvider: null }
       ) as Result;
@@ -252,12 +253,12 @@ export default function CreateProfilePage() {
                                 </div>
                                 <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                             </div>
-                            <div className="relative">
+                            {/* <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <EnvelopeIcon className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleInputChange} required className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            </div>
+                            </div> */}
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <PhoneIcon className="h-5 w-5 text-gray-400" />

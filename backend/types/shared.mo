@@ -18,11 +18,10 @@ module {
         imageUrl: Text;
         thumbnailUrl: Text;
     };
-
+    // Removed Profile
     public type Profile = {
         id: Principal;
         name: Text;
-        email: Text;
         phone: Text;
         role: UserRole;
         createdAt: Time.Time;

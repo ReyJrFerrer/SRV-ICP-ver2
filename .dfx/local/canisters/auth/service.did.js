@@ -14,7 +14,6 @@ export const idlFactory = ({ IDL }) => {
     'createdAt' : Time,
     'role' : UserRole,
     'biography' : IDL.Opt(IDL.Text),
-    'email' : IDL.Text,
     'updatedAt' : Time,
     'isVerified' : IDL.Bool,
     'phone' : IDL.Text,
@@ -24,11 +23,7 @@ export const idlFactory = ({ IDL }) => {
   const Result_2 = IDL.Variant({ 'ok' : IDL.Text, 'err' : IDL.Text });
   const Result = IDL.Variant({ 'ok' : IDL.Bool, 'err' : IDL.Text });
   return IDL.Service({
-    'createProfile' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, UserRole],
-        [Result_1],
-        [],
-      ),
+    'createProfile' : IDL.Func([IDL.Text, IDL.Text, UserRole], [Result_1], []),
     'getAllServiceProviders' : IDL.Func([], [IDL.Vec(Profile)], ['query']),
     'getMyProfile' : IDL.Func([], [Result_1], ['query']),
     'getProfile' : IDL.Func([IDL.Principal], [Result_1], ['query']),

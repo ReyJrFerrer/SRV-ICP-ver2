@@ -8,7 +8,6 @@ export interface Profile {
   'createdAt' : Time,
   'role' : UserRole,
   'biography' : [] | [string],
-  'email' : string,
   'updatedAt' : Time,
   'isVerified' : boolean,
   'phone' : string,
@@ -25,7 +24,7 @@ export type Time = bigint;
 export type UserRole = { 'Client' : null } |
   { 'ServiceProvider' : null };
 export interface _SERVICE {
-  'createProfile' : ActorMethod<[string, string, string, UserRole], Result_1>,
+  'createProfile' : ActorMethod<[string, string, UserRole], Result_1>,
   'getAllServiceProviders' : ActorMethod<[], Array<Profile>>,
   'getMyProfile' : ActorMethod<[], Result_1>,
   'getProfile' : ActorMethod<[Principal], Result_1>,

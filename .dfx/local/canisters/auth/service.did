@@ -28,7 +28,6 @@ type Profile =
  record {
    biography: opt text;
    createdAt: Time;
-   email: text;
    id: principal;
    isVerified: bool;
    name: text;
@@ -38,8 +37,7 @@ type Profile =
    updatedAt: Time;
  };
 service : {
-  createProfile: (name: text, email: text, phone: text, role: UserRole) ->
-   (Result_1);
+  createProfile: (name: text, phone: text, role: UserRole) -> (Result_1);
   getAllServiceProviders: () -> (vec Profile) query;
   getMyProfile: () -> (Result_1) query;
   getProfile: (userId: principal) -> (Result_1) query;

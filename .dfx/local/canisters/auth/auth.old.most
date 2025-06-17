@@ -5,6 +5,7 @@ type Profile__661219454 =
   {
     biography : ?Text;
     createdAt : Time__593356169;
+    email : Text;
     id : Principal;
     isVerified : Bool;
     name : Text;

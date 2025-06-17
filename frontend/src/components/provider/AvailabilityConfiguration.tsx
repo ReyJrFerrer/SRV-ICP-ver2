@@ -225,7 +225,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
           {/* Common Time Slots */}
           {useSameTimeForAllDays && (
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
+              {/* <div className="flex items-center justify-between mb-3">
                 <h5 className="text-sm font-medium text-gray-700">Common Time Slots</h5>
                 <button
                   type="button"
@@ -235,7 +235,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                   <PlusIcon className="h-4 w-4 mr-1" />
                   Add Slot
                 </button>
-              </div>
+              </div> */}
               
               <div className="space-y-3">
                 {commonTimeSlots.map((slot, index) => (

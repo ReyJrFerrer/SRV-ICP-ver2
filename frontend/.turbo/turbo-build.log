@@ -45,29 +45,29 @@ Creating HTTP agent with anonymous identity
 
 
 Route (pages)                                        Size     First Load JS
-┌ ○ / (441 ms)                                       6.58 kB         203 kB
+┌ ○ / (494 ms)                                       6.58 kB         203 kB
 ├   /_app                                            0 B             190 kB
 ├ ○ /404                                             181 B           190 kB
-├ ○ /client                                          2.44 kB         195 kB
-├ ○ /client/book/[id] (1009 ms)                      50.5 kB         241 kB
-├ ○ /client/booking                                  9.35 kB         209 kB
-├ ○ /client/booking/[id] (413 ms)                    6.4 kB          202 kB
-├ ○ /client/booking/confirmation                     1.23 kB         194 kB
-├ ○ /client/categories/[slug] (448 ms)               3.68 kB         208 kB
+├ ○ /client (449 ms)                                 2.44 kB         195 kB
+├ ○ /client/book/[id] (1001 ms)                      50.5 kB         241 kB
+├ ○ /client/booking (446 ms)                         9.35 kB         209 kB
+├ ○ /client/booking/[id]                             6.4 kB          202 kB
+├ ○ /client/booking/confirmation (442 ms)            1.23 kB         194 kB
+├ ○ /client/categories/[slug]                        3.68 kB         208 kB
 ├ ○ /client/chat                                     2.25 kB         195 kB
 ├ ○ /client/home                                     7.58 kB         212 kB
-├ ○ /client/review/[id] (485 ms)                     2.87 kB         199 kB
+├ ○ /client/review/[id]                              2.87 kB         199 kB
 ├ ○ /client/search-results                           3.23 kB         207 kB
-├ ○ /client/service/[id] (486 ms)                    6.67 kB         206 kB
-├ ○ /client/service/reviews/[id] (448 ms)            4.8 kB          202 kB
-├ ○ /client/service/view-all                         2.54 kB         206 kB
-├ ○ /create-profile (409 ms)                         4.24 kB         198 kB
+├ ○ /client/service/[id]                             6.58 kB         206 kB
+├ ○ /client/service/reviews/[id] (423 ms)            4.8 kB          202 kB
+├ ○ /client/service/view-all (401 ms)                2.54 kB         206 kB
+├ ○ /create-profile (444 ms)                         4.24 kB         198 kB
 ├ ○ /provider                                        2.47 kB         195 kB
-├ ○ /provider/active-service/[bookingId] (474 ms)    4.93 kB         202 kB
-├ ○ /provider/booking/[id] (462 ms)                  6.08 kB         203 kB
-├ ○ /provider/bookings (485 ms)                      7.22 kB         208 kB
-├ ○ /provider/complete-service/[bookingId] (471 ms)  2.9 kB          197 kB
-├ ○ /provider/home                                   11.4 kB         218 kB
+├ ○ /provider/active-service/[bookingId] (433 ms)    4.93 kB         202 kB
+├ ○ /provider/booking/[id] (510 ms)                  6.08 kB         203 kB
+├ ○ /provider/bookings                               7.22 kB         208 kB
+├ ○ /provider/complete-service/[bookingId] (445 ms)  2.9 kB          197 kB
+├ ○ /provider/home (471 ms)                          11.4 kB         218 kB
 ├ ○ /provider/receipt/[bookingId]                    2.92 kB         197 kB
 ├ ○ /provider/review/[id]                            5.02 kB         205 kB
 ├ ○ /provider/service-details/[id]                   8.3 kB          204 kB

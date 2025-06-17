@@ -29,24 +29,24 @@ const CredentialsDisplayNextjs: React.FC<CredentialsDisplayProps> = ({ provider,
   const placeholderCredentials: Credential[] = [
     {
       id: '1',
-      title: 'Certified Professional Cleaner',
-      issuingAuthority: 'Philippine Cleaning Association',
+      title: 'Lorem Ipsum Dolor',
+      issuingAuthority: 'Authority',
       issueDate: new Date('2023-01-15'),
       expiryDate: new Date('2025-01-15'),
       verificationStatus: 'VERIFIED'
     },
     {
       id: '2',
-      title: 'Basic First Aid Certificate',
-      issuingAuthority: 'Philippine Red Cross',
+      title: 'Lorem Ipum',
+      issuingAuthority: 'Authority',
       issueDate: new Date('2023-06-10'),
       expiryDate: new Date('2024-06-10'),
       verificationStatus: 'VERIFIED'
     },
     {
       id: '3',
-      title: 'Business Permit',
-      issuingAuthority: 'City Government of Manila',
+      title: 'Lorem Ipsum Dolor Met',
+      issuingAuthority: 'Authority',
       issueDate: new Date('2024-01-01'),
       expiryDate: new Date('2024-12-31'),
       verificationStatus: 'PENDING'

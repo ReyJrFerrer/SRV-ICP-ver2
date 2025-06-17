@@ -35,7 +35,7 @@ const BookingRequestsNextjs: React.FC<BookingRequestsProps> = ({
       {/* Upcoming Jobs Card */}
       <div className="booking-card bg-white border-l-4 border-blue-600 flex flex-col p-5 rounded-lg shadow-md">
         <div className="booking-card-header flex justify-between items-center mb-3">
-          <h3 className="font-bold text-black text-base sm:text-lg">Paparating na Trabaho</h3>
+          <h3 className="font-bold text-black text-base sm:text-lg">Serbisyong Nakaiskedyul</h3>
           <CalendarIcon className="h-6 w-6 text-blue-600" />
         </div>
        <p className="text-blue-600 text-sm mb-4 flex-grow">

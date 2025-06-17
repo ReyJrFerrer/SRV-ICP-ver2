@@ -166,7 +166,7 @@ const MyServicesPage: React.FC = () => {
           )}
 
           {!loading && !error && userServices.length === 0 && (
-            <div className="text-center py-16 bg-yellow-100 rounded-xl shadow-md mt-6">
+            <div className="text-center py-16 bg-white rounded-xl shadow-md mt-6">
               <WrenchScrewdriverIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                <p className="text-lg text-gray-700 mb-2">No services found</p>
                 <p className="text-sm text-gray-600 mb-6">

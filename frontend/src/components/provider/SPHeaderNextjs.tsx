@@ -38,9 +38,9 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
     );
   }
 
-  // Extract first name from the full name
-  const displayName = provider.name.split(' ')[0] || 'Provider';
-  // const displayLocation = provider.address || 'Location not set';
+  /***
+   * To add address map api functionality
+   */
 
   return (
       <header className={`provider-header bg-white p-4 ${className} space-y-4`}>
@@ -65,7 +65,7 @@ const SPHeaderNextjs: React.FC<SPHeaderProps> = ({
                 <MapPinIcon className="h-5 w-5 text-white" />
               </span>
               <span className="text-base font-medium text-black">
-                Current Location: <span className="font-bold">Baguio City</span>
+                Current Location: <span className="font-bold">Olangapo City</span>
               </span>
 
             </button>

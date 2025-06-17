@@ -36,7 +36,7 @@ actor AuthCanister {
     // Constants
     private let MIN_NAME_LENGTH : Nat = 2;
     private let MAX_NAME_LENGTH : Nat = 50;
-    private let MIN_EMAIL_LENGTH : Nat = 5;
+    // private let MIN_EMAIL_LENGTH : Nat = 5;
     // private let MAX_EMAIL_LENGTH : Nat = 100;
     private let MIN_PHONE_LENGTH : Nat = 10;
     private let MAX_PHONE_LENGTH : Nat = 15;

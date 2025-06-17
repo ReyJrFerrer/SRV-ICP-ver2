@@ -375,7 +375,7 @@ const ProviderServiceDetailPage: React.FC = () => {
                   {service.status}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm leading-relaxed mt-1">{service.description}</p>
+              {/* <p className="text-gray-600 text-sm leading-relaxed mt-1">{service.description}</p> */}
             </div>
           </div>
 
@@ -410,23 +410,25 @@ const ProviderServiceDetailPage: React.FC = () => {
 
           {/* Detailed Information Sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-3">
-              <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Pricing & Rating</h3>
-              <p className="flex items-center text-sm">
-                <CurrencyDollarIcon className="h-5 w-5 mr-2 text-green-500"/>
-                Price: <span className="font-medium ml-1">{service.formattedPrice || formatServicePrice(service.price)}</span>
-              </p>
-              {/* <p className="flex items-center text-sm">
-                <StarSolid className="h-5 w-5 mr-2 text-yellow-400"/>
-                Rating: <span className="font-medium ml-1">{service.averageRating?.toFixed(1) || '0.0'} ({service.totalReviews || 0} reviews)</span>
-              </p> */}
-                <ViewReviewsButton
+              <h3 className="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Ratings</h3>
+                 <ViewReviewsButton
                   serviceId={service.id}
                   averageRating={service.averageRating!}
                   totalReviews={service.totalReviews!}
                   variant="card"
                   className="mt-2"
                 />
+              {/* <p className="flex items-center text-sm">
+                <CurrencyDollarIcon className="h-5 w-5 mr-2 text-green-500"/>
+                Price: <span className="font-medium ml-1">{service.formattedPrice || formatServicePrice(service.price)}</span>
+              </p> */}
+              {/* <p className="flex items-center text-sm">
+                <StarSolid className="h-5 w-5 mr-2 text-yellow-400"/>
+                Rating: <span className="font-medium ml-1">{service.averageRating?.toFixed(1) || '0.0'} ({service.totalReviews || 0} reviews)</span>
+              </p> */}
+              
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-6 space-y-3">
@@ -451,14 +453,14 @@ const ProviderServiceDetailPage: React.FC = () => {
                   </div>
                 </p>
                 
-                {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
+                {/* {(service.location.latitude !== undefined && service.location.longitude !== undefined) && (
                   <p className="flex items-center text-sm">
                     <MapPinIcon className="h-5 w-5 mr-2 text-green-500"/>
                     Coordinates: <span className="font-medium ml-1 font-mono text-xs">
                       {service.location.latitude.toFixed(6)}, {service.location.longitude.toFixed(6)}
                     </span>
                   </p>
-                )}
+                )} */}
               </div>
               {/* {service.providerProfile && (
                 <p className="flex items-center text-sm">
@@ -486,14 +488,14 @@ const ProviderServiceDetailPage: React.FC = () => {
                         ?.join(' | ') || 'Not specified'}
                     </span>
                   </p>
-                  {service.instantBookingEnabled !== undefined && (
+                  {/* {service.instantBookingEnabled !== undefined && (
                     <p className="flex items-center text-sm">
                       <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500"/>
                       Instant Booking: <span className="font-medium ml-1">
                         {service.instantBookingEnabled ? 'Available' : 'Not Available'}
                       </span>
                     </p>
-                  )}
+                  )} */}
                   {service.bookingNoticeHours !== undefined && (
                     <p className="flex items-center text-sm">
                       <ClockIcon className="h-5 w-5 mr-2 text-orange-500"/>

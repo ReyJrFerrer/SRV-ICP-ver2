@@ -127,14 +127,15 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
   return (
     <div className="space-y-6">
       {/* Booking Settings */}
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+      {/* <div className="bg-blue-50 p-4 rounded-lg"> */}
+        {/* <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
           <ClockIcon className="h-4 w-4 mr-2" />
           Booking Settings
-        </h4>
+        </h4> */}
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Instant Booking Toggle */}
+          {/* Instant Booking Toggle */}      {/* Booking Notice Hours */}           {/* Max Bookings Per Day */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
           <div className="flex items-center space-x-3">
             <input
               type="checkbox"
@@ -148,7 +149,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
             </label>
           </div>
 
-          {/* Booking Notice Hours */}
+     
           <div>
             <label htmlFor="bookingNoticeHours" className="block text-xs font-medium text-gray-600 mb-1">
               Booking Notice (hours)
@@ -166,7 +167,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
             <p className="text-xs text-gray-500 mt-1">0-720 hours (30 days max)</p>
           </div>
 
-          {/* Max Bookings Per Day */}
+
           <div>
             <label htmlFor="maxBookingsPerDay" className="block text-xs font-medium text-gray-600 mb-1">
               Max Bookings/Day
@@ -183,8 +184,8 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
             />
             <p className="text-xs text-gray-500 mt-1">1-50 bookings</p>
           </div>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       {/* Working Days Selection */}
       <div>
@@ -225,37 +226,25 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
           {/* Common Time Slots */}
           {useSameTimeForAllDays && (
             <div className="bg-gray-50 p-4 rounded-lg">
-              {/* <div className="flex items-center justify-between mb-3">
-                <h5 className="text-sm font-medium text-gray-700">Common Time Slots</h5>
-                <button
-                  type="button"
-                  onClick={addCommonTimeSlot}
-                  className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
-                >
-                  <PlusIcon className="h-4 w-4 mr-1" />
-                  Add Slot
-                </button>
-              </div> */}
-              
               <div className="space-y-3">
                 {commonTimeSlots.map((slot, index) => (
-                  <div key={slot.id} className="flex items-center space-x-2 bg-white p-3 rounded border">
+                  <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 bg-white p-3 rounded border">
                     {/* Start Time */}
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-1 flex-shrink-0">
                       <select
                         value={slot.startHour}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'startHour', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {hourOptions.map(hour => (
                           <option key={hour} value={hour}>{hour}</option>
                         ))}
                       </select>
-                      <span>:</span>
+                      <span className="text-gray-500">:</span>
                       <select
                         value={slot.startMinute}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'startMinute', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {minuteOptions.map(minute => (
                           <option key={minute} value={minute}>{minute}</option>
@@ -264,7 +253,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                       <select
                         value={slot.startPeriod}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'startPeriod', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {periodOptions.map(period => (
                           <option key={period} value={period}>{period}</option>
@@ -272,24 +261,24 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                       </select>
                     </div>
 
-                    <span className="text-gray-500">to</span>
+                    <span className="text-gray-500 text-center sm:text-left">to</span>
 
                     {/* End Time */}
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-1 flex-shrink-0">
                       <select
                         value={slot.endHour}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'endHour', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {hourOptions.map(hour => (
                           <option key={hour} value={hour}>{hour}</option>
                         ))}
                       </select>
-                      <span>:</span>
+                      <span className="text-gray-500">:</span>
                       <select
                         value={slot.endMinute}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'endMinute', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {minuteOptions.map(minute => (
                           <option key={minute} value={minute}>{minute}</option>
@@ -298,7 +287,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                       <select
                         value={slot.endPeriod}
                         onChange={(e) => handleCommonTimeSlotChange(index, 'endPeriod', e.target.value)}
-                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                       >
                         {periodOptions.map(period => (
                           <option key={period} value={period}>{period}</option>
@@ -311,7 +300,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                       <button
                         type="button"
                         onClick={() => removeCommonTimeSlot(slot.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-red-500 hover:text-red-700 p-1 self-center sm:self-auto"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -327,12 +316,12 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
             <div className="space-y-4">
               {availabilitySchedule.map(day => (
                 <div key={day} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
                     <h5 className="text-sm font-medium text-gray-700">{day}</h5>
                     <button
                       type="button"
                       onClick={() => addPerDayTimeSlot(day)}
-                      className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                      className="text-blue-600 hover:text-blue-700 text-sm flex items-center self-start sm:self-auto"
                     >
                       <PlusIcon className="h-4 w-4 mr-1" />
                       Add Slot
@@ -341,23 +330,23 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                   
                   <div className="space-y-2">
                     {(perDayTimeSlots[day] || []).map((slot, index) => (
-                      <div key={slot.id} className="flex items-center space-x-2 bg-white p-3 rounded border">
+                      <div key={slot.id} className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 bg-white p-3 rounded border">
                         {/* Start Time */}
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1 flex-shrink-0">
                           <select
                             value={slot.startHour}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startHour', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {hourOptions.map(hour => (
                               <option key={hour} value={hour}>{hour}</option>
                             ))}
                           </select>
-                          <span>:</span>
+                          <span className="text-gray-500">:</span>
                           <select
                             value={slot.startMinute}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startMinute', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {minuteOptions.map(minute => (
                               <option key={minute} value={minute}>{minute}</option>
@@ -366,7 +355,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                           <select
                             value={slot.startPeriod}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'startPeriod', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {periodOptions.map(period => (
                               <option key={period} value={period}>{period}</option>
@@ -374,24 +363,24 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                           </select>
                         </div>
 
-                        <span className="text-gray-500">to</span>
+                        <span className="text-gray-500 text-center sm:text-left">to</span>
 
                         {/* End Time */}
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1 flex-shrink-0">
                           <select
                             value={slot.endHour}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endHour', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {hourOptions.map(hour => (
                               <option key={hour} value={hour}>{hour}</option>
                             ))}
                           </select>
-                          <span>:</span>
+                          <span className="text-gray-500">:</span>
                           <select
                             value={slot.endMinute}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endMinute', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-14 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {minuteOptions.map(minute => (
                               <option key={minute} value={minute}>{minute}</option>
@@ -400,7 +389,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                           <select
                             value={slot.endPeriod}
                             onChange={(e) => handlePerDayTimeSlotChange(day, index, 'endPeriod', e.target.value)}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                           >
                             {periodOptions.map(period => (
                               <option key={period} value={period}>{period}</option>
@@ -413,7 +402,7 @@ const AvailabilityConfiguration: React.FC<AvailabilityConfigurationProps> = ({
                           <button
                             type="button"
                             onClick={() => removePerDayTimeSlot(day, slot.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
+                            className="text-red-500 hover:text-red-700 p-1 self-center sm:self-auto"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>

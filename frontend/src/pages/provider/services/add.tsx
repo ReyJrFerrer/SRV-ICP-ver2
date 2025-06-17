@@ -770,7 +770,7 @@ const AddServicePage: React.FC = () => {
                 </div>
 
                 {/* GPS Coordinates Section (Optional/Collapsible) */}
-                <div className="bg-gray-50 p-4 rounded-md">
+                {/* <div className="bg-gray-50 p-4 rounded-md">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-medium text-gray-900">GPS Coordinates (Optional)</h4>
                     <button
@@ -818,10 +818,10 @@ const AddServicePage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Service Radius */}
-                <div className="bg-gray-50 p-4 rounded-md">
+                {/* <div className="bg-gray-50 p-4 rounded-md">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Service Radius</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -853,7 +853,7 @@ const AddServicePage: React.FC = () => {
                     </div>
                   </div>
                   <p className="mt-2 text-xs text-gray-500">This is the maximum distance you're willing to travel for service delivery.</p>
-                </div>
+                </div> */}
 
                 {/* Generated Address Preview */}
                 {formData.locationAddress && (

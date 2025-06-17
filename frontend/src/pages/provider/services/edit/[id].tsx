@@ -701,7 +701,7 @@ const EditServicePage: React.FC = () => {
                     <input type="text" name="locationAddress" id="locationAddress" value={formData.locationAddress} onChange={handleChange} required placeholder="e.g., Within Baguio City limits" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div>
+                    {/* <div>
                         <label htmlFor="serviceRadius" className="block text-xs font-medium text-gray-600 mb-1">Service Radius</label>
                         <input type="number" name="serviceRadius" id="serviceRadius" value={formData.serviceRadius} onChange={handleChange} required placeholder="e.g., 5" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                     </div>
@@ -710,16 +710,16 @@ const EditServicePage: React.FC = () => {
                         <select name="serviceRadiusUnit" id="serviceRadiusUnit" value={formData.serviceRadiusUnit} onChange={handleChange} className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm h-[42px]">
                             <option value="km">km</option><option value="mi">mi</option>
                         </select>
-                    </div>
+                    </div> */}
                 </div>
             </fieldset>
             
-            {/* Image Upload Section */}
-            <div>
+            {/* Image Upload Section */}   {/* Display Existing Images (Simplified) */}    {/* Display New Image Previews */}
+            {/* <div>
                 <label htmlFor="serviceImages" className="block text-sm font-medium text-gray-700 mb-1">Service Images (New images will replace existing)</label>
                 <input type="file" name="serviceImages" id="serviceImages" accept="image/png, image/jpeg, image/gif, image/svg+xml" multiple onChange={handleImageFilesChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
                 
-                {/* Display Existing Images (Simplified) */}
+              
                 {formData.existingHeroImage && (
                     <div className="mt-2">
                         <p className="text-xs text-gray-600">Current Hero Image: <span className="italic">{formData.existingHeroImage.substring(formData.existingHeroImage.lastIndexOf('/')+1) || formData.existingHeroImage}</span></p>
@@ -735,7 +735,7 @@ const EditServicePage: React.FC = () => {
                         </ul>
                     </div>
                 )}
-                {/* Display New Image Previews */}
+             
                 {imagePreviews.length > 0 && (
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                         {imagePreviews.map((previewUrl, index) => (
@@ -749,7 +749,7 @@ const EditServicePage: React.FC = () => {
                     </div>
                 )}
                  {serviceImageFiles.length === 0 && !formData.existingHeroImage && <p className="mt-1 text-xs text-red-500">At least one image (hero image) is required.</p>}
-            </div>
+            </div> */}
 
             <button type="submit" disabled={isLoading} className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
               {isLoading ? ( /* ... loading indicator ... */ <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Saving Changes...</>

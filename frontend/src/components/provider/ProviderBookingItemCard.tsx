@@ -48,7 +48,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
     return (
       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-lg" role="alert">
         <strong className="font-bold">Error!</strong>
-        <span className="block sm:inline"> Nawawala ang impormasyon sa booking na ito.</span>
+        <span className="block sm:inline"> Missing Booking Information</span>
       </div>
     );
   }
@@ -61,7 +61,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
           <ExclamationTriangleIcon className="h-5 w-5 mr-2"/>
           <strong className="font-bold">Data Issue!</strong>
         </div>
-        <span className="block sm:inline"> Kulang kulang ang impormasyon ng booking na ito.                      (missing ID).</span>
+        <span className="block sm:inline"> Missing booking information (missing ID).</span>
       </div>
     );
   }
@@ -246,7 +246,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
                     </p>
                     
                     <p className="flex items-center">
-                      <MapPinIcon className="h-4 w-4 mr-1.5 text-gray-400" />
+                      <MapPinIcon className="h-4 w-4 mr-1.5 text-gray-500" />
                       {locationAddress}
                     </p>
                     
@@ -300,23 +300,21 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
                 </div>
 
                 {/* Action buttons */}
-                <div className="mt-4 pt-3 border-t border-gray-200 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:justify-end">
+                <div className="mt-4 pt-3 border-t border-gray-200 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 sm:justify-start">
                   {/* Show accept/reject buttons for pending bookings */}
                   {canAcceptOrDecline && (
                     <>
                       <button 
                         onClick={handleReject} 
                         disabled={isBookingActionInProgress(booking.id, 'decline')}
-                        className="flex items-center justify-center text-xs w-full sm:w-auto bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-md transition-colors"
-                      >
+                        className="flex items-center justify-center text-xs w-full sm:w-auto bg-white text-red-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-3 rounded-md transition-colors">
                         <XCircleIcon className="h-4 w-4 mr-1.5" />
                         {isBookingActionInProgress(booking.id, 'decline') ? 'Declining...' : 'Decline'}
                       </button>
                       <button 
                         onClick={handleAccept} 
                         disabled={isBookingActionInProgress(booking.id, 'accept')}
-                        className="flex items-center justify-center text-xs w-full sm:w-auto bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2 px-3 rounded-md transition-colors"
-                      >
+                        className="flex items-center justify-center text-xs w-full sm:w-auto bg-white text-green-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium py-2 px-3 rounded-md transition-colors">
                         <CheckCircleIcon className="h-4 w-4 mr-1.5" />
                         {isBookingActionInProgress(booking.id, 'accept') ? 'Accepting...' : 'Accept'}
                       </button>
@@ -443,7 +441,7 @@ const ProviderBookingItemCard: React.FC<ProviderBookingItemCardProps> = ({ booki
                   </p>
                   
                   <p className="flex items-center">
-                    <MapPinIcon className="h-4 w-4 mr-1.5 text-gray-400" />
+                    <MapPinIcon className="h-4 w-4 mr-1.5 text-gray-500" />
                     {locationAddress}
                   </p>
                   

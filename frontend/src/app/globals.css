@@ -43,6 +43,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Nordique Pro Cyrillic Bold';
+  src: url('/fonts/fontspring-demo-nordiquepro-cyrillic-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

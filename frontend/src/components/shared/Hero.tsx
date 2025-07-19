@@ -51,12 +51,12 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
           </p>
 
           {/* Action Buttons REPLACED */}
-          <div className="mt-10">
+          <div className="mt-10 space-y-5">
             <button
               onClick={onLoginClick}
               disabled={isLoginLoading}
-              className={`flex items-center justify-center bg-yellow-400 text-slate-800 hover:bg-yellow-500 
-                          font-bold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg 
+              className={`flex items-center justify-center bg-black text-white hover:bg-black
+                          font-bold py-4 px-12 rounded-full transition-all duration-300 shadow-lg 
                           hover:shadow-xl transform hover:scale-105 text-lg
                           ${isLoginLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
@@ -67,13 +67,31 @@ export default function Hero({ onLoginClick, isLoginLoading }: HeroProps) {
                 </>
               ) : (
                 <>
-                  <FingerPrintIcon className="h-6 w-6 mr-3" />
-                  <span>Login / Sign Up</span>
+                  <span>I need service</span>
                 </>
               )}
             </button>
+
+            <button
+            onClick={onLoginClick}
+            disabled={isLoginLoading}
+            className={`flex items-center justify-center text-black
+                        font-bold py-4 px-8 rounded-lg transition-all duration-300
+                        transform hover:scale-105 text-lg
+                        ${isLoginLoading ? 'opacity-70 cursor-not-allowed' : ''} underline`}
+            >
+            {isLoginLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5  border-b-2 border-slate-800 mr-3 "></div>
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <span>I provide service</span>
+              </>
+            )}
+            </button>
           </div>
-        
         </div>
       </div>
     </section>

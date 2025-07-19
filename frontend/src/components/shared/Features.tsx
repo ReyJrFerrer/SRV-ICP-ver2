@@ -38,8 +38,8 @@ import React from 'react';
                 // MODIFIED: Changed bg-yellow-100 to bg-yellow-300 for a brighter color
                 className="bg-yellow-200 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col items-center text-center"
              >
-               <h3 className="text-xl font-semibold mb-3 text-slate-800">{feature.title}</h3> {/* Made text darker for better contrast */}
-               <div className="w-24 h-24 flex items-center justify-center mb-4">
+               <h3 className="text-4xl font-bold mb-3 text-slate-800"  style={{ fontFamily: 'Nordique Pro Cyrillic Bold' }}>{feature.title} </h3> {/* Made text darker for better contrast */}
+               <div className="w-24 h-24 mb-4">
                  <img src={feature.imagePlaceholder} alt={feature.title} className="max-w-full max-h-full" />
                </div>
                <p className="text-slate-700 text-sm leading-relaxed">{feature.description}</p> {/* Made text darker for better contrast */}

@@ -1,0 +1,79 @@
+type TrustLevel = 
+ variant {
+   High;
+   Low;
+   Medium;
+   New;
+   VeryHigh;
+ };
+type Time = int;
+type ReviewStatus = 
+ variant {
+   Flagged;
+   Hidden;
+   Visible;
+ };
+type Review = 
+ record {
+   bookingId: text;
+   clientId: principal;
+   comment: text;
+   createdAt: Time;
+   id: text;
+   providerId: principal;
+   qualityScore: opt float64;
+   rating: nat;
+   serviceId: text;
+   status: ReviewStatus;
+   updatedAt: Time;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: Review;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: ReputationScore;
+ };
+type ReputationScore = 
+ record {
+   averageRating: opt float64;
+   completedBookings: nat;
+   detectionFlags: vec DetectionFlag;
+   lastUpdated: Time;
+   trustLevel: TrustLevel;
+   trustScore: float64;
+   userId: principal;
+ };
+type DetectionFlag = 
+ variant {
+   CompetitiveManipulation;
+   FakeEvidence;
+   IdentityFraud;
+   Other;
+   ReviewBomb;
+ };
+service : {
+  getReputationScore: (userId: principal) -> (Result) query;
+  getReputationStatistics: () ->
+   (record {
+      averageTrustScore: float64;
+      totalUsers: nat;
+      trustLevelDistribution: vec record {
+                                    TrustLevel;
+                                    nat;
+                                  };
+    }) query;
+  initializeReputation: (userId: principal, creationTime: Time) -> (Result);
+  processReview: (review: Review) -> (Result_2);
+  setCanisterReferences: (auth: principal, booking: principal, review:
+   principal, "service": principal) -> (Result_1);
+  updateUserReputation: (userId: principal) -> (Result);
+}

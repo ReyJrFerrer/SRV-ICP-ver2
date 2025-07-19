@@ -195,10 +195,6 @@ const ProviderHomePage: React.FC<ProviderHomePageProps> = () => {
             error={servicesError}
             onRefresh={refreshServices}
           />
-
-          {userProfile && (
-            <CredentialsDisplayNextjs provider={userProfile} />
-          )}
         </div>
         
         <BottomNavigationNextjs />

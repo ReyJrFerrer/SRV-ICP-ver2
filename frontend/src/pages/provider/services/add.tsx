@@ -1,8 +1,7 @@
-// SRV-ICP-ver2-jdMain/frontend/src/pages/provider/services/add.tsx
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { ArrowLeftIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@bundly/ares-react';
 import { nanoid } from 'nanoid';
 
@@ -73,7 +72,7 @@ const initialServiceState = {
   useSameTimeForAllDays: true,
   commonTimeSlots: [
     { id: nanoid(), startHour: '09', startMinute: '00', startPeriod: 'AM' as 'AM' | 'PM',
-      endHour: '05', endMinute: '00', endPeriod: 'PM' as 'AM' | 'PM' }
+      endHour: '10', endMinute: '00', endPeriod: 'AM' as 'AM' | 'PM' }
   ] as TimeSlotUIData[],
   perDayTimeSlots: {} as Record<DayOfWeek, TimeSlotUIData[]>,
   
@@ -152,19 +151,19 @@ const AddServicePage: React.FC = () => {
     if (type === 'checkbox') {
         const { checked } = e.target as HTMLInputElement;
         if (name === 'useSameTimeForAllDays') {
-            setFormData(prev => ({ ...prev, [name]: checked }));
+          setFormData(prev => ({ ...prev, [name]: checked }));
         } else if (name === 'availabilitySchedule') {
-            const dayValue = value as DayOfWeek;
-            setFormData(prev => {
-                const currentSchedule = prev.availabilitySchedule;
-                let newSchedule;
-                if (checked) {
-                    newSchedule = Array.from(new Set([...currentSchedule, dayValue]));
-                } else {
-                    newSchedule = currentSchedule.filter(day => day !== dayValue);
-                }
-                return { ...prev, availabilitySchedule: newSchedule };
-            });
+          const dayValue = value as DayOfWeek;
+          setFormData(prev => {
+            const currentSchedule = prev.availabilitySchedule;
+            let newSchedule;
+            if (checked) {
+              newSchedule = Array.from(new Set([...currentSchedule, dayValue]));
+            } else {
+              newSchedule = currentSchedule.filter(day => day !== dayValue);
+            }
+            return { ...prev, availabilitySchedule: newSchedule };
+          });
         }
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -213,7 +212,7 @@ const AddServicePage: React.FC = () => {
     setFormData(prev => ({ ...prev, perDayTimeSlots: perDaySlots }));
   };
 
-  const formatSlotTo24HourString = (slot: TimeSlotUIData): string | null => { /* ... same as before ... */ if (!slot.startHour || !slot.startMinute || !slot.startPeriod || !slot.endHour || !slot.endMinute || !slot.endPeriod) return null; const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => { let hour = parseInt(hourStr, 10); if (period === 'PM' && hour !== 12) hour += 12; else if (period === 'AM' && hour === 12) hour = 0; return `${String(hour).padStart(2, '0')}:${minuteStr}`; }; const startTime24 = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod); const endTime24 = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod); const startDateForCompare = new Date(`1970/01/01 ${startTime24}`); const endDateForCompare = new Date(`1970/01/01 ${endTime24}`); if (endDateForCompare <= startDateForCompare) return null;  return `${startTime24}-${endTime24}`; };
+  const formatSlotTo24HourString = (slot: TimeSlotUIData): string | null => { /* ... same as before ... */ if (!slot.startHour || !slot.startMinute || !slot.startPeriod || !slot.endHour || !slot.endMinute || !slot.endPeriod) return null; const formatTimePart = (hourStr: string, minuteStr: string, period: 'AM' | 'PM'): string => { let hour = parseInt(hourStr, 10); if (period === 'PM' && hour !== 12) hour += 12; else if (period === 'AM' && hour === 12) hour = 0; return `${String(hour).padStart(2, '0')}:${minuteStr}`; }; const startTime24 = formatTimePart(slot.startHour, slot.startMinute, slot.startPeriod); const endTime24 = formatTimePart(slot.endHour, slot.endMinute, slot.endPeriod); const startDateForCompare = new Date(`1970/01/01 ${startTime24}`); const endDateForCompare = new Date(`1970/01/01 ${endTime24}`); if (endDateForCompare <= startDateForCompare) return null;   return `${startTime24}-${endTime24}`; };
 
   // Enhanced location validation function
   const validateLocationFields = (): { isValid: boolean; errors: string[] } => {
@@ -565,56 +564,72 @@ const AddServicePage: React.FC = () => {
       </Head>
       <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="bg-white shadow-sm sticky top-0 z-20">
-          {/* ... header JSX same as before ... */}
-          <div className="container mx-auto px-4 py-3 flex items-center">
+          <div className="container mx-auto px-4 py-3 flex text-center items-center">
             <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 mr-2 transition-colors" aria-label="Go back"><ArrowLeftIcon className="h-5 w-5 text-gray-700" /></button>
-            <h1 className="text-xl font-semibold text-gray-800">Add New Service Offering</h1>
+            {/* <h1 className="text-xl font-semibold text-gray-800">Add New Service Offering</h1> */}
+            <div className="flex-grow flex justify-center">
+              <img src="/logo.svg" alt="SRV Logo" className="h-20" />
+            </div>
           </div>
         </header>
 
         <main className="flex-grow container mx-auto p-4 sm:p-6">
           {successMessage && ( <div className="mb-4 p-3 bg-green-100 text-green-700 border border-green-300 rounded-md text-sm"> {successMessage} </div> )}
           {(error || hookError) && ( <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md text-sm"> {error || hookError} </div> )}
+          
+          <h1 className="pb-5 text-xl text-center font-extrabold text-black-1000">Add New Service Offering</h1>
 
           <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-6">
-            {/* ... All previous form sections (Title, Category, Packages, Availability, Location, Requirements, Images) remain the same ... */}
             {/* Service Offering Title */}
             <div>
-              <label htmlFor="serviceOfferingTitle" className="block text-sm font-medium text-gray-700 mb-1">Service Offering Title*</label>
+              <label htmlFor="serviceOfferingTitle" className="block text-sm font-medium text-gray-700 mb-1">Service Offering Title</label>
               <input type="text" name="serviceOfferingTitle" id="serviceOfferingTitle" value={formData.serviceOfferingTitle} onChange={handleChange} required
-                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                     placeholder="e.g., Professional Hair Styling, Math Tutoring Sessions"/>
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="e.g., Professional Hair Styling, Math Tutor.."/>
             </div>
 
             {/* Category Selection */}
-            <div><label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">Category*</label><select name="categoryId" id="categoryId" value={formData.categoryId} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <div>
+              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select name="categoryId" id="categoryId" value={formData.categoryId} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <option value="" disabled>Select a category</option>
                 {loadingCategories ? (
                   <option disabled>Loading categories...</option>
                 ) : (
                   categories.filter((cat: ServiceCategory) => !cat.parentId).map((cat: ServiceCategory) => <option key={cat.id} value={cat.id}>{cat.name}</option>)
                 )}
-              </select></div>
+              </select>
+            </div>
 
             {/* Service Packages Section */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-              <legend className="text-sm font-medium text-gray-700 px-1">Service Packages*</legend>
-              {/* ... packages mapping logic ... */}
+            <fieldset className="border border-gray-300 rounded-md p-4">
+              <legend className="text-sm font-medium text-gray-700 px-1">Service Packages</legend>
               {formData.servicePackages.map((pkg, index) => (
-                <div key={pkg.id} className="space-y-3 border border-gray-200 p-4 rounded-md mb-4 bg-gray-50 relative">
-                  <h4 className="text-sm font-semibold text-gray-800">Package {index + 1}</h4>
-                  <div><label htmlFor={`pkgName-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Package Name*</label><input type="text" name="name" id={`pkgName-${pkg.id}`} value={pkg.name} onChange={(e) => handlePackageChange(index, 'name', e.target.value)} required={index === 0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
-                  <div><label htmlFor={`pkgDesc-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Description*</label><textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Describe your service package. You can specify requirements for your clients here (e.g., materials to prepare, access requirements, timing constraints)."></textarea></div>
-                  <div><label htmlFor={`pkgPrice-${pkg.id}`} className="block text-xs font-medium text-gray-600 mb-1">Price (PHP)*</label><input type="number" name="price" id={`pkgPrice-${pkg.id}`} value={pkg.price} onChange={(e) => handlePackageChange(index, 'price', e.target.value)} required={index === 0} step="1" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500" /></div>
+                <div key={pkg.id} className="space-y-3 p-4 rounded-md mb-4 bg-gray-50 relative">
+                  <div>
+                    <label htmlFor={`pkgName-${pkg.id}`} className="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
+                    <input type="text" name="name" id={`pkgName-${pkg.id}`} value={pkg.name} onChange={(e) => handlePackageChange(index, 'name', e.target.value)} required={index === 0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500" placeholder="Package Name"/>
+                  </div>
+                  <div>
+                    <label htmlFor={`pkgDesc-${pkg.id}`} className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" id={`pkgDesc-${pkg.id}`} value={pkg.description} onChange={(e) => handlePackageChange(index, 'description', e.target.value)} rows={3} required={index===0} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500" placeholder="Describe your service package. You can specify requirements for your clients.."></textarea>
+                  </div>
+                  <div>
+                    <label htmlFor={`pkgPrice-${pkg.id}`} className="block text-sm font-medium text-gray-700 mb-1">Price (PHP)</label>
+                    <input type="number" name="price" id={`pkgPrice-${pkg.id}`} value={pkg.price} onChange={(e) => handlePackageChange(index, 'price', e.target.value)} required={index === 0} step="1" min="0" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-500" placeholder="Price (PHP)"/>
+                  </div>
                   {formData.servicePackages.length > 1 && (<button type="button" onClick={() => removePackage(pkg.id)} className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700" aria-label="Remove package"><TrashIcon className="h-4 w-4"/></button>)}
                 </div>
               ))} 
-              <button type="button" onClick={addPackage} className="mt-3 px-4 py-2 border border-dashed border-blue-500 text-sm font-medium rounded-md text-blue-700 hover:bg-blue-50">+ Add Package</button>
+              <button type="button" onClick={addPackage} className="mt-3 w-full px-4 py-2 border border-solid border-blue-400 text-sm font-medium rounded-md text-blue-700 hover:bg-blue-100 flex items-center justify-center space-x-2">
+                <PlusIcon className="h-4 w-4" />
+                <span>Add Package</span>
+              </button>
             </fieldset>
 
             {/* Availability Section */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-              <legend className="text-sm font-medium text-gray-700 px-1">Availability*</legend>
+            <fieldset className="border border-gray-300 rounded-md p-4">
+              <legend className="text-sm font-medium text-gray-700 px-1">Availability</legend>
               <AvailabilityConfiguration
                 instantBookingEnabled={formData.instantBookingEnabled}
                 bookingNoticeHours={formData.bookingNoticeHours}
@@ -634,17 +649,17 @@ const AddServicePage: React.FC = () => {
             </fieldset>
 
             {/* Service Location */}
-            <fieldset className="border p-4 rounded-md border-gray-300">
-              <legend className="text-sm font-medium text-gray-700 px-1">Service Location*</legend>
+            <fieldset className="border border-gray-300 rounded-md p-4">
+              <legend className="text-sm font-medium text-gray-700 px-1">Service Location</legend>
               <div className="space-y-4">
                 {/* Current Location Detection */}
-                <div className="bg-blue-50 p-4 rounded-md">
+                <div className="bg-blue-50 p-2 rounded-md">
                   <h4 className="text-sm font-medium text-blue-900 mb-2">Auto-Detect Location</h4>
                   <button 
                     type="button"
                     onClick={handleDetectLocation}
                     disabled={isDetectingLocation}
-                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
+                    className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
                   >
                     {isDetectingLocation ? (
                       <>
@@ -655,7 +670,7 @@ const AddServicePage: React.FC = () => {
                         Detecting Location...
                       </>
                     ) : (
-                      '📍 Use Current Location'
+                      'Use current location'
                     )}
                   </button>
                   {formData.locationLatitude && formData.locationLongitude && (
@@ -666,7 +681,7 @@ const AddServicePage: React.FC = () => {
                 </div>
 
                 {/* Address Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label htmlFor="locationHouseNumber" className="block text-sm font-medium text-gray-700 mb-1">House/Bldg Number</label>
                     <input 
@@ -675,85 +690,69 @@ const AddServicePage: React.FC = () => {
                       name="locationHouseNumber"
                       value={formData.locationHouseNumber} 
                       onChange={(e) => handleLocationFieldChange('locationHouseNumber', e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="123"
                     />
                   </div>
                   <div>
-                    <label htmlFor="locationStreet" className="block text-sm font-medium text-gray-700 mb-1">Street*</label>
+                    <label htmlFor="locationStreet" className="block text-sm font-medium text-gray-700 mb-1">Street</label>
                     <input 
                       type="text" 
                       id="locationStreet" 
                       name="locationStreet"
                       value={formData.locationStreet} 
                       onChange={(e) => handleLocationFieldChange('locationStreet', e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="Session Road"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="locationBarangay" className="block text-sm font-medium text-gray-700 mb-1">Barangay*</label>
+                    <label htmlFor="locationBarangay" className="block text-sm font-medium text-gray-700 mb-1">Barangay</label>
                     <input 
                       type="text" 
                       id="locationBarangay" 
                       name="locationBarangay"
                       value={formData.locationBarangay} 
                       onChange={(e) => handleLocationFieldChange('locationBarangay', e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="Barangay"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Bakakeng"
                     />
                   </div>
                   <div>
-                    <label htmlFor="locationMunicipalityCity" className="block text-sm font-medium text-gray-700 mb-1">Municipality/City*</label>
+                    <label htmlFor="locationMunicipalityCity" className="block text-sm font-medium text-gray-700 mb-1">Municipality/City</label>
                     <input 
                       type="text" 
                       id="locationMunicipalityCity" 
                       name="locationMunicipalityCity"
                       value={formData.locationMunicipalityCity} 
                       onChange={(e) => handleLocationFieldChange('locationMunicipalityCity', e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="Baguio City"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label htmlFor="locationProvince" className="block text-sm font-medium text-gray-700 mb-1">Province*</label>
+                    <label htmlFor="locationProvince" className="block text-sm font-medium text-gray-700 mb-1">Province</label>
                     <input 
                       type="text" 
                       id="locationProvince" 
                       name="locationProvince"
                       value={formData.locationProvince} 
                       onChange={(e) => handleLocationFieldChange('locationProvince', e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       placeholder="Benguet"
                     />
                   </div>
                   <div>
-                    <label htmlFor="locationCountry" className="block text-sm font-medium text-gray-700 mb-1">Country*</label>
-                    <select 
+                    <label htmlFor="locationCountry" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <input 
+                      type="text" 
                       id="locationCountry" 
                       name="locationCountry"
                       value={formData.locationCountry} 
                       onChange={(e) => handleLocationFieldChange('locationCountry', e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    >
-                      <option value="Philippines">Philippines</option>
-                      <option value="United States">United States</option>
-                      <option value="Canada">Canada</option>
-                      <option value="Singapore">Singapore</option>
-                      <option value="Malaysia">Malaysia</option>
-                      <option value="Other">Other</option>
-                    </select>
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="Philippines"
+                    />
                   </div>
                   <div>
                     <label htmlFor="locationPostalCode" className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
@@ -763,119 +762,34 @@ const AddServicePage: React.FC = () => {
                       name="locationPostalCode"
                       value={formData.locationPostalCode} 
                       onChange={(e) => handleLocationFieldChange('locationPostalCode', e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      placeholder="2600"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      placeholder="123"
                     />
                   </div>
                 </div>
-
-                {/* GPS Coordinates Section (Optional/Collapsible) */}
-                {/* <div className="bg-gray-50 p-4 rounded-md">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-gray-900">GPS Coordinates (Optional)</h4>
-                    <button
-                      type="button"
-                      onClick={() => setShowGPSCoordinates(!showGPSCoordinates)}
-                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      {showGPSCoordinates ? 'Hide' : 'Show'} GPS Section
-                    </button>
-                  </div>
-                  
-                  {showGPSCoordinates && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="locationLatitude" className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                        <input 
-                          type="number" 
-                          id="locationLatitude" 
-                          name="locationLatitude"
-                          value={formData.locationLatitude} 
-                          onChange={(e) => handleLocationFieldChange('locationLatitude', e.target.value)}
-                          step="any"
-                          min="-90"
-                          max="90"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                          placeholder="16.4145"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Range: -90 to 90 degrees</p>
-                      </div>
-                      <div>
-                        <label htmlFor="locationLongitude" className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                        <input 
-                          type="number" 
-                          id="locationLongitude" 
-                          name="locationLongitude"
-                          value={formData.locationLongitude} 
-                          onChange={(e) => handleLocationFieldChange('locationLongitude', e.target.value)}
-                          step="any"
-                          min="-180"
-                          max="180"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                          placeholder="120.5960"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Range: -180 to 180 degrees</p>
-                      </div>
-                    </div>
-                  )}
-                </div> */}
-
-                {/* Service Radius */}
-                {/* <div className="bg-gray-50 p-4 rounded-md">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Service Radius</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="serviceRadius" className="block text-sm font-medium text-gray-700 mb-1">Radius*</label>
-                      <input 
-                        type="number" 
-                        id="serviceRadius" 
-                        name="serviceRadius"
-                        value={formData.serviceRadius} 
-                        onChange={handleChange}
-                        min="1"
-                        max="100"
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="serviceRadiusUnit" className="block text-sm font-medium text-gray-700 mb-1">Unit*</label>
-                      <select 
-                        id="serviceRadiusUnit" 
-                        name="serviceRadiusUnit"
-                        value={formData.serviceRadiusUnit} 
-                        onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      >
-                        <option value="km">Kilometers</option>
-                        <option value="mi">Miles</option>
-                      </select>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500">This is the maximum distance you're willing to travel for service delivery.</p>
-                </div> */}
-
-                {/* Generated Address Preview */}
-                {formData.locationAddress && (
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <h4 className="text-sm font-medium text-green-900 mb-1">Address Preview:</h4>
-                    <p className="text-sm text-green-800">{formData.locationAddress}</p>
-                  </div>
-                )}
               </div>
             </fieldset>
 
-            {/* Image Upload Section */}
-            <div>
-                {/* <label htmlFor="serviceImages" className="block text-sm font-medium text-gray-700 mb-1">Service Images* (First image is main/hero)</label> */}
-                {/* ... image upload content ... */}
-                 {/* <input type="file" name="serviceImages" id="serviceImages" accept="image/png, image/jpeg, image/gif, image/svg+xml" multiple onChange={handleImageFilesChange} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>{serviceImageFiles.length === 0 && <p className="mt-1 text-xs text-red-500">At least one image is required.</p>}{imagePreviews.length > 0 && (<div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">{imagePreviews.map((previewUrl, index) => (<div key={previewUrl} className="relative group border border-gray-200 rounded-md overflow-hidden aspect-square"><img src={previewUrl} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => handleRemoveImage(index)} className="absolute top-1 right-1 bg-red-500 text-white p-0.5 sm:p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-700 transition-opacity duration-150" aria-label={`Remove image ${index + 1}`}><TrashIcon className="h-3 w-3 sm:h-4 sm:w-4" /></button></div>))}</div>)} */}
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4 border-t border-gray-200">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Add Service'
+                )}
+              </button>
             </div>
-
-            <button type="submit" disabled={isLoading || loading} className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-              {(isLoading || loading) ? ( /* ... loading indicator ... */ <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Adding Service...</>
-              ) : ( <><PlusCircleIcon className="h-5 w-5 mr-2" /> Add Service</>)}
-            </button>
           </form>
         </main>
       </div>

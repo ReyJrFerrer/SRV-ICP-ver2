@@ -5,8 +5,8 @@ import BottomNavigation from '@app/components/provider/BottomNavigationNextjs';
 import ProviderBookingItemCard from '@app/components/provider/ProviderBookingItemCard';
 import { useProviderBookingManagement, ProviderEnhancedBooking } from '../../hooks/useProviderBookingManagement';
 
-type BookingStatusTab = 'Pending' | 'Upcoming' | 'Completed' | 'Cancelled' | 'InProgress';
-const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Upcoming', 'InProgress', 'Completed', 'Cancelled'];
+type BookingStatusTab = 'Pending' | 'Approved' | 'InProgress' | 'Completed' | 'Canceled';
+const TAB_ITEMS: BookingStatusTab[] = ['Pending', 'Approved', 'InProgress', 'Completed', 'Canceled'];
 
 const ProviderBookingsPage: React.FC = () => {
   const router = useRouter();
@@ -39,23 +39,21 @@ const ProviderBookingsPage: React.FC = () => {
 
   // Categorize bookings based on the hook's filtering functions
   const categorizedBookings = useMemo(() => {
-    // Combine cancelled and declined bookings in the cancelled tab
     const cancelledBookings = getBookingsByStatus('Cancelled');
     const declinedBookings = getBookingsByStatus('Declined');
     const combinedCancelledBookings = [...cancelledBookings, ...declinedBookings];
 
     return {
       Pending: getPendingBookings(),
-      Upcoming: getUpcomingBookings(),
+      Approved: getUpcomingBookings(), // Assuming Approved is what's used for upcoming in the UI
       Completed: getCompletedBookings(),
-      Cancelled: combinedCancelledBookings, // Include both cancelled and declined
+      Canceled: combinedCancelledBookings, // Include both cancelled and declined
       InProgress: bookings.filter(booking => booking.status === 'InProgress'),
     };
   }, [getPendingBookings, getUpcomingBookings, getCompletedBookings, getBookingsByStatus, bookings]);
 
   const currentBookings: ProviderEnhancedBooking[] = categorizedBookings[activeTab] || [];
 
-  // Handle retry functionality
   const handleRetry = async () => {
     clearError();
     try {
@@ -70,15 +68,15 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hala!</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h1>
           <p className="text-gray-600 mb-4">
-            Kailangan mong nakalogin bilang isang tagapagbigay serbisyo upang magpatuloy
+            You need to be logged in as service provider to continue.
           </p>
           <button
             onClick={() => router.push('/provider/login')}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            Balik sa Login
+            Back to Login
           </button>
         </div>
       </div>
@@ -91,7 +89,7 @@ const ProviderBookingsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Niloload ang iyong mga bookings...</p>
+          <p className="text-gray-600">Loading Bookings...</p>
         </div>
       </div>
     );
@@ -102,20 +100,20 @@ const ProviderBookingsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Hindi maload ang mga bookings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Unable to load bookings</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <div className="space-x-3">
             <button
               onClick={() => router.push('/provider/dashboard')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             >
-              Balik sa Dashboard
+              Back to Dashboard
             </button>
             <button
               onClick={handleRetry}
               className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg transition-colors"
             >
-              Ulitin
+              Retry
             </button>
           </div>
         </div>
@@ -130,76 +128,47 @@ const ProviderBookingsPage: React.FC = () => {
         <meta name="description" content="Manage your service bookings" />
       </Head>
       <div className="min-h-screen bg-gray-100 flex flex-col">
-        {/* Error Display */}
-        {error && (
-          <div className="mx-4 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-red-600 text-sm">{error}</span>
-              </div>
-              <button
-                onClick={clearError}
-                className="text-red-600 hover:text-red-800 text-sm font-medium"
-              >
-                Isara
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Refresh indicator */}
-        {refreshing && (
-          <div className="mx-4 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
-              <span className="text-blue-600 text-sm">Nirerefresh ang mga bookings...</span>
-            </div>
-          </div>
-        )}
-
-        <header className="bg-white shadow-sm sticky top-0 z-20 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-800">Aking Bookings</h1>
-            <button
-              onClick={refreshBookings}
-              disabled={refreshing}
-              className="p-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-              title="Refresh bookings"
-            >
-              <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        {/* Header */}
+        <header className="bg-white shadow-sm sticky top-0 z-20 px-4 py-4">
+          <div className="flex items-center">
+            <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-800 p-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+            <h1 className="flex-grow text-center text-lg font-semibold text-gray-800 -ml-10">My Bookings</h1>
           </div>
         </header>
 
-        <div className="bg-white border-b border-gray-200 sticky top-[73px] z-10">
-          <nav className="flex space-x-1 sm:space-x-2 p-1 sm:p-2 justify-around">
+        {/* Tab Navigation */}
+        <div className="bg-white border-b border-gray-200 sticky top-[73px] z-10 px-4">
+          <nav className="flex space-x-2 py-3 px-1">
             {TAB_ITEMS.map(tab => (
               <button
                 key={tab}
                 onClick={() => {
                   setActiveTab(tab);
                 }}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md flex-grow text-center transition-colors
-                            ${activeTab === tab 
-                                ? 'bg-blue-600 text-white shadow-sm' 
-                                : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700'}`}
+                className={`flex-1 text-center py-2 px-4 text-sm font-medium transition-colors
+                           ${activeTab === tab 
+                              ? 'bg-blue-600 text-white rounded-full' 
+                              : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700 rounded-full'}`}
               >
-                {tab} ({categorizedBookings[tab]?.length || 0})
+                {tab}
               </button>
             ))}
           </nav>
         </div>
 
         <main className="flex-grow overflow-y-auto pb-20">
+          <h2 className="text-2xl font-bold text-gray-900 mt-6 mb-4 px-4">{activeTab} Jobs</h2>
+
           {currentBookings.length > 0 ? (
-            <div className="space-y-4 p-4">
+            <div className="space-y-4 px-4">
               {currentBookings.map(booking => (
                 <div 
                   key={booking.id}
                   onClick={() => {
-                    // If it's an InProgress booking, navigate to active service page
                     if (activeTab === 'InProgress' && booking.status === 'InProgress') {
                       router.push(`/provider/active-service/${booking.id}`);
                     }
@@ -213,18 +182,18 @@ const ProviderBookingsPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16">
+            <div className="text-center py-16 px-4">
               <div className="mb-4">
                 {activeTab === 'Pending' && (
                   <div className="text-6xl mb-4">⏳</div>
                 )}
-                {activeTab === 'Upcoming' && (
+                {activeTab === 'Approved' && (
                   <div className="text-6xl mb-4">📅</div>
                 )}
                 {activeTab === 'Completed' && (
                   <div className="text-6xl mb-4">✅</div>
                 )}
-                {activeTab === 'Cancelled' && (
+                {activeTab === 'Canceled' && (
                   <div className="text-6xl mb-4">❌</div>
                 )}
                 {activeTab === 'InProgress' && (
@@ -232,23 +201,23 @@ const ProviderBookingsPage: React.FC = () => {
                 )}
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Walang {activeTab.toLowerCase()} bookings
+                No {activeTab.toLowerCase()} bookings
               </h3>
               <p className="text-gray-500 mb-6">
-                {activeTab === 'Pending' && "Wala kang naghihintay na booking request."}
-                {activeTab === 'Upcoming' && "Wala kang mga nalalapit na kumpirmadong booking."}
-                {activeTab === 'Completed' && "Wala ka pang natapos na booking."}
-                {activeTab === 'Cancelled' && "Wala kang mga nakanselang o tinanggihang booking."}
-                {activeTab === 'InProgress' && "Wala kang mga booking na kasalukuyang isinasagawa."}
+                {activeTab === 'Pending' }
+                {activeTab === 'Approved' }
+                {activeTab === 'Completed' }
+                {activeTab === 'Canceled' }
+                {activeTab === 'InProgress' }
               </p>
               {activeTab === 'Pending' && (
                 <p className="text-sm text-gray-400">
-                  Ang mga bagong booking requests ay magpapakita dito kapag nagbook na sila.
+                  Booking requests will appear here.
                 </p>
               )}
-              {activeTab === 'Cancelled' && (
+              {activeTab === 'Canceled' && (
                 <p className="text-sm text-gray-400">
-                  Ang booking na ito ay kinansela ng kliyente o tinanggihan mo ay magpapakita dito.
+                  Booking cancelled by client will appear here. 
                 </p>
               )}
             </div>

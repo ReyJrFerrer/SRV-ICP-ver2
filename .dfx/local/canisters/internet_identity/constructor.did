@@ -75,6 +75,12 @@ type AuthnMethodRegistrationInfo = record {
   expiration : Timestamp;
   authn_method : opt AuthnMethodData;
 };
+type AuthnMethodRegistrationModeEnterError = variant {
+  InvalidRegistrationId : text;
+  AlreadyInProgress;
+  Unauthorized : principal;
+  InternalError : text;
+};
 type AuthnMethodReplaceError = variant {
   AuthnMethodNotFound;
   InvalidMetadata : text;
@@ -159,6 +165,7 @@ type DeviceWithUsage = record {
   purpose : Purpose;
   credential_id : opt CredentialId;
 };
+type DummyAuthConfig = record { prompt_for_index : bool };
 type FrontendHostname = text;
 type GetAccountsError = variant {
   InternalCanisterError : text;
@@ -230,6 +237,7 @@ type IdentityAuthnInfo = record {
 type IdentityInfo = record {
   authn_methods : vec AuthnMethodData;
   metadata : MetadataMapV2;
+  name : opt text;
   authn_method_registration : opt AuthnMethodRegistrationInfo;
   openid_credentials : opt vec OpenIdCredential;
 };
@@ -246,6 +254,16 @@ type IdentityMetadataReplaceError = variant {
   };
 };
 type IdentityNumber = nat64;
+type IdentityPropertiesReplace = record { name : opt text };
+type IdentityPropertiesReplaceError = variant {
+  InternalCanisterError : text;
+  Unauthorized : principal;
+  NameTooLong : record { limit : nat64 };
+  StorageSpaceExceeded : record {
+    space_required : nat64;
+    space_available : nat64;
+  };
+};
 type InternetIdentityInit = record {
   fetch_root_key : opt bool;
   openid_google : opt opt OpenIdConfig;
@@ -258,6 +276,7 @@ type InternetIdentityInit = record {
   analytics_config : opt opt AnalyticsConfig;
   related_origins : opt vec text;
   captcha_config : opt CaptchaConfig;
+  dummy_auth : opt opt DummyAuthConfig;
   register_rate_limit : opt RateLimitConfig;
 };
 type InternetIdentityStats = record {
@@ -277,6 +296,7 @@ type KeyType = variant {
   unknown;
   browser_storage_key;
 };
+type LookupByRegistrationIdError = variant { InvalidRegistrationId : text };
 type MetadataMap = vec record {
   text;
   variant { map : MetadataMap; string : text; bytes : blob };
@@ -297,6 +317,7 @@ type OpenIdCredential = record {
 type OpenIdCredentialAddError = variant {
   OpenIdCredentialAlreadyRegistered;
   InternalCanisterError : text;
+  JwtExpired;
   Unauthorized : principal;
   JwtVerificationFailed;
 };
@@ -309,6 +330,7 @@ type OpenIdCredentialRemoveError = variant {
 type OpenIdDelegationError = variant {
   NoSuchDelegation;
   NoSuchAnchor;
+  JwtExpired;
   JwtVerificationFailed;
 };
 type OpenIdPrepareDelegationResponse = record {
@@ -347,6 +369,7 @@ type RegistrationFlowNextStep = variant {
   CheckCaptcha : record { captcha_png_base64 : text };
   Finish;
 };
+type RegistrationId = text;
 type Salt = blob;
 type SessionKey = PublicKey;
 type SignedDelegation = record { signature : blob; delegation : Delegation };
@@ -407,8 +430,14 @@ service : (opt InternetIdentityInit) -> {
         Err : AuthnMethodRegisterError;
       },
     );
-  authn_method_registration_mode_enter : (IdentityNumber) -> (
-      variant { Ok : record { expiration : Timestamp }; Err },
+  authn_method_registration_mode_enter : (
+      IdentityNumber,
+      opt RegistrationId,
+    ) -> (
+      variant {
+        Ok : record { expiration : Timestamp };
+        Err : AuthnMethodRegistrationModeEnterError;
+      },
     );
   authn_method_registration_mode_exit : (IdentityNumber) -> (
       variant { Ok; Err },
@@ -466,6 +495,9 @@ service : (opt InternetIdentityInit) -> {
   identity_metadata_replace : (IdentityNumber, MetadataMapV2) -> (
       variant { Ok; Err : IdentityMetadataReplaceError },
     );
+  identity_properties_replace : (IdentityNumber, IdentityPropertiesReplace) -> (
+      variant { Ok; Err : IdentityPropertiesReplaceError },
+    );
   identity_registration_finish : (IdRegFinishArg) -> (
       variant { Ok : IdRegFinishResult; Err : IdRegFinishError },
     );
@@ -474,6 +506,9 @@ service : (opt InternetIdentityInit) -> {
     );
   init_salt : () -> ();
   lookup : (UserNumber) -> (vec DeviceData) query;
+  lookup_by_registration_mode_id : (RegistrationId) -> (
+      opt IdentityNumber,
+    ) query;
   lookup_device_key : (blob) -> (opt DeviceKeyWithAnchor) query;
   openid_credential_add : (IdentityNumber, JWT, Salt) -> (
       variant { Ok; Err : OpenIdCredentialAddError },
